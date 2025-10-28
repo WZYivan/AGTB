@@ -1,7 +1,6 @@
 *.hpp linguist-language=C++
 *.cpp linguist-language=C++
 *.h linguist-language=C++
-*cmake linguist-language=cmake
 README.md linguist-documentation
 *.md linguist-documentation
 *.txt linguist-documentation
