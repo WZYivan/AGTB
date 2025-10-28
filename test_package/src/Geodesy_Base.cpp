@@ -6,7 +6,7 @@
 namespace ag = AGTB::Geodesy;
 namespace au = AGTB::Utils;
 
-template <ag::EllipsoidParam E>
+template <ag::EllipsoidConcept E>
 void PE()
 {
     std::println(
@@ -23,7 +23,7 @@ e2_2={}
 
 AGTB_DEFINE_QUICK_ELLIPSOID(my_ellipsoid, 6378245.0, 6356863.018773047);
 
-template <ag::GeodeticLatitudeParam L>
+template <ag::GeodeticLatitudeConstantsConcept L>
 void PL(L l)
 {
     std::println(
@@ -34,7 +34,7 @@ tau_2={}
 W={}
 V={}
 )",
-        l.B, l.t, l.tau_2, l.W, l.V);
+        l.B, l.t, l.nu_2, l.W, l.V);
 }
 
 int main()

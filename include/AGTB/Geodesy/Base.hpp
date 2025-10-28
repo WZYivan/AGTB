@@ -13,7 +13,7 @@
 AGTB_GEODESY_BEGIN
 
 template <typename T>
-concept EllipsoidParam = requires {
+concept EllipsoidConcept = requires {
     { T::a } -> std::convertible_to<double>;
     { T::b } -> std::convertible_to<double>;
     { T::c } -> std::convertible_to<double>;
@@ -23,10 +23,10 @@ concept EllipsoidParam = requires {
 };
 
 template <typename T>
-concept GeodeticLatitudeParam = requires {
+concept GeodeticLatitudeConstantsConcept = requires {
     { T::B } -> std::convertible_to<double>;
     { T::t } -> std::convertible_to<double>;
-    { T::tau_2 } -> std::convertible_to<double>;
+    { T::nu_2 } -> std::convertible_to<double>;
     { T::W } -> std::convertible_to<double>;
     { T::V } -> std::convertible_to<double>;
 };
@@ -122,13 +122,13 @@ struct GeodeticLongitude
     }
 };
 
-template <EllipsoidParam e>
+template <EllipsoidConcept ellipsoid>
 struct GeodeticLatitudeConstants
 {
     double
         B,
         t,
-        tau_2,
+        nu_2,
         W,
         V;
     constexpr GeodeticLatitudeConstants(GeodeticLatitude _B) : B(static_cast<double>(_B))
@@ -138,9 +138,9 @@ struct GeodeticLatitudeConstants
             AGTB_THROW(std::invalid_argument, std::format("invalid latitude: \'{}\'", B));
         }
         t = gcem::tan(B);
-        tau_2 = e::e2_2 * gcem::pow(gcem::cos(B), 2);
-        W = gcem::sqrt(1 - e::e1_2 * gcem::pow(gcem::sin(B), 2));
-        V = gcem::sqrt(1 + tau_2);
+        nu_2 = ellipsoid::e2_2 * gcem::pow(gcem::cos(B), 2);
+        W = gcem::sqrt(1 - ellipsoid::e1_2 * gcem::pow(gcem::sin(B), 2));
+        V = gcem::sqrt(1 + nu_2);
     }
 };
 
