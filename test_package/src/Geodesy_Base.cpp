@@ -1,8 +1,10 @@
 #include <AGTB/Geodesy/Base.hpp>
+#include <AGTB/Utils/Angles.hpp>
 #include <print>
 #include <iostream>
 
 namespace ag = AGTB::Geodesy;
+namespace au = AGTB::Utils;
 
 template <ag::EllipsoidParam E>
 void PE()
@@ -46,5 +48,13 @@ int main()
     PE<my_ellipsoid>();
 
     std::cout << "Constants at B(45.0)" << std::endl;
-    PL(ag::GeodeticLatitudeConstants<Krasovski>(45));
+    PL(
+        ag::GeodeticLatitudeConstants<Krasovski>(
+            au::Angles::FromDegrees(45)));
+
+    auto [d, m, s] =
+        au::Angles::ToDegrees(
+            au::Angles::FromDegrees(
+                10 * 3600 + 20 * 60 + 30.4));
+    std::println("d:{}, m:{}, s:{}", d, m, s);
 }
