@@ -22,9 +22,10 @@ class agtbTestConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            targets = {"SpaceResection" : True, 
+            targets = {"SpaceResection" : False, 
                        "EigenIO" : False, 
-                       "StringUtils" : False}
+                       "StringUtils" : False,
+                       "Geodesy_Base": True}
             for (tar, b) in targets.items():
                 cmd = cmd = os.path.join(self.cpp.build.bindir, tar)
                 if b:
