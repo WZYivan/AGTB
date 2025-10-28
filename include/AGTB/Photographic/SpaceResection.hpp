@@ -10,9 +10,9 @@
 #include <iostream>
 #include <filesystem>
 
-#include "details/Macros.hpp"
+#include "../details/Macros.hpp"
 
-AGTB_BEGIN
+AGTB_PHOTOGRAPHIC_BEGIN
 
 /**
  * @brief Space Resection Namespace
@@ -1312,6 +1312,6 @@ namespace SpaceResection::Solve::Utils
     }
 }
 
-AGTB_END
+AGTB_PHOTOGRAPHIC_END
 
 #endif

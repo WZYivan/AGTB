@@ -12,6 +12,26 @@
     {
 #define AGTB_END }
 
+#define AGTB_PHOTOGRAPHIC_BEGIN
+
+#define AGTB_PHOTOGRAPHIC_BEGIN \
+    AGTB_BEGIN                  \
+    namespace Photographic      \
+    {
+
+#define AGTB_PHOTOGRAPHIC_END \
+    }                         \
+    AGTB_END
+
+#define AGTB_GEODESY_BEGIN \
+    AGTB_BEGIN             \
+    namespace Geodesy      \
+    {
+
+#define AGTB_GEODESY_END \
+    }                    \
+    AGTB_END
+
 AGTB_BEGIN
 
 namespace macros
