@@ -7,21 +7,18 @@
 
 #include "../details/Macros.hpp"
 
-AGTB_BEGIN
+AGTB_UTILS_BEGIN
 
-namespace Utils
+class not_implement_error : public std::runtime_error
 {
-    class not_implement_error : public std::runtime_error
-    {
-    public:
-        explicit not_implement_error(const std::string &message = "Function not implemented")
-            : std::runtime_error(message) {}
+public:
+    explicit not_implement_error(const std::string &message = "Function not implemented")
+        : std::runtime_error(message) {}
 
-        explicit not_implement_error(const char *message = "Function not implemented")
-            : std::runtime_error(message) {}
-    };
-}
+    explicit not_implement_error(const char *message = "Function not implemented")
+        : std::runtime_error(message) {}
+};
 
-AGTB_END
+AGTB_UTILS_END
 
 #endif

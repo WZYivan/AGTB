@@ -32,6 +32,24 @@
     }                    \
     AGTB_END
 
+#define AGTB_DSM_BEGIN \
+    AGTB_BEGIN         \
+    namespace DSM      \
+    {
+
+#define AGTB_DSM_END \
+    }                \
+    AGTB_END
+
+#define AGTB_UTILS_BEGIN \
+    AGTB_BEGIN           \
+    namespace Utils      \
+    {
+
+#define AGTB_UTILS_END \
+    }                  \
+    AGTB_END
+
 AGTB_BEGIN
 
 namespace macros
