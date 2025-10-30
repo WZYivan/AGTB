@@ -95,7 +95,13 @@ namespace Ellipsoid
 struct GeodeticLatitude
 {
     double B;
-    constexpr GeodeticLatitude(double _B) : B(_B) {}
+    constexpr GeodeticLatitude(double _B) : B(_B)
+    {
+        if (!Valid())
+        {
+            AGTB_THROW(std::invalid_argument, std::format("Invalid Latitude: \'{}\'", B));
+        }
+    }
     constexpr explicit operator double() const noexcept
     {
         return B;
@@ -109,7 +115,13 @@ struct GeodeticLatitude
 struct GeodeticLongitude
 {
     double L;
-    constexpr GeodeticLongitude(double _L) : L(_L) {}
+    constexpr GeodeticLongitude(double _L) : L(_L)
+    {
+        if (!Valid())
+        {
+            AGTB_THROW(std::invalid_argument, std::format("Invalid Longitude: \'{}\'", L));
+        }
+    }
     constexpr explicit operator double() const noexcept
     {
         return L;
@@ -140,6 +152,14 @@ struct GeodeticLatitudeConstants
         W = gcem::sqrt(1 - ellipsoid::e1_2 * gcem::pow(gcem::sin(B), 2));
         V = gcem::sqrt(1 + nu_2);
     }
+};
+
+struct GeodeticConstants
+{
+    constexpr static double
+        rho_degree = 57.295'779'513'082'321'0,
+        rho_minute = 3'437.746'770'784'939'17,
+        rho_second = 206'264.806'247'096'355;
 };
 
 AGTB_GEODESY_END
