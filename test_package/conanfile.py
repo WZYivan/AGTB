@@ -25,7 +25,8 @@ class agtbTestConan(ConanFile):
             targets = {"SpaceResection" : False, 
                        "EigenIO" : False, 
                        "StringUtils" : False,
-                       "Geodesy_Base": True}
+                       "Geodesy_Base": False,
+                       "Bessel_Coeff.cpp": True}
             for (tar, b) in targets.items():
                 cmd = cmd = os.path.join(self.cpp.build.bindir, tar)
                 if b:
