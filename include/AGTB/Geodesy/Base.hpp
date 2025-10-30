@@ -43,15 +43,15 @@ concept GeodeticLatitudeConstantsConcept = requires {
             e2_2 = _e2_2;                                                      \
     }
 
-#define AGTB_DEFINE_QUICK_ELLIPSOID(_name, _a, _b)              \
-    AGTB_DEFINE_PRECISE_ELLIPSOID(                              \
-        _name,                                                  \
-        _a,                                                     \
-        _b,                                                     \
-        (_a) * (_a) / (_b),                                     \
-        ((_a) - (_b)) / (_a),                                   \
-        gcem::sqrt(gcem::pow(_a, 2) - gcem::pow(_b, 2)) / (_a), \
-        gcem::sqrt(gcem::pow(_a, 2) - gcem::pow(_b, 2)) / (_b))
+#define AGTB_DEFINE_QUICK_ELLIPSOID(_name, _a, _b)                  \
+    AGTB_DEFINE_PRECISE_ELLIPSOID(                                  \
+        _name,                                                      \
+        _a,                                                         \
+        _b,                                                         \
+        gcem::pow((_a), 2) / (_b),                                  \
+        ((_a) - (_b)) / (_a),                                       \
+        (gcem::pow(_a, 2) - gcem::pow(_b, 2)) / gcem::pow((_a), 2), \
+        (gcem::pow(_a, 2) - gcem::pow(_b, 2)) / gcem::pow((_b), 2))
 
 namespace Ellipsoid
 {
@@ -100,10 +100,9 @@ struct GeodeticLatitude
     {
         return B;
     }
-    constexpr static double Max = 90 / std::numbers::pi;
     constexpr bool Valid()
     {
-        return gcem::abs(B) <= Max;
+        return gcem::abs(B) <= Utils::Angles::FromDegrees(90);
     }
 };
 
@@ -115,10 +114,9 @@ struct GeodeticLongitude
     {
         return L;
     }
-    constexpr static double Max = 180 / std::numbers::pi;
     constexpr bool Valid()
     {
-        return gcem::abs(L) <= Max;
+        return gcem::abs(L) <= Utils::Angles::FromDegrees(180);
     }
 };
 
