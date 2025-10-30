@@ -14,5 +14,7 @@ endfunction()
 # create_new_executable(EigenIO "src/IO_EigenIO.cpp")
 # create_new_executable(StringUtils "src/Utils_String.cpp")
 # create_new_executable(Geodesy_Base "src/Geodesy_Base.cpp")
-create_new_executable(Bessel_Coeff.cpp "src/Bessel_Coeff.cpp")
+# create_new_executable(Bessel_Coeff "src/Bessel_Coeff.cpp")
+create_new_executable(Geodesy_PC "src/Geodesy_PC.cpp")
+
 

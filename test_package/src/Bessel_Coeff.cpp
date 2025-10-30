@@ -4,8 +4,8 @@ namespace agsb = AGTB::Geodesy::Solution::Bessel;
 namespace agsbc = agsb::Coefficients;
 namespace ag = AGTB::Geodesy;
 using agsbc::Tag;
-// using impl_def = agsbc::Impl<ag::Ellipsoid::Krasovski, Tag, Tag::Default_Precise>;
-// using impl_simp = agsbc::Impl<ag::Ellipsoid::Krasovski, Tag, Tag::Simplified>;
+// using impl_def = agsbc::Impl<ag::Ellipsoid::Krasovski, Tag, Tag::General>;
+// using impl_simp = agsbc::Impl<ag::Ellipsoid::Krasovski, Tag, Tag::Specified>;
 
 #include <print>
 
@@ -23,8 +23,8 @@ void print_impl(double pow_cosA0_2, std::string msg)
 template <ag::EllipsoidConcept ellipsoid>
 void compare_coeff_impl(double pow_cosA0_2, std::string msg)
 {
-    using impl_def = agsbc::Impl<ellipsoid, Tag, Tag::Default_Precise>;
-    using impl_simp = agsbc::Impl<ellipsoid, Tag, Tag::Simplified>;
+    using impl_def = agsbc::Impl<ellipsoid, Tag, Tag::General>;
+    using impl_simp = agsbc::Impl<ellipsoid, Tag, Tag::Specified>;
 
     std::println("{:=^50}", msg);
     print_impl<impl_def>(pow_cosA0_2, "default");
@@ -33,15 +33,15 @@ void compare_coeff_impl(double pow_cosA0_2, std::string msg)
 
 enum class my_coeff_tag
 {
-    Default_Precise,
-    Simplified,
+    General,
+    Specified,
     CustomMethod
 };
 
-AGTB_DEFAULT_IMPL_CUSTOM_TAG_DEFAULT_PRECISE(my_coeff_tag);
-AGTB_DEFAULT_IMPL_CUSTOM_TAG_ELLIPSOID_SIMPLIFIED(my_coeff_tag, ag::Ellipsoid::Krasovski);
-using my_impl_def = agsbc::Impl<ag::Ellipsoid::Krasovski, my_coeff_tag, my_coeff_tag::Default_Precise>;
-using my_impl_simp = agsbc::Impl<ag::Ellipsoid::Krasovski, my_coeff_tag, my_coeff_tag::Simplified>;
+AGTB_DEFAULT_IMPL_CUSTOM_TAG_GENERAL(my_coeff_tag);
+AGTB_DEFAULT_IMPL_CUSTOM_TAG_ELLIPSOID_SPECIFIED(my_coeff_tag, ag::Ellipsoid::Krasovski);
+using my_impl_def = agsbc::Impl<ag::Ellipsoid::Krasovski, my_coeff_tag, my_coeff_tag::General>;
+using my_impl_simp = agsbc::Impl<ag::Ellipsoid::Krasovski, my_coeff_tag, my_coeff_tag::Specified>;
 
 template <>
 struct agsbc::Impl<ag::Ellipsoid::IE1975, my_coeff_tag, my_coeff_tag::CustomMethod>
