@@ -3,6 +3,10 @@
 #ifndef AGTB_DETAILS_MACROS_HPP
 #define AGTB_DETAILS_MACROS_HPP
 
+#ifndef __GNUC__
+#warning "This is a GNU C++ 23 lib"
+#endif
+
 #include <exception>
 #include <source_location>
 #include <format>
@@ -84,5 +88,7 @@ AGTB_END
 
 #define AGTB_NOT_IMPLEMENT() \
     AGTB_THROW(AGTB_UTILS not_implement_error, "AGTB::Not implement this")
+
+#define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
 #endif
