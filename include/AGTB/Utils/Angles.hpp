@@ -16,14 +16,40 @@ namespace Angles
         return (degrees * 3600 + minutes * 60 + seconds) / (3600 * 180) * std::numbers::pi;
     }
 
-    constexpr auto ToDegrees(double rad = 0)
+    constexpr double
+        rad_45d = FromDegrees(45),
+        rad_90d = FromDegrees(90),
+        rad_180d = FromDegrees(180);
+
+    constexpr double ToSeconds(double rad)
     {
-        double all_seconds = rad * 180 / std::numbers::pi;
+        return rad * 180 / std::numbers::pi;
+    }
+
+    constexpr auto ToDegrees(double rad)
+    {
+        double all_seconds = ToSeconds(rad);
         double
             degrees = gcem::floor(all_seconds / 3600),
             minutes = gcem::floor((all_seconds - degrees * 3600) / 60),
             seconds = all_seconds - degrees * 3600 - minutes * 60;
         return std::make_tuple(degrees, minutes, seconds);
+    }
+
+    constexpr double Normalized(double rad)
+    {
+        if (rad < rad_180d)
+        {
+            return rad + rad_180d;
+        }
+        else if (rad > rad_180d)
+        {
+            return rad - rad_180d;
+        }
+        else
+        {
+            return rad;
+        }
     }
 }
 
