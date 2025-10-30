@@ -20,14 +20,14 @@ namespace Solution::Bessel
     {
         enum class Tag
         {
-            Default_Precise,
-            Simplified
+            General,
+            Specified
         };
 
         template <typename T>
         concept BasicTagConcept = requires {
-            T::Default_Precise;
-            T::Simplified;
+            T::General;
+            T::Specified;
         };
 
         template <typename T>
@@ -62,45 +62,45 @@ namespace Solution::Bessel
     }                                   \
     AGTB_GEODESY_END
 
-#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_DEFAULT_PRECISE(__Tag)                                           \
-    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                                 \
-    template <EllipsoidConcept ellipsoid>                                                             \
-    struct Impl<ellipsoid, __Tag, __Tag::Default_Precise>                                             \
-    {                                                                                                 \
-        static auto A_B_C(double pow_cosA0_2)                                                         \
-        {                                                                                             \
-            return Coefficients::Impl<ellipsoid, Tag, Tag::Default_Precise>::A_B_C(pow_cosA0_2);      \
-        }                                                                                             \
-                                                                                                      \
-        static auto alpha_beta(double pow_cosA0_2)                                                    \
-        {                                                                                             \
-            return Coefficients::Impl<ellipsoid, Tag, Tag::Default_Precise>::alpha_beta(pow_cosA0_2); \
-        }                                                                                             \
-    };                                                                                                \
+#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_GENERAL(__Tag)                                           \
+    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                         \
+    template <EllipsoidConcept ellipsoid>                                                     \
+    struct Impl<ellipsoid, __Tag, __Tag::General>                                             \
+    {                                                                                         \
+        static auto A_B_C(double pow_cosA0_2)                                                 \
+        {                                                                                     \
+            return Coefficients::Impl<ellipsoid, Tag, Tag::General>::A_B_C(pow_cosA0_2);      \
+        }                                                                                     \
+                                                                                              \
+        static auto alpha_beta(double pow_cosA0_2)                                            \
+        {                                                                                     \
+            return Coefficients::Impl<ellipsoid, Tag, Tag::General>::alpha_beta(pow_cosA0_2); \
+        }                                                                                     \
+    };                                                                                        \
     __AGTB_BESSEL_COEFF_NEW_DEF_END
 
-#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_ELLIPSOID_SIMPLIFIED(__Tag, __Ellipsoid)                      \
-    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                              \
-    template <>                                                                                    \
-    struct Impl<__Ellipsoid, __Tag, __Tag::Simplified>                                             \
-    {                                                                                              \
-        static auto A_B_C(double pow_cosA0_2)                                                      \
-        {                                                                                          \
-            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Simplified>::A_B_C(pow_cosA0_2);      \
-        }                                                                                          \
-                                                                                                   \
-        static auto alpha_beta(double pow_cosA0_2)                                                 \
-        {                                                                                          \
-            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Simplified>::alpha_beta(pow_cosA0_2); \
-        }                                                                                          \
-    };                                                                                             \
+#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_ELLIPSOID_SPECIFIED(__Tag, __Ellipsoid)                      \
+    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                             \
+    template <>                                                                                   \
+    struct Impl<__Ellipsoid, __Tag, __Tag::Specified>                                             \
+    {                                                                                             \
+        static auto A_B_C(double pow_cosA0_2)                                                     \
+        {                                                                                         \
+            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Specified>::A_B_C(pow_cosA0_2);      \
+        }                                                                                         \
+                                                                                                  \
+        static auto alpha_beta(double pow_cosA0_2)                                                \
+        {                                                                                         \
+            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Specified>::alpha_beta(pow_cosA0_2); \
+        }                                                                                         \
+    };                                                                                            \
     __AGTB_BESSEL_COEFF_NEW_DEF_END
 #pragma endregion
 
         template <EllipsoidConcept ellipsoid>
-        struct Impl<ellipsoid, Tag, Tag::Default_Precise>
+        struct Impl<ellipsoid, Tag, Tag::General>
         {
-            AGTB_WARNING("Not a good implement, use Tag::Simplified or custom tag")
+            AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
             static auto A_B_C(double pow_cosA0_2)
             {
                 double
@@ -120,7 +120,7 @@ namespace Solution::Bessel
                 return std::make_tuple(A, B, C);
             }
 
-            AGTB_WARNING("Not a good implement, use Tag::Simplified or custom tag")
+            AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
             static auto alpha_beta(double pow_cosA0_2)
             {
                 double
@@ -139,7 +139,7 @@ namespace Solution::Bessel
         };
 
         template <>
-        struct Impl<Ellipsoid::Krasovski, Tag, Tag::Simplified>
+        struct Impl<Ellipsoid::Krasovski, Tag, Tag::Specified>
         {
             static auto A_B_C(double pow_cosA0_2)
             {
@@ -160,7 +160,7 @@ namespace Solution::Bessel
         };
 
         template <>
-        struct Impl<Ellipsoid::IE1975, Tag, Tag::Simplified>
+        struct Impl<Ellipsoid::IE1975, Tag, Tag::Specified>
         {
             static auto A_B_C(double pow_cosA0_2)
             {
@@ -180,6 +180,14 @@ namespace Solution::Bessel
             }
         };
     }
+
+    template <EllipsoidConcept _e, Coefficients::BasicTagConcept _tag, _tag _t>
+    struct BesselParams
+    {
+        static constexpr _tag Tag = _t;
+        using Ellipsoid = _e;
+        using TagType = _tag;
+    };
 }
 
 AGTB_GEODESY_END
