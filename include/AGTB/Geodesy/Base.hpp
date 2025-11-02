@@ -92,54 +92,66 @@ namespace Ellipsoid
         0.006'739'496'775'48);
 }
 
-struct GeodeticLatitude
+template <std::floating_point T>
+class GeoLatLonBase
 {
-    double B;
-    constexpr GeodeticLatitude(double _B_rad) : B(_B_rad)
+private:
+    T _value;
+
+public:
+    constexpr GeoLatLonBase(T rad) : _value(rad)
     {
-        if (!Valid())
-        {
-            AGTB_THROW(std::invalid_argument, std::format("Invalid Latitude: \'{}\'", B));
-        }
     }
-    constexpr explicit operator double() const noexcept
+    virtual ~GeoLatLonBase() = default;
+    constexpr T Value() const noexcept
     {
-        return B;
+        return _value;
     }
-    constexpr bool Valid()
+    virtual constexpr bool IsValid() const noexcept = 0;
+    constexpr operator T() const noexcept
     {
-        return gcem::abs(B) <= Utils::Angles::FromDMS(90);
-    }
-    template <std::floating_point T = double>
-    constexpr T To() const noexcept
-    {
-        return static_cast<T>(*this);
+        return Value();
     }
 };
 
-struct GeodeticLongitude
+class GeodeticLatitude : public GeoLatLonBase<double>
 {
-    double L;
-    constexpr GeodeticLongitude(double _L_rad) : L(_L_rad)
+public:
+    virtual constexpr bool IsValid() const noexcept override
     {
-        if (!Valid())
+        return gcem::abs(Value()) <= max;
+    }
+
+    GeodeticLatitude(double rad) : GeoLatLonBase<double>(rad)
+    {
+        if (!IsValid())
         {
-            AGTB_THROW(std::invalid_argument, std::format("Invalid Longitude: \'{}\'", L));
+            AGTB_THROW(std::invalid_argument, std::format("Invalid Latitude: \'{}\'", Value()));
         }
     }
-    constexpr explicit operator double() const noexcept
+
+private:
+    constexpr static double max = Utils::Angles::FromDMS(90);
+};
+
+class GeodeticLongitude : public GeoLatLonBase<double>
+{
+public:
+    virtual constexpr bool IsValid() const noexcept override
     {
-        return L;
+        return gcem::abs(Value()) <= max;
     }
-    constexpr bool Valid()
+
+    GeodeticLongitude(double rad) : GeoLatLonBase<double>(rad)
     {
-        return gcem::abs(L) <= Utils::Angles::FromDMS(180);
+        if (!IsValid())
+        {
+            AGTB_THROW(std::invalid_argument, std::format("Invalid Longitude: \'{}\'", Value()));
+        }
     }
-    template <std::floating_point T = double>
-    constexpr T To() const noexcept
-    {
-        return static_cast<T>(*this);
-    }
+
+private:
+    constexpr static double max = Utils::Angles::FromDMS(180);
 };
 
 template <EllipsoidConcept ellipsoid>
@@ -153,10 +165,6 @@ struct GeodeticLatitudeConstants
         V;
     constexpr GeodeticLatitudeConstants(GeodeticLatitude _B) : B(static_cast<double>(_B))
     {
-        if (!_B.Valid())
-        {
-            AGTB_THROW(std::invalid_argument, std::format("invalid latitude: \'{}\'", B));
-        }
         t = gcem::tan(B);
         nu_2 = ellipsoid::e2_2 * gcem::pow(gcem::cos(B), 2);
         W = gcem::sqrt(1 - ellipsoid::e1_2 * gcem::pow(gcem::sin(B), 2));

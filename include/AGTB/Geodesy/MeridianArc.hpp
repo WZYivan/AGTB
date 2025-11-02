@@ -93,7 +93,7 @@ namespace MeridianArcSolve
         using coeff = MeridianArcLengthCoefficient<_ellipsoid, _opt>;
         using ellipsoid = _ellipsoid;
         constexpr static EllipsoidBasedOption option = _opt;
-        static GeodeticLatitude Inverse(double len_m, double threshold)
+        static GeodeticLatitude Inverse(double len_m, double iter_threshold)
         {
             double Bf_cur = len_m / coeff::a0, Bf_next = Bf_cur, FB = 0;
 
@@ -110,8 +110,18 @@ namespace MeridianArcSolve
                     coeff::a4 * gcem::sin(4 * Bf_cur) -
                     coeff::a6 * gcem::sin(6 * Bf_cur);
                 Bf_next = (len_m - FB) / coeff::a0;
-            } while (Bf_next - Bf_cur < threshold);
+            } while (Bf_next - Bf_cur > iter_threshold);
             return Utils::Angles::FromDMS(Bf_cur); // return rad
+        }
+
+        static GeodeticLatitude Inverse(double len_m)
+        {
+            AGTB_NOT_IMPLEMENT();
+        }
+
+        static double Forward(GeodeticLatitude _B)
+        {
+            AGTB_NOT_IMPLEMENT();
         }
     };
 

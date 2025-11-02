@@ -19,7 +19,7 @@ void test_meridian_length(ag::GeodeticLatitude B)
 }
 
 template <ag::EllipsoidConcept e>
-void test_inverse_length_general(ag::GeodeticLatitude B_expected, double threshold = 1e-15)
+void test_inverse_length_general(ag::GeodeticLatitude B_expected, double threshold = std::numeric_limits<double>::epsilon())
 {
     // Calculate the length for the expected latitude using the General solver
     using Solver = ag::MeridianArcSolver<e, ag::EllipsoidBasedOption::Specified>;
@@ -27,7 +27,7 @@ void test_inverse_length_general(ag::GeodeticLatitude B_expected, double thresho
     std::println("Calculated Length for {}(deg): {} m", static_cast<double>(B_expected) * 180.0 / M_PI, len);
 
     // Now, try to solve for the latitude given the length
-    double B_computed = Solver::Inverse(len, threshold).To();
+    double B_computed = Solver::Inverse(len, threshold).Value();
     std::println("Computed Latitude from Length: {} rad ({} deg)",
                  B_computed, B_computed * 180.0 / M_PI);
     std::println("Expected Latitude: {} rad ({} deg)",
