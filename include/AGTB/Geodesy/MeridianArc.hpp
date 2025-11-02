@@ -36,7 +36,21 @@ private:
         m8 = pcc::m8;
 
 public:
-    constexpr static double a0 = 0, a2 = 0, a4 = 0, a6 = 0;
+    constexpr static double
+        a0 = m0 +
+             m2 / 2.0 +
+             m4 * 3.0 / 8.0 +
+             m6 * 5.0 / 16.0 +
+             m8 * 35.0 / 128.0,
+        a2 = m2 / 2.0 +
+             m4 / 2.0 +
+             m6 * 15.0 / 32.0 +
+             m8 * 7.0 / 16.0,
+        a4 = m4 / 8.0 +
+             m6 * 3.0 / 16.0 +
+             m8 * 7.0 / 32.0,
+        a6 = m6 / 32.0 +
+             m8 / 16.0;
 };
 
 #define AGTB_DEFINE_SPECIFIED_MeridianArcLengthCoefficient(_ellipsoid, _a0, _a2, _a4, _a6) \
