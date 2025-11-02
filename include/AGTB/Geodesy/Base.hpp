@@ -95,7 +95,7 @@ namespace Ellipsoid
 struct GeodeticLatitude
 {
     double B;
-    constexpr GeodeticLatitude(double _B) : B(_B)
+    constexpr GeodeticLatitude(double _B_rad) : B(_B_rad)
     {
         if (!Valid())
         {
@@ -108,14 +108,19 @@ struct GeodeticLatitude
     }
     constexpr bool Valid()
     {
-        return gcem::abs(B) <= Utils::Angles::FromDegrees(90);
+        return gcem::abs(B) <= Utils::Angles::FromDMS(90);
+    }
+    template <std::floating_point T = double>
+    constexpr T To() const noexcept
+    {
+        return static_cast<T>(*this);
     }
 };
 
 struct GeodeticLongitude
 {
     double L;
-    constexpr GeodeticLongitude(double _L) : L(_L)
+    constexpr GeodeticLongitude(double _L_rad) : L(_L_rad)
     {
         if (!Valid())
         {
@@ -128,7 +133,12 @@ struct GeodeticLongitude
     }
     constexpr bool Valid()
     {
-        return gcem::abs(L) <= Utils::Angles::FromDegrees(180);
+        return gcem::abs(L) <= Utils::Angles::FromDMS(180);
+    }
+    template <std::floating_point T = double>
+    constexpr T To() const noexcept
+    {
+        return static_cast<T>(*this);
     }
 };
 
@@ -160,6 +170,16 @@ struct GeodeticConstants
         rho_degree = 57.295'779'513'082'321'0,
         rho_minute = 3'437.746'770'784'939'17,
         rho_second = 206'264.806'247'096'355;
+};
+
+enum class EllipsoidBasedOption
+{
+    General,
+    Specified
+#if defined(AGTB_ENABLE_USER_EXTENSION) && defined(AGTB_EllipsoidBasedOption_EXTENSION)
+    ,
+    AGTB_EllipsoidBasedAlgoOption_EXTENSION
+#endif
 };
 
 AGTB_GEODESY_END

@@ -50,11 +50,11 @@ int main()
     std::cout << "Constants at B(45.0)" << std::endl;
     PL(
         ag::GeodeticLatitudeConstants<Krasovski>(
-            au::Angles::FromDegrees(45)));
+            au::Angles::FromDMS(45)));
 
     auto [d, m, s] =
-        au::Angles::ToDegrees(
-            au::Angles::FromDegrees(
+        au::Angles::ToDMS(
+            au::Angles::FromDMS(
                 10 * 3600 + 20 * 60 + 30.4));
     std::println("d:{}, m:{}, s:{}", d, m, s);
 }

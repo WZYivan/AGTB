@@ -18,25 +18,22 @@ namespace Solution::Bessel
 {
     namespace Coefficients
     {
-        enum class Tag
+        struct ABC
         {
-            General,
-            Specified
+            double A, B, C;
         };
-
-        template <typename T>
-        concept BasicTagConcept = requires {
-            T::General;
-            T::Specified;
+        struct AlphaBeta
+        {
+            double Alpha, Beta;
         };
 
         template <typename T>
         concept ImplConcept = requires {
-            { T::A_B_C(double(0.0)) } -> std::convertible_to<std::tuple<double, double, double>>;
-            { T::alpha_beta(double(0.0)) } -> std::convertible_to<std::tuple<double, double>>;
+            { T::A_B_C(double(0.0)) } -> std::convertible_to<ABC>;
+            { T::alpha_beta(double(0.0)) } -> std::convertible_to<AlphaBeta>;
         };
 
-        template <EllipsoidConcept ellipsoid, BasicTagConcept tag, tag t>
+        template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
         struct Impl
         {
             static auto A_B_C(double pow_cosA0_2)
@@ -49,59 +46,12 @@ namespace Solution::Bessel
                 AGTB_NOT_IMPLEMENT();
             }
         };
-#pragma region Custom_New_Tag_Macros
-#define __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN \
-    AGTB_GEODESY_BEGIN                    \
-    namespace Solution::Bessel            \
-    {                                     \
-                                          \
-        namespace Coefficients            \
-        {
-#define __AGTB_BESSEL_COEFF_NEW_DEF_END \
-    }                                   \
-    }                                   \
-    AGTB_GEODESY_END
-
-#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_GENERAL(__Tag)                                           \
-    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                         \
-    template <EllipsoidConcept ellipsoid>                                                     \
-    struct Impl<ellipsoid, __Tag, __Tag::General>                                             \
-    {                                                                                         \
-        static auto A_B_C(double pow_cosA0_2)                                                 \
-        {                                                                                     \
-            return Coefficients::Impl<ellipsoid, Tag, Tag::General>::A_B_C(pow_cosA0_2);      \
-        }                                                                                     \
-                                                                                              \
-        static auto alpha_beta(double pow_cosA0_2)                                            \
-        {                                                                                     \
-            return Coefficients::Impl<ellipsoid, Tag, Tag::General>::alpha_beta(pow_cosA0_2); \
-        }                                                                                     \
-    };                                                                                        \
-    __AGTB_BESSEL_COEFF_NEW_DEF_END
-
-#define AGTB_DEFAULT_IMPL_CUSTOM_TAG_ELLIPSOID_SPECIFIED(__Tag, __Ellipsoid)                      \
-    __AGTB_BESSEL_COEFF_NEW_DEF_BEGIN                                                             \
-    template <>                                                                                   \
-    struct Impl<__Ellipsoid, __Tag, __Tag::Specified>                                             \
-    {                                                                                             \
-        static auto A_B_C(double pow_cosA0_2)                                                     \
-        {                                                                                         \
-            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Specified>::A_B_C(pow_cosA0_2);      \
-        }                                                                                         \
-                                                                                                  \
-        static auto alpha_beta(double pow_cosA0_2)                                                \
-        {                                                                                         \
-            return Coefficients::Impl<__Ellipsoid, Tag, Tag::Specified>::alpha_beta(pow_cosA0_2); \
-        }                                                                                         \
-    };                                                                                            \
-    __AGTB_BESSEL_COEFF_NEW_DEF_END
-#pragma endregion
 
         template <EllipsoidConcept ellipsoid>
-        struct Impl<ellipsoid, Tag, Tag::General>
+        struct Impl<ellipsoid, EllipsoidBasedOption::General>
         {
             AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
-            static auto A_B_C(double pow_cosA0_2)
+            static ABC A_B_C(double pow_cosA0_2)
             {
                 double
                     k2 = ellipsoid::e2_2 * pow_cosA0_2,
@@ -117,11 +67,11 @@ namespace Solution::Bessel
                              k6 * 15 / 1024),
                     C = b * (k4 / 128 -
                              k6 * 3 / 512);
-                return std::make_tuple(A, B, C);
+                return {.A = A, .B = B, .C = C};
             }
 
             AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
-            static auto alpha_beta(double pow_cosA0_2)
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
             {
                 double
                     e2 = ellipsoid::e1_2,
@@ -134,59 +84,58 @@ namespace Solution::Bessel
                             (e6 * 3 / 128) * k4,
                     beta = (e4 / 32 + e6 / 32) * k2 -
                            (e6 / 64) * k4;
-                return std::make_tuple(alpha, beta);
+                return {.Alpha = alpha, .Beta = beta};
             }
         };
 
         template <>
-        struct Impl<Ellipsoid::Krasovski, Tag, Tag::Specified>
+        struct Impl<Ellipsoid::Krasovski, EllipsoidBasedOption::Specified>
         {
-            static auto A_B_C(double pow_cosA0_2)
+            static ABC A_B_C(double pow_cosA0_2)
             {
                 double
                     A = 6'356'863.020 + (10'708.949 - 13.474 * pow_cosA0_2) * pow_cosA0_2,
                     B = (5'354.469 - 8.978 * pow_cosA0_2) * pow_cosA0_2,
                     C = (2.238 * pow_cosA0_2) * pow_cosA0_2 + 0.006;
-                return std::make_tuple(A, B, C);
+                return {.A = A, .B = B, .C = C};
             }
 
-            static auto alpha_beta(double pow_cosA0_2)
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
             {
                 double
                     alpha = (33'523'299.0 - (28'189.0 - 70.0 * pow_cosA0_2) * pow_cosA0_2) * gcem::pow(10.0, -10),
                     beta = (0.2907 - 0.001'0 * pow_cosA0_2) * pow_cosA0_2;
-                return std::make_tuple(alpha, beta);
+                return {.Alpha = alpha, .Beta = beta};
             }
         };
 
         template <>
-        struct Impl<Ellipsoid::IE1975, Tag, Tag::Specified>
+        struct Impl<Ellipsoid::IE1975, EllipsoidBasedOption::Specified>
         {
-            static auto A_B_C(double pow_cosA0_2)
+            static ABC A_B_C(double pow_cosA0_2)
             {
                 double
                     A = 6'356'755.288 + (10'710.341 - 13.534 * pow_cosA0_2) * pow_cosA0_2,
                     B = (5'355.171 - 9.023 * pow_cosA0_2) * pow_cosA0_2,
                     C = (2.256 * pow_cosA0_2) * pow_cosA0_2 + 0.006;
-                return std::make_tuple(A, B, C);
+                return {.A = A, .B = B, .C = C};
             }
 
-            static auto alpha_beta(double pow_cosA0_2)
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
             {
                 double
                     alpha = (33'528'130.0 - (28'190.0 - 70.0 * pow_cosA0_2) * pow_cosA0_2) * gcem::pow(10.0, -10),
                     beta = (14'095.0 - 46.7 * pow_cosA0_2) * pow_cosA0_2 * gcem::pow(10.0, -10);
-                return std::make_tuple(alpha, beta);
+                return {.Alpha = alpha, .Beta = beta};
             }
         };
     }
 
-    template <EllipsoidConcept _e, Coefficients::BasicTagConcept _tag, _tag _t>
+    template <EllipsoidConcept _e, EllipsoidBasedOption opt>
     struct BesselParams
     {
-        static constexpr _tag Tag = _t;
+        static constexpr EllipsoidBasedOption Option = opt;
         using Ellipsoid = _e;
-        using TagType = _tag;
     };
 }
 

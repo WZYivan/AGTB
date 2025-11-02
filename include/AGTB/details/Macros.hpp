@@ -91,4 +91,9 @@ AGTB_END
 
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
+#define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>
+#define AGTB_T_HAS_TYPED_MEMBER(__M, __RTp) AGTB_WEAK_REQUIRE_MEMBER_TYPE(T, __M, __RTp)
+#define AGTB_WEAK_REQUIRE_MEMBER_RETURN_TYPE(__Tp, __M, __MCp, __RTp) {__Tp::__M(__MCp)}->std::convertible_to<__RTp>
+#define AGTB_T_HAS_MEMBER_RETURN(__M, __MCp, __RTp) AGTB_WEAK_REQUIRE_MEMBER_RETURN_TYPE(T, __M, __MCp, __RTp)
+
 #endif
