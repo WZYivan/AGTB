@@ -54,6 +54,15 @@
     }                  \
     AGTB_END
 
+#define AGTB_ADJUSTMENT_BEGIN \
+    AGTB_BEGIN                \
+    namespace Adjustment      \
+    {
+
+#define AGTB_ADJUSTMENT_END \
+    }                       \
+    AGTB_END
+
 AGTB_BEGIN
 
 namespace macros
