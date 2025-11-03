@@ -161,14 +161,9 @@ namespace MeridianArcSolve
     };
 };
 
-template <MeridianArcSolveImplConcept impl>
-struct __CheckMeridianArcSolverIsCorrectlyImpl
-{
-    using Impl = impl;
-};
-
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
-using MeridianArcSolver = __CheckMeridianArcSolverIsCorrectlyImpl<MeridianArcSolve::Impl<ellipsoid, opt>>::Impl;
+    requires MeridianArcSolveImplConcept<MeridianArcSolve::Impl<ellipsoid, opt>>
+using MeridianArcSolver = MeridianArcSolve::Impl<ellipsoid, opt>;
 
 AGTB_GEODESY_END
 
