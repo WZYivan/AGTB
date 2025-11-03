@@ -58,7 +58,7 @@ namespace Angles
             degrees = gcem::floor(all_seconds / 3600),
             minutes = gcem::floor((all_seconds - degrees * 3600) / 60),
             seconds = all_seconds - degrees * 3600 - minutes * 60;
-        return std::make_tuple((!neg) ? degrees : -degrees, minutes, seconds);
+        return std::make_tuple(neg, degrees, minutes, seconds);
     }
 
     constexpr inline double NormalizedSym(double rad)
@@ -83,29 +83,160 @@ namespace Angles
 
     namespace DMS_Support
     {
-        class AngleDMS
+        class Angle
         {
         private:
-            bool neg;
-            int d, m;
-            double s;
+            double seconds;
+
+            constexpr static double d360 = 3600 * 360;
 
         public:
-            constexpr AngleDMS(int _d, int _m, double _s)
-                : d(_d), m(_m), s(_s)
+            constexpr Angle(double _d, double _m, double _s)
             {
-                AGTB_NOT_IMPLEMENT();
+                seconds = gcem::abs(_d) * 3600 + _m * 60 + _s;
+                seconds = gcem::signbit(_d) ? -seconds : seconds;
+            }
+            constexpr Angle(double s)
+                : Angle(0, 0, s)
+            {
+            }
+            constexpr Angle()
+                : Angle(0, 0, 0)
+            {
+            }
+            ~Angle() = default;
 
-                if (!IsValidMS(m, s))
+            std::string ToString() const noexcept
+            {
+                auto [d, m, s] = DMS();
+                return std::format("{}d{}m{}s", d, m, s);
+            }
+
+            constexpr inline double Degrees() const noexcept
+            {
+                return seconds / 3600;
+            }
+            constexpr inline double Minutes() const noexcept
+            {
+                return gcem::fmod(seconds, 3600.0) / 60;
+            }
+            constexpr inline double Seconds() const noexcept
+            {
+                return gcem::fmod(seconds, 60.0);
+            }
+            std::tuple<int, int, double> DMS() const noexcept
+            {
+                auto [neg, d, m, s] = ToDMS(Rad());
+                if (!neg)
                 {
-                    AGTB_THROW(Utils::constructor_error, "Invalid DMS");
+                    return std::make_tuple(d, m, s);
                 }
 
-                neg = d < 0;
-                d = gcem::abs(d);
+                if (d != 0)
+                {
+                    return std::make_tuple(-d, m, s);
+                }
+                else if (m != 0)
+                {
+                    return std::make_tuple(-d, -m, s);
+                }
+                else
+                {
+                    return std::make_tuple(-d, -m, -s);
+                }
             }
-            ~AngleDMS() = default;
+            constexpr inline double Rad() const noexcept
+            {
+                return FromDMS(Degrees());
+            }
+
+            friend inline Angle operator+(Angle left, Angle right);
+            friend inline Angle operator-(Angle left, Angle right);
+            friend inline Angle operator*(double left, Angle right);
+            friend inline Angle operator*(Angle left, double right);
+            friend inline double operator/(Angle left, Angle right);
+            friend inline Angle operator/(Angle left, double scale);
+            friend inline Angle operator%(Angle left, Angle right);
+            friend inline Angle operator-(Angle a);
+
+            constexpr double Sin() const noexcept
+            {
+                return gcem::sin(Rad());
+            }
+            constexpr double Cos() const noexcept
+            {
+                return gcem::cos(Rad());
+            }
+            constexpr double Tan() const noexcept
+            {
+                return gcem::tan(Rad());
+            }
+
+            constexpr auto operator<=>(const Angle &rhs) const
+            {
+                return std::strong_order(this->seconds, rhs.seconds);
+            }
+
+            Angle NormStd()
+            {
+                double s = gcem::fmod(seconds, d360);
+                if (s < 0)
+                {
+                    s += d360;
+                }
+                else if (s > d360)
+                {
+                    s -= d360;
+                }
+
+                return Angle(s);
+            }
         };
+
+        Angle operator+(Angle left, Angle right)
+        {
+            return Angle(left.seconds + right.seconds);
+        }
+
+        Angle operator-(Angle left, Angle right)
+        {
+            return Angle(left.seconds - right.seconds);
+        }
+
+        Angle operator*(double left, Angle right)
+        {
+            return Angle(right.seconds * left);
+        }
+
+        Angle operator*(Angle left, double right)
+        {
+            return right * left;
+        }
+
+        double operator/(Angle left, Angle right)
+        {
+            return left.seconds / right.seconds;
+        }
+
+        Angle operator/(Angle left, double scale)
+        {
+            return Angle(left.seconds / scale);
+        }
+
+        Angle operator%(Angle left, Angle right)
+        {
+            return Angle(gcem::fmod(left.seconds, right.seconds));
+        }
+
+        inline Angle operator-(Angle a)
+        {
+            return Angle(-a.seconds);
+        }
+
+        constexpr Angle
+            A180d = Angle(180, 0, 0),
+            A90d = Angle(90, 0, 0),
+            A45d = Angle(45, 0, 0);
     }
 }
 
