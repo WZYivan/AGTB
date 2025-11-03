@@ -19,6 +19,15 @@ public:
         : std::runtime_error(message) {}
 };
 
+class constructor_error : public std::invalid_argument
+{
+public:
+    explicit constructor_error(const std::string &msg = "Construct failed")
+        : std::invalid_argument(msg) {}
+    explicit constructor_error(const char *msg = "Construct failed")
+        : std::invalid_argument(msg) {}
+};
+
 AGTB_UTILS_END
 
 #endif

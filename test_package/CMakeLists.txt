@@ -17,5 +17,6 @@ endfunction()
 # create_new_executable(Bessel_Coeff "src/Bessel_Coeff.cpp")
 # create_new_executable(Geodesy_PC "src/Geodesy_PC.cpp")
 create_new_executable(MeridianArc_Part "src/MeridianArc_Part.cpp")
+create_new_executable(AngleUtils "src/Utils_Angles.cpp")
 
 
