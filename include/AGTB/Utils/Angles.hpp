@@ -124,7 +124,7 @@ namespace Angles
             : Angle(0, 0, 0)
         {
         }
-        constexpr explicit Angle(std::initializer_list<double> il)
+        constexpr Angle(std::initializer_list<double> il)
             : Angle(
                   il.size() == 3 ? *il.begin() : (AGTB_THROW(Utils::constructor_error, "Initializer list size must be 3"), 0.0),
                   il.size() == 3 ? *(il.begin() + 1) : 0.0,

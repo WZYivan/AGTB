@@ -177,16 +177,23 @@ namespace EigenIO
         return ReadEigenCustom<mmd, container, em>(is, mat, sep);
     }
 
+    namespace Fmt
+    {
+        const Eigen::IOFormat
+            python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
+    }
+
     template <EigenMatrix em>
     void PrintEigen(
         const em &m,
         const std::string msg,
-        const Eigen::IOFormat &fmt = Eigen::IOFormat(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]"),
+        const Eigen::IOFormat &fmt = Fmt::python_style,
         std::ostream &os = std::cout)
     {
         os << msg << "\n"
            << m.format(fmt) << std::endl;
     }
+
 }
 
 AGTB_END

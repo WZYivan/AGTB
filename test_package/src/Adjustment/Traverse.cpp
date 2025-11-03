@@ -11,8 +11,8 @@ int main()
     aat::TraverseParam p1{
         .shape = aat::TraverseShape::Closed,
         .distances = {105.22, 80.18, 129.34, 78.16},
-        .angles = {Angle(107, 48, 30), Angle(73, 0, 24), Angle(89, 33, 48), Angle(89, 36, 30)},
-        .azi_beg = Angle(125, 30, 0),
+        .angles = {{107, 48, 30}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
+        .azi_beg = {125, 30, 0},
         .x_beg = 506.32,
         .y_beg = 215.65};
     aat::ClosedAdjustor ca(p1);

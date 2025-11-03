@@ -16,8 +16,6 @@
     {
 #define AGTB_END }
 
-#define AGTB_PHOTOGRAPHIC_BEGIN
-
 #define AGTB_PHOTOGRAPHIC_BEGIN \
     AGTB_BEGIN                  \
     namespace Photographic      \
