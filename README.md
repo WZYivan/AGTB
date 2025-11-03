@@ -86,14 +86,7 @@ template <ag::EllipsoidConcept E>
 void PE()
 {
     std::println(
-        R"(
-a={}
-b={}
-c={}
-alpha={}
-e1_2={}
-e2_2={}
-)",
+        "\na={}\nb={}\nc={}\nalpha={}\ne1_2={}\ne2_2={}",
         E::a, E::b, E::c, E::alpha, E::e1_2, E::e2_2);
 }
 
@@ -103,13 +96,7 @@ template <ag::GeodeticLatitudeConstantsConcept L>
 void PL(L l)
 {
     std::println(
-        R"(
-B={}
-t={}
-tau_2={}
-W={}
-V={}
-)",
+        "\nB={}\nt={}\ntau_2={}\nW={}\nV={}",
         l.B, l.t, l.nu_2, l.W, l.V);
 }
 
@@ -145,6 +132,30 @@ class GeodeticLatitude;
 class GeodeticLongitude;
 ```
 
+#### Meridian Arc Solution
+
+AGTB provide forward and inverse solution ofr meridian are length.
+```cpp
+#include <AGTB/Geodesy/MeridianArc.hpp>
+
+namespace ag = AGTB::Geodesy;
+namespace age = ag::Ellipsoid;
+using Solver = ag::MeridianArcSolver<age::Krasovski, ag::EllipsoidBasedOption::Specified>;
+
+double len = Solver::Forward(B);
+GeodeticLatitude  B = Solver::Inverse(len);
+```
+
+#### Principle Curvature Radii
+
+```cpp
+#include <AGTB/Geodesy/PrincipleCurvatureRadii.hpp>
+
+namespace ag = AGTB::Geodesy;
+namespace age = ag::Ellipsoid;
+auto [M, N] = ag::PrincipleCurvatureRadii<age::Krasovski, ag::EllipsoidBasedOption::Specified>(B);
+```
+
 #### Solution
 
 ```TODO```
@@ -161,31 +172,39 @@ AGTB provides an Ordinary Least Squares (OLS) iterative optimization method for 
 
 ```cpp
 #include <AGTB/Photographic/SpaceResection.hpp>
+#include <AGTB/IO/Eigen.hpp>
 #include <sstream>
+
+namespace aei = AGTB::EigenIO;
+namespace ap = AGTB::Photographic;
+namespace apsr = ap::SpaceResection;
 
 int main()
 {
-    namespace apss = AGTB::Photographic::SpaceResection::Solve;
-
     std::istringstream iss{
         "-86.15, -68.99,  36589.41, 25273.32, 2195.17\n"
         "-53.40, 82.21 ,  37631.08, 31324.51, 728.69 \n"
         "-14.78, -76.63,  39100.97, 24934.98, 2386.50\n"
         "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
-    auto [photo, obj] = apss::ReadMatrix<apss::MatrixLayout::PhotoLeft>(iss);
-    apss::Print::Matrix(photo, "photo"); // mm
-    apss::Print::Matrix(obj, "obj");
+
+    ap::Matrix photo(4, 2), obj(4, 3), all(4, 5);
+    aei::ReadEigen(iss, all);
+    photo = all.leftCols(2),
+    obj = all.rightCols(3);
+
+    aei::PrintEigen(photo, "photo"); // mm
+    aei::PrintEigen(obj, "obj");
     photo /= 1000; // mm -> m
 
-    apss::InternalElements internal{
+    ap::InteriorOrientationElements internal{
         .x0 = 0,
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
-    auto result = apss::QuickSolve<apss::NormalizationTag::SVD>(internal, photo, obj);
-    if (result.info == apss::Info::Success)
+    auto result = apsr::QuickSolve<ap::NormalizationMethod::SVD>(internal, photo, obj);
+    if (result.info == ap::IterativeSolutionInfo::Success)
     {
-        apss::Print::Result(result); // photo in (mm)
+        std::println(std::cout, "{}", result.ToString());
     }
     else
     {

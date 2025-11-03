@@ -10,14 +10,7 @@ template <ag::EllipsoidConcept E>
 void PE()
 {
     std::println(
-        R"(
-a={}
-b={}
-c={}
-alpha={}
-e1_2={}
-e2_2={}
-)",
+        "\na={}\nb={}\nc={}\nalpha={}\ne1_2={}\ne2_2={}",
         E::a, E::b, E::c, E::alpha, E::e1_2, E::e2_2);
 }
 
@@ -27,13 +20,7 @@ template <ag::GeodeticLatitudeConstantsConcept L>
 void PL(L l)
 {
     std::println(
-        R"(
-B={}
-t={}
-tau_2={}
-W={}
-V={}
-)",
+        "\nB={}\nt={}\ntau_2={}\nW={}\nV={}",
         l.B, l.t, l.nu_2, l.W, l.V);
 }
 
