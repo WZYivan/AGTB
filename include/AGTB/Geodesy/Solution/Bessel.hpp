@@ -50,7 +50,6 @@ namespace Solution::Bessel
         template <EllipsoidConcept ellipsoid>
         struct Impl<ellipsoid, EllipsoidBasedOption::General>
         {
-            AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
             static ABC A_B_C(double pow_cosA0_2)
             {
                 double
@@ -70,7 +69,6 @@ namespace Solution::Bessel
                 return {.A = A, .B = B, .C = C};
             }
 
-            AGTB_WARNING("Not a good implement, use Tag::Specified or custom tag")
             static AlphaBeta alpha_beta(double pow_cosA0_2)
             {
                 double

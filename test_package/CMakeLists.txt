@@ -10,14 +10,18 @@ function(create_new_executable target_name source_file)
     target_link_libraries(${target_name} agtb::agtb)
 endfunction()
 
-# create_new_executable(SpaceResection "src/SpaceResection.cpp")
-# create_new_executable(EigenIO "src/IO_EigenIO.cpp")
-# create_new_executable(StringUtils "src/Utils_String.cpp")
-# create_new_executable(Geodesy_Base "src/Geodesy_Base.cpp")
-# create_new_executable(Bessel_Coeff "src/Bessel_Coeff.cpp")
-# create_new_executable(Geodesy_PC "src/Geodesy_PC.cpp")
-# create_new_executable(MeridianArc_Part "src/MeridianArc_Part.cpp")
-# create_new_executable(AngleUtils "src/Utils_Angles.cpp")
-# create_new_executable(Adj_Traverse "src/Adj_Traverse.cpp")
 
+create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
+
+create_new_executable(Geodesy_Base "src/Geodesy/Base.cpp")
+create_new_executable(Geodesy_PrincipleCurvatureRadii "src/Geodesy/PrincipleCurvatureRadii.cpp")
+create_new_executable(Geodesy_MeridianArc "src/Geodesy/MeridianArc.cpp")
+create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
+
+create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
+
+create_new_executable(Photographic_SpaceResection "src/Photographic/SpaceResection.cpp")
+
+create_new_executable(Utils_Angle "src/Utils/Angles.cpp")
+create_new_executable(Utils_String "src/Utils/String.cpp")
 
