@@ -1,23 +1,10 @@
 #include <AGTB/Adjustment/Traverse.hpp>
+#include <AGTB/Utils/Angles.hpp> // for class `Angle`
 #include <print>
+
 namespace aa = AGTB::Adjustment;
 namespace aat = aa::Traverse;
-using aat::Angle;
-
-template <typename vec>
-void NL(const vec &v)
-{
-    for (auto &e : v)
-    {
-        std::println("{}", e);
-    }
-    std::println("{:=^50}", "");
-}
-
-void NL()
-{
-    std::println("{:=^50}", "");
-}
+using AGTB::Utils::Angles::Angle;
 
 int main()
 {

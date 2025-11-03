@@ -14,7 +14,7 @@ AGTB_ADJUSTMENT_BEGIN
 
 namespace Traverse
 {
-    using namespace AGTB::Utils::Angles::DMS_Support;
+    using AGTB::Utils::Angles::Angle;
 
     enum class TraverseShape
     {
@@ -257,7 +257,7 @@ namespace Traverse
             for (auto i = 0uz; i != n; ++i)
             {
                 va.a_c.at(i) = (a.at(i) + va.delta_a).NormStd();
-                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - A180d).NormStd();
+                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - Utils::Angles::A180d).NormStd();
             }
             va.a_c_sum = std::accumulate(va.a_c.begin(), va.a_c.end(), Angle());
 
@@ -341,7 +341,7 @@ namespace Traverse
             for (auto i = 0uz; i != n_a; ++i)
             {
                 va.a_c.at(i) = (a.at(i) + va.delta_a).NormStd();
-                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - A180d).NormStd();
+                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - Utils::Angles::A180d).NormStd();
             }
             va.a_c_sum = std::accumulate(va.a_c.begin(), va.a_c.end(), Angle());
 

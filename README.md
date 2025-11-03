@@ -7,54 +7,185 @@
 This is a conan package. Use the following command to install:
 
 ```bash
-conan install .
+conan create .
 ```
 
-## Space Resection Module
+## Dependence
+
+- Eigen3/[*] (for matrix operations)
+- gcem /[*] (for constexpr math functions)
+- C++23 or later
+- Conan for package management
+
+## Interface
+
+### Adjustment
+
+#### Traverse
+
+AGTB provides adjustment solver for closed or attached traversing.
+
+```cpp
+#include <AGTB/Adjustment/Traverse.hpp>
+#include <AGTB/Utils/Angles.hpp> // for class `Angle`
+#include <print>
+
+namespace aa = AGTB::Adjustment;
+namespace aat = aa::Traverse;
+using AGTB::Utils::Angles::Angle;
+
+int main()
+{
+    aat::TraverseParam p1{
+        .shape = aat::TraverseShape::Closed,
+        .distances = {105.22, 80.18, 129.34, 78.16},
+        .angles = {Angle(107, 48, 30), Angle(73, 0, 24), Angle(89, 33, 48), Angle(89, 36, 30)},
+        .azi_beg = Angle(125, 30, 0),
+        .x_beg = 506.32,
+        .y_beg = 215.65};
+    aat::ClosedAdjustor ca(p1);
+    ca.Solve(2);
+
+    std::println(">>> Closed:\n{}", aat::SolveResultOf(ca));
+
+    aat::TraverseParam p2{
+        .shape = aat::TraverseShape::Attached,
+        .distances = {225.85, 139.03, 172.57, 100.07, 102.48},
+        .angles = {Angle(99, 1, 0), Angle(167, 45, 36), Angle(123, 11, 24), Angle(189, 20, 36), Angle(179, 59, 18), Angle(129, 27, 24)},
+        .azi_beg = Angle(237, 59, 30),
+        .azi_end = Angle(46, 45, 24),
+        .x_beg = 2507.65,
+        .y_beg = 1215.64,
+        .x_end = 2166.70,
+        .y_end = 1757.28};
+    aat::AttachedAdjustor aa(p2);
+    aa.Solve(2);
+
+    std::println(">>> Attached:\n{}", aat::SolveResultOf(aa));
+}
+```
+
+### Geodesy
+
+AGTB provides a series of implements for geodesy. Including solution, transform and some basic ellipsoid parameters.
+
+#### Base (Ellipsoid)
+
+AGTB provides a series of constants to describe ellipsoid. You can also use AGTB macros define your ellipsoid and work with AGTB.
+
+```cpp
+#include <AGTB/Geodesy/Base.hpp>
+#include <AGTB/Utils/Angles.hpp>
+#include <print>
+#include <iostream>
+
+namespace ag = AGTB::Geodesy;
+namespace au = AGTB::Utils;
+
+template <ag::EllipsoidConcept E>
+void PE()
+{
+    std::println(
+        R"(
+a={}
+b={}
+c={}
+alpha={}
+e1_2={}
+e2_2={}
+)",
+        E::a, E::b, E::c, E::alpha, E::e1_2, E::e2_2);
+}
+
+AGTB_DEFINE_QUICK_ELLIPSOID(my_ellipsoid, 6378245.0, 6356863.018773047);
+
+template <ag::GeodeticLatitudeConstantsConcept L>
+void PL(L l)
+{
+    std::println(
+        R"(
+B={}
+t={}
+tau_2={}
+W={}
+V={}
+)",
+        l.B, l.t, l.nu_2, l.W, l.V);
+}
+
+int main()
+{
+    using ag::Ellipsoid::Krasovski;
+
+    std::cout << "Krasovski" << std::endl;
+    PE<Krasovski>();
+
+    std::cout << "my ellipsoid" << std::endl;
+    PE<my_ellipsoid>();
+
+    std::cout << "Constants at B(45.0)" << std::endl;
+    PL(
+        ag::GeodeticLatitudeConstants<Krasovski>(
+            au::Angles::FromDMS(45)));
+}
+
+```
+
+To define an ellipsoid, you can do as below:
+```cpp
+AGTB_DEFINE_QUICK_ELLIPSOID(my_ellipsoid, a, b); // You only know basic parameters (a, b)
+AGTB_DEFINE_PRECISE_ELLIPSOID(my_ellipsoid, ...); // You know all parameters (a, b, c, alpha, e, e')
+```
+
+AGTB also provide basic lat lon.
+```cpp
+// in AGTB/Geodesy/Base.hpp
+
+class GeodeticLatitude;
+class GeodeticLongitude;
+```
+
+#### Solution
+
+```TODO```
+
+#### Transform
+
+```TODO```
+
+### Photographic
+
+#### Space Resection
 
 AGTB provides an Ordinary Least Squares (OLS) iterative optimization method for space resection with a pure functional interface.
 
-### Quick Example
-
 ```cpp
-#include <AGTB/SpaceResection.hpp>
+#include <AGTB/Photographic/SpaceResection.hpp>
 #include <sstream>
 
 int main()
 {
-    namespace srs = AGTB::SpaceResection::Solve;
+    namespace apss = AGTB::Photographic::SpaceResection::Solve;
 
-    // Read input data from any stream
     std::istringstream iss{
         "-86.15, -68.99,  36589.41, 25273.32, 2195.17\n"
         "-53.40, 82.21 ,  37631.08, 31324.51, 728.69 \n"
         "-14.78, -76.63,  39100.97, 24934.98, 2386.50\n"
         "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
-    
-    // Parse data into photo and object coordinates
-    auto [photo, obj] = srs::ReadMatrix<srs::MatrixLayout::PhotoLeft>(iss);
-    
-    // Display input matrices
-    srs::Print::Matrix(photo, "photo"); // in mm
-    srs::Print::Matrix(obj, "obj");
-    
-    // Convert photo coordinates from mm to meters
-    photo /= 1000;
+    auto [photo, obj] = apss::ReadMatrix<apss::MatrixLayout::PhotoLeft>(iss);
+    apss::Print::Matrix(photo, "photo"); // mm
+    apss::Print::Matrix(obj, "obj");
+    photo /= 1000; // mm -> m
 
-    // Define internal orientation parameters
-    srs::InternalElements internal{
+    apss::InternalElements internal{
         .x0 = 0,
         .y0 = 0,
-        .f = 153.24 / 1000,  // 153.24mm -> meters
-        .m = 50000};          // scale denominator
-
-    // Solve space resection using quick method with SVD
-    auto result = srs::QuickSolve<srs::NormalizationTag::SVD>(internal, photo, obj);
-    
-    // Check solution status and display results
-    if (result.info == srs::Info::Success)
+        .f = 153.24 / 1000,
+        .m = 50000};
+    auto result = apss::QuickSolve<apss::NormalizationTag::SVD>(internal, photo, obj);
+    if (result.info == apss::Info::Success)
     {
-        srs::Print::Result(result); // photo coordinates in mm
+        apss::Print::Result(result); // photo in (mm)
     }
     else
     {
@@ -63,134 +194,147 @@ int main()
 }
 ```
 
-### Core Functions Reference
+### IO
 
-#### Data Input Functions
+AGTB provides some IO interface to adapt 3rd party lib like Eigen3.
 
-##### `ReadMatrix<MatrixLayout>`
+#### Eigen
+
+AGTB provides a Eigen reader and quick printer. You can read from ```std::istream``` and print to ```std::ostream```. The ```AGTB::EigenIO::ReadEigen``` read like the given ```MatrixXd``` and ```AGTB::EigenIO::ReadEigenCustom<>``` read like the given template parameter.
+
 ```cpp
-template<MatrixLayout layout>
-auto ReadMatrix(std::istream& is, std::string sep = ",");
+#include <AGTB/IO/Eigen.hpp>
+#include <iostream>
+#include <Eigen/Dense>
+#include <cassert>
+
+int main()
+{
+    using AGTB::EigenIO::ContainerOf;
+    using AGTB::EigenIO::IsValidContainer;
+    using AGTB::EigenIO::MMDOf;
+
+    using ContainerXd = ContainerOf<Eigen::MatrixXd>;
+    using MMDXd = MMDOf<Eigen::MatrixXd>;
+    static_assert(std::is_same_v<ContainerXd, std::vector<std::vector<double>>>);
+
+    ContainerXd cxd{
+        {1, 2},
+        {3, 4}};
+
+    using Container3cd = ContainerOf<Eigen::Matrix3cd>;
+    using MMD3cd = MMDOf<Eigen::Matrix3cd>;
+    static_assert(std::is_same_v<Container3cd, std::array<std::array<std::complex<double>, 3>, 3>>);
+
+    Container3cd c3cd{
+        {{1, 2}, {3, 4}}};
+
+    auto validation_xd = IsValidContainer<MMDXd, ContainerXd>(cxd);
+    auto validation_3cd = IsValidContainer<MMD3cd, Container3cd>(c3cd);
+    assert(validation_xd);
+    assert(validation_3cd);
+
+    std::string data{
+        "-86.15, -68.99,  36589.41, 25273.32, 2195.17\n"
+        "-53.40, 82.21 ,  37631.08, 31324.51, 728.69 \n"
+        "-14.78, -76.63,  39100.97, 24934.98, 2386.50\n"
+        "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
+    auto iss = std::istringstream(data);
+
+    Eigen::MatrixXd mat(4, 5);
+    AGTB::EigenIO::ReadEigen(iss, mat); // default shape
+    AGTB::EigenIO::PrintEigen(mat, "Read mat");
+
+    iss = std::istringstream(data);
+    using MMD_4_2_d = AGTB::EigenIO::MatrixMetaData<double, 4, 2>; // custom shape
+    Eigen::MatrixXd mat_cus(4, 2);
+    AGTB::EigenIO::ReadEigenCustom<
+        MMD_4_2_d,
+        AGTB::EigenIO::ContainerOf<decltype(mat_cus)>>(iss, mat_cus);
+    AGTB::EigenIO::PrintEigen(mat_cus, "Custom read(4, 2)");
+
+    iss = std::istringstream(data);
+    using MMD_2_4_d = AGTB::EigenIO::MatrixMetaData<double, 2, 4>;
+    Eigen::MatrixXd mat_2_4(2, 4);
+    AGTB::EigenIO::ReadEigenCustom<
+        MMD_2_4_d,
+        AGTB::EigenIO::ContainerOf<decltype(mat_2_4)>>(iss, mat_2_4);
+    AGTB::EigenIO::PrintEigen(mat_2_4, "Custom read(2, 4)");
+
+    return 0;
+}
 ```
-**Purpose**: Parses coordinate data from input stream into matrices.
 
-**Layout Options**:
-- `MatrixLayout::PhotoLeft`: Photo coordinates in left 2 columns, object coordinates in right 3 columns
-- `MatrixLayout::PhotoRight`: Photo coordinates in right 2 columns, object coordinates in left 3 columns  
-- `MatrixLayout::PhotoOnly`: Only photo coordinates (2 columns)
-- `MatrixLayout::ObjectOnly`: Only object coordinates (3 columns)
+### Utils
 
-**Returns**: Tuple containing parsed matrices based on layout.
+AGTB also provides some utilities as helpers.
 
-#### Solving Functions
+#### String
 
-##### `QuickSolve`
+Here provide functions to manipulate ```std::string``` like below.
+
 ```cpp
-template<NormalizationTag nTag = NormalizationTag::Cholesky>
-SpaceResectionSolveResult QuickSolve(
-    const InternalElements& internal,
-    const Matrix& photo, 
-    const Matrix& object,
-    size_t max_loop = 50,
-    double threshold = 3e-5);
+#include <AGTB/Utils/String.hpp>
+#include <print>
+#include <iostream>
+
+void P(auto &str)
+{
+    std::println(std::cout, "[{}]", str);
+}
+
+int main()
+{
+    using namespace AGTB::Utils;
+
+    std::string ori = "  a test str   ";
+
+    P(ori);
+
+    auto ls = LStrip(ori),
+         rs = RStrip(ori),
+         lrs = LRStrip(ori),
+         sws = SkipWhiteSpace(ori);
+
+    P(ls);
+    P(rs);
+    P(lrs);
+    P(sws);
+
+    std::string arr = " 2,  5  , 3, 6";
+    auto vec = SplitThenConv<int>(arr, ",");
+    for (auto &i : vec)
+    {
+        std::print("{}, ", i);
+    }
+    std::cout << std::endl;
+}
 ```
-**Purpose**: Fast space resection solution using simplified coefficient calculation (NoAngles method).
 
-**Parameters**:
-- `internal`: Internal orientation elements (x0, y0, f, m)
-- `photo`: Image coordinates matrix (n×2) in meters
-- `object`: Object coordinates matrix (n×3) 
-- `max_loop`: Maximum iterations (default: 50)
-- `threshold`: Convergence threshold in radians (default: 3e-5 ≈ 6.2 arc-seconds)
+#### Angles
 
-**Normalization Methods**:
-- `NormalizationTag::Cholesky`: Cholesky decomposition (default, faster)
-- `NormalizationTag::SVD`: Singular Value Decomposition (more stable)
-
-##### Alternative Solvers
-- `SimplifiedSolve`: Uses KappaOnly coefficient method (balanced accuracy/speed)
-- `PreciseSolve`: Uses FullAngles coefficient method (highest accuracy)
-- `GeneralSolve`: Template-based solver with full customization
-
-#### Data Structures
-
-##### `InternalElements`
+Here provides basic angle algorithms and a ```Angle``` class. It's a user-friendly interface, you can use as below:
 ```cpp
-struct InternalElements {
-    double x0, y0;  // Principal point coordinates (meters)
-    double f;       // Focal length (meters) 
-    double m;       // Photo scale denominator
-};
+#include <AGTB/Utils/Angles.hpp>
+
+namespace aua = AGTB::Utils::Angles;
+using aua::Angle;
+
+int main(){
+    aua::FromDMS(d, m, s); // dms -> rad
+    aua::ToDMS(rad); // rad -> dms (signed at the highest non-zero position)
+
+    Angle a1 (d, m, s), a2 (d, m, s); // Angle(d, m, s) object
+    a1 + a2; // angle operators
+    a1 - a2;
+    a1 / a2;
+    a1 % a2;
+    a1 * double(scale); // operator with double 
+    a1.DMS(); // like aua::ToDMS()
+    a1.Rad(); // -> rad
+    a1.Sin(); // Internal trigonometric functions, execute by 'rad'
+    a1.NormStd(); // {0, 360deg}
+    a1.ToString(); // -> "{}d{}m{}s"
+}
 ```
 
-##### `SpaceResectionSolveResult`
-```cpp
-struct SpaceResectionSolveResult {
-    ExternalElements external;  // Solved exterior orientation
-    Matrix rotate;             // 3×3 rotation matrix
-    Matrix sigma;              // Accuracy assessment matrix
-    Matrix photo;              // Adjusted photo coordinates (mm)
-    double m0;                 // Unit weight mean square error
-    Info info;                 // Solution status
-};
-```
-
-#### Output Functions
-
-##### `Print::Matrix`
-```cpp
-void Matrix(const Matrix& m, const std::string msg, 
-           const Eigen::IOFormat& fmt = fmt::bordered, 
-           std::ostream& os = std::cout);
-```
-**Purpose**: Formatted matrix output with descriptive message.
-
-##### `Print::Result`
-```cpp
-void Result(const SpaceResectionSolveResult& result, std::ostream& os = std::cout);
-```
-**Purpose**: Comprehensive result display including:
-- Exterior orientation parameters
-- Adjusted photo coordinates  
-- Rotation matrix
-- Error analysis
-- Unit weight error
-
-#### Status Enumeration
-
-##### `Info`
-```cpp
-enum class Info : size_t {
-    Success,        // Solution converged successfully
-    NotConverged,   // Maximum iterations reached
-    Failed,         // Numerical or input failure
-    Unknown         // Unknown status
-};
-```
-
-### Input Data Format
-
-The library expects coordinate data in CSV format (without head). For the example above:
-
-```
-# photo_x, photo_y, object_X, object_Y, object_Z
--86.15,  -68.99,  36589.41, 25273.32, 2195.17
--53.40,   82.21,  37631.08, 31324.51,  728.69
--14.78,  -76.63,  39100.97, 24934.98, 2386.50
- 10.46,   64.43,  40426.54, 30319.81,  757.31
-```
-
-**Note**: Photo coordinates should be provided in **millimeters** and will be converted to meters internally. Object coordinates are typically in the project coordinate system units.
-
-### Algorithm Characteristics
-
-- **Method**: Iterative least squares with collinearity equations
-- **Convergence**: Based on angular corrections (< 3e-5 radians)
-- **Minimum Control Points**: 4 points required
-- **Output**: Photo coordinates are returned in millimeters for convenience
-
-### Dependencies
-
-- Eigen3 (for matrix operations)
-- C++17 or later
-- Conan for package management

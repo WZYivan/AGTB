@@ -30,7 +30,7 @@ class agtbTestConan(ConanFile):
                        "Geodesy_PC" : False,
                        "MeridianArc_Part" : False,
                        "AngleUtils" : False,
-                       "Adj_Traverse" : True}
+                       "Adj_Traverse" : False}
             for (tar, b) in targets.items():
                 cmd = cmd = os.path.join(self.cpp.build.bindir, tar)
                 if b:

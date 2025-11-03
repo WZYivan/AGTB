@@ -51,10 +51,4 @@ int main()
     PL(
         ag::GeodeticLatitudeConstants<Krasovski>(
             au::Angles::FromDMS(45)));
-
-    auto [d, m, s] =
-        au::Angles::ToDMS(
-            au::Angles::FromDMS(
-                10 * 3600 + 20 * 60 + 30.4));
-    std::println("d:{}, m:{}, s:{}", d, m, s);
 }

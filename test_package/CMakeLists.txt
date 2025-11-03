@@ -18,6 +18,6 @@ endfunction()
 # create_new_executable(Geodesy_PC "src/Geodesy_PC.cpp")
 # create_new_executable(MeridianArc_Part "src/MeridianArc_Part.cpp")
 # create_new_executable(AngleUtils "src/Utils_Angles.cpp")
-create_new_executable(Adj_Traverse "src/Adj_Traverse.cpp")
+# create_new_executable(Adj_Traverse "src/Adj_Traverse.cpp")
 
 
