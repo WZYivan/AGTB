@@ -16,8 +16,8 @@ endfunction()
 # create_new_executable(Geodesy_Base "src/Geodesy_Base.cpp")
 # create_new_executable(Bessel_Coeff "src/Bessel_Coeff.cpp")
 # create_new_executable(Geodesy_PC "src/Geodesy_PC.cpp")
-create_new_executable(MeridianArc_Part "src/MeridianArc_Part.cpp")
+# create_new_executable(MeridianArc_Part "src/MeridianArc_Part.cpp")
 # create_new_executable(AngleUtils "src/Utils_Angles.cpp")
-# create_new_executable(Adj_Traverse_ClosedLoop "src/Adj_Traverse_ClosedLoop.cpp")
+create_new_executable(Adj_Traverse "src/Adj_Traverse.cpp")
 
 
