@@ -25,7 +25,7 @@ concept MeridianArcLengthCoeffConcept = requires {
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
 struct MeridianArcLengthCoefficient
 {
-    using pcc = PrincipleCurvatureSpecifiedCoefficient<ellipsoid, opt>;
+    using pcc = PrincipleCurvatureCoefficient<ellipsoid, opt>;
 
 private:
     constexpr static double

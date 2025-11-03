@@ -13,7 +13,7 @@
 AGTB_GEODESY_BEGIN
 
 template <typename T>
-concept PrincipleCurvatureSpecifiedCoeffConcept = requires {
+concept PrincipleCurvatureCoeffConcept = requires {
     { T::m0 } -> std::convertible_to<double>;
     { T::m2 } -> std::convertible_to<double>;
     { T::m4 } -> std::convertible_to<double>;
@@ -28,7 +28,7 @@ concept PrincipleCurvatureSpecifiedCoeffConcept = requires {
 };
 
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
-struct PrincipleCurvatureSpecifiedCoefficient
+struct PrincipleCurvatureCoefficient
 {
     constexpr static double
         a = ellipsoid::a,
@@ -49,7 +49,7 @@ struct PrincipleCurvatureSpecifiedCoefficient
 
 #define AGTB_DEFINE_SPECIFIED_PrincipleCurvatureSpecifiedCoefficient(_ellipsoid, _m0, _m2, _m4, _m6, _m8, _n0, _n2, _n4, _n6, _n8) \
     template <>                                                                                                                    \
-    struct PrincipleCurvatureSpecifiedCoefficient<_ellipsoid, EllipsoidBasedOption::Specified>                                     \
+    struct PrincipleCurvatureCoefficient<_ellipsoid, EllipsoidBasedOption::Specified>                                              \
     {                                                                                                                              \
         constexpr static double                                                                                                    \
             m0 = _m0,                                                                                                              \
@@ -100,7 +100,7 @@ struct PrincipleCurvatureRadiiResult
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
 PrincipleCurvatureRadiiResult PrincipleCurvatureRadii(GeodeticLatitude B)
 {
-    using coeff = PrincipleCurvatureSpecifiedCoefficient<ellipsoid, opt>;
+    using coeff = PrincipleCurvatureCoefficient<ellipsoid, opt>;
     double
         k = gcem::sin(static_cast<double>(B)),
         k2 = gcem::pow(k, 2),
