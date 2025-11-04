@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AGTB_IO_EIGEN_HPP
-#define AGTB_IO_EIGEN_HPP
+#ifndef __AGTB_IO_EIGEN_HPP__
+#define __AGTB_IO_EIGEN_HPP__
 
 #include <concepts>
 #include <type_traits>

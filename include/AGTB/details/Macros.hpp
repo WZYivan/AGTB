@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AGTB_DETAILS_MACROS_HPP
-#define AGTB_DETAILS_MACROS_HPP
+#ifndef __AGTB_DETAILS_MACROS_HPP__
+#define __AGTB_DETAILS_MACROS_HPP__
 
 #ifndef __GNUC__
 #warning "This is a GNU C++ 23 lib"
@@ -16,13 +16,13 @@
     {
 #define AGTB_END }
 
-#define AGTB_PHOTOGRAPHIC_BEGIN \
-    AGTB_BEGIN                  \
-    namespace Photographic      \
+#define AGTB_PHOTOGRAMMETRY_BEGIN \
+    AGTB_BEGIN                    \
+    namespace Photogrammetry      \
     {
 
-#define AGTB_PHOTOGRAPHIC_END \
-    }                         \
+#define AGTB_PHOTOGRAMMETRY_END \
+    }                           \
     AGTB_END
 
 #define AGTB_GEODESY_BEGIN \
@@ -59,6 +59,15 @@
 
 #define AGTB_ADJUSTMENT_END \
     }                       \
+    AGTB_END
+
+#define AGTB_LINALG_BEGIN \
+    AGTB_BEGIN            \
+    namespace Linalg      \
+    {
+
+#define AGTB_LINALG_END \
+    }                   \
     AGTB_END
 
 AGTB_BEGIN

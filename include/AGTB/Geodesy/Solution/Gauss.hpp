@@ -1,12 +1,12 @@
-#ifndef AGTB_GEODESY_SOLUTION_GAUSS_HPP
-#define AGTB_GEODESY_SOLUTION_GAUSS_HPP
+#ifndef __AGTB_GEODESY_SOLUTION_GAUSS_HPP__
+#define __AGTB_GEODESY_SOLUTION_GAUSS_HPP__
 
 #pragma once
 
 #include "../../details/Macros.hpp"
 #include "../../Utils/Angles.hpp"
 #include "../Base.hpp"
-#include "../PrincipleCurvature.hpp"
+#include "../PrincipleCurvatureRadii.hpp"
 
 #include <gcem.hpp>
 

@@ -1,5 +1,5 @@
-#ifndef AGTB_GEODESY_BASE_HPP
-#define AGTB_GEODESY_BASE_HPP
+#ifndef __AGTB_GEODESY_BASE_HPP__
+#define __AGTB_GEODESY_BASE_HPP__
 
 #pragma once
 

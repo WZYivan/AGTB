@@ -1,5 +1,5 @@
-#ifndef AGTB_SPACERESECTION_HPP
-#define AGTB_SPACERESECTION_HPP
+#ifndef __AGTB_SPACERESECTION_HPP__
+#define __AGTB_SPACERESECTION_HPP__
 
 #pragma once
 
@@ -13,9 +13,10 @@
 #include "../details/Macros.hpp"
 #include "../IO/Eigen.hpp"
 #include "Base.hpp"
-#include "NormalizationSolver.hpp"
+#include "../Linalg/NormalEquationMatrixInverse.hpp"
+#include "../Linalg/RotationMatrix.hpp"
 
-AGTB_PHOTOGRAPHIC_BEGIN
+AGTB_PHOTOGRAMMETRY_BEGIN
 
 namespace SpaceResection
 {
@@ -87,24 +88,8 @@ namespace SpaceResection
             &phi = external.Phi,
             &omega = external.Omega,
             &kappa = external.Kappa;
-        const double
-            sinp = sin(phi),
-            cosp = cos(phi),
-            sinw = sin(omega),
-            cosw = cos(omega),
-            sink = sin(kappa),
-            cosk = cos(kappa);
-        Matrix Rp(3, 3), Rw(3, 3), Rk(3, 3);
-        Rp << cosp, 0, -sinp,
-            0, 1, 0,
-            sinp, 0, cosp;
-        Rw << 1, 0, 0,
-            0, cosw, -sinw,
-            0, sinw, cosw;
-        Rk << cosk, -sink, 0,
-            sink, cosk, 0,
-            0, 0, 1;
-        return Rp * Rw * Rk;
+
+        return Linalg::RotateY(phi) * Linalg::RotateX(omega) * Linalg::RotateZ(kappa);
     }
 
     Matrix TransformedObjectiveCoordinates(const Matrix &rotate, const Matrix &object, const ExteriorOrientationElements &external)
@@ -319,7 +304,7 @@ namespace SpaceResection
             }
             else
             {
-                static_assert(false, "invoke with invalid tag");
+                AGTB_NOT_IMPLEMENT();
             }
         }
     }
@@ -366,7 +351,7 @@ namespace SpaceResection
         }
     }
 
-    template <SpaceResectionCoeffOption opt, NormalizationMethod mtd>
+    template <SpaceResectionCoeffOption opt, Linalg::LinalgOption mtd>
     SpaceResectionSolveResult GeneralSolve [[nodiscard]] (
         const InteriorOrientationElements &internal,
         const Matrix &photo, const Matrix &object,
@@ -408,8 +393,7 @@ namespace SpaceResection
 
             if (IsExternalElementsConverged(correction, threshold))
             {
-                Matrix N(6, 6);
-                NormalizationSolve::Invoke<mtd>(N, coefficient);
+                Matrix N = Linalg::NormalEquationMatrixInverseSolver<mtd>::Invoke(coefficient);
                 CompleteResult(
                     result,
                     coefficient,
@@ -425,7 +409,7 @@ namespace SpaceResection
         return result;
     }
 
-    template <NormalizationMethod mtd = NormalizationMethod::Cholesky>
+    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
     SpaceResectionSolveResult QuickSolve [[nodiscard]] (
         const InteriorOrientationElements &internal,
         const Matrix &photo, const Matrix &object,
@@ -434,7 +418,7 @@ namespace SpaceResection
         return GeneralSolve<SpaceResectionCoeffOption::NoAngles, mtd>(internal, photo, object, max_loop, threshold);
     }
 
-    template <NormalizationMethod mtd = NormalizationMethod::Cholesky>
+    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
     SpaceResectionSolveResult SimplifiedSolve [[nodiscard]] (
         const InteriorOrientationElements &internal,
         const Matrix &photo, const Matrix &object,
@@ -443,7 +427,7 @@ namespace SpaceResection
         return GeneralSolve<SpaceResectionCoeffOption::KappaOnly, mtd>(internal, photo, object, max_loop, threshold);
     }
 
-    template <NormalizationMethod mtd = NormalizationMethod::Cholesky>
+    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
     SpaceResectionSolveResult PreciseSolve [[nodiscard]] (
         const InteriorOrientationElements &internal,
         const Matrix &photo, const Matrix &object,
@@ -453,6 +437,6 @@ namespace SpaceResection
     }
 }
 
-AGTB_PHOTOGRAPHIC_END
+AGTB_PHOTOGRAMMETRY_END
 
 #endif

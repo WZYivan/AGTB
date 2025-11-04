@@ -1,5 +1,5 @@
-#ifndef AGTB_UTILS_ANGLES_HPP
-#define AGTB_UTILS_ANGLES_HPP
+#ifndef __AGTB_UTILS_ANGLES_HPP__
+#define __AGTB_UTILS_ANGLES_HPP__
 
 #include "../details/Macros.hpp"
 #include "../Utils/Error.hpp"
@@ -130,6 +130,10 @@ namespace Angles
                   il.size() == 3 ? *(il.begin() + 1) : 0.0,
                   il.size() == 3 ? *(il.begin() + 2) : 0.0)
         {
+        }
+        static constexpr Angle FromRad(double rad)
+        {
+            return Angle(ToSeconds(rad));
         }
         ~Angle() = default;
 

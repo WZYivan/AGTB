@@ -1,5 +1,5 @@
-#ifndef AGTB_ADJUSTMENT_TRAVERSE_HPP
-#define AGTB_ADJUSTMENT_TRAVERSE_HPP
+#ifndef __AGTB_ADJUSTMENT_TRAVERSE_HPP__
+#define __AGTB_ADJUSTMENT_TRAVERSE_HPP__
 
 #include "../details/Macros.hpp"
 #include "../Utils/Angles.hpp"
@@ -16,15 +16,9 @@ namespace Traverse
 {
     using AGTB::Utils::Angles::Angle;
 
-    enum class TraverseShape
-    {
-        Closed,
-        Attached
-    };
-
     struct TraverseParam
     {
-        TraverseShape shape;
+        RouteType route_type;
         std::vector<double> distances;
         std::vector<Angle> angles;
         Angle azi_beg, azi_end;
@@ -47,14 +41,14 @@ namespace Traverse
             }
             std::format_to(sbb, "\n{:-^50}\n", " (X,Y) (m) ");
             std::format_to(sbb, "X_beg = {}, Y_beg = {}\n", x_beg, y_beg);
-            if (shape == TraverseShape::Attached)
+            if (route_type == RouteType::Connecting)
             {
                 std::format_to(sbb, "X_end = {}, Y_end = {}\n", x_end, y_end);
             }
 
             std::format_to(sbb, "\n{:-^50}\n", " Azimuth ");
             std::format_to(sbb, "Azimuth_beg = {}\n", azi_beg.ToString());
-            if (shape == TraverseShape::Attached)
+            if (route_type == RouteType::Connecting)
             {
                 std::format_to(sbb, "Azimuth_end = {}\n", azi_end.ToString());
             }
@@ -167,7 +161,7 @@ namespace Traverse
         };
     };
 
-    template <TraverseShape shape>
+    template <RouteType route_type>
     class AdjustorBase
     {
     protected:
@@ -180,19 +174,19 @@ namespace Traverse
         AdjustorBase(TraverseParam _p)
             : param(std::move(_p)), is_solved(false)
         {
-            if (param.shape != shape)
+            if (param.route_type != route_type)
             {
-                AGTB_THROW(Utils::constructor_error, "Param.shape not correct");
+                AGTB_THROW(Utils::constructor_error, "Param.route_type not correct");
             }
 
             auto a_s = param.angles.size(), d_s = param.distances.size();
-            if (shape == TraverseShape::Closed && a_s != d_s)
+            if (route_type == RouteType::Closed && a_s != d_s)
             {
-                AGTB_THROW(Utils::constructor_error, "[TraverseShape::Closed] Angles and distances must have same size");
+                AGTB_THROW(Utils::constructor_error, "[RouteType::Closed] Angles and distances must have same size");
             }
-            else if (shape == TraverseShape::Attached && a_s != d_s + 1)
+            else if (route_type == RouteType::Connecting && a_s != d_s + 1)
             {
-                AGTB_THROW(Utils::constructor_error, "[TraverseShape::Attached] Angles.size must equals to distances.size + 1");
+                AGTB_THROW(Utils::constructor_error, "[RouteType::Connecting] Angles.size must equals to distances.size + 1");
             }
         }
         virtual ~AdjustorBase() = default;
@@ -232,12 +226,12 @@ namespace Traverse
         }
     };
 
-    class ClosedAdjustor : public AdjustorBase<TraverseShape::Closed>
+    class ClosedAdjustor : public AdjustorBase<RouteType::Closed>
     {
 
     public:
         ClosedAdjustor(TraverseParam _p)
-            : AdjustorBase<TraverseShape::Closed>(std::move(_p))
+            : AdjustorBase<RouteType::Closed>(std::move(_p))
         {
         }
 
@@ -318,11 +312,11 @@ namespace Traverse
         }
     };
 
-    class AttachedAdjustor : public AdjustorBase<TraverseShape::Attached>
+    class ConnectingAdjustor : public AdjustorBase<RouteType::Connecting>
     {
     public:
-        AttachedAdjustor(TraverseParam _p)
-            : AdjustorBase<TraverseShape::Attached>(std::move(_p))
+        ConnectingAdjustor(TraverseParam _p)
+            : AdjustorBase<RouteType::Connecting>(std::move(_p))
         {
         }
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AGTB_UTILS_FILEREADER_HPP
-#define AGTB_UTILS_FILEREADER_HPP
+#ifndef __AGTB_UTILS_FILEREADER_HPP__
+#define __AGTB_UTILS_FILEREADER_HPP__
 
 #include <filesystem>
 #include <fstream>

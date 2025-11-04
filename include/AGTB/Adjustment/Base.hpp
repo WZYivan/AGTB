@@ -1,5 +1,5 @@
-#ifndef AGTB_ADJUSTMENT_BASE_HPP
-#define AGTB_ADJUSTMENT_BASE_HPP
+#ifndef __AGTB_ADJUSTMENT_BASE_HPP__
+#define __AGTB_ADJUSTMENT_BASE_HPP__
 
 #include "../details/Macros.hpp"
 
@@ -16,6 +16,12 @@ constexpr double TakePrecision(double x, int v)
     double scale = gcem::pow(10, v);
     return gcem::round(x * scale) / scale;
 }
+
+enum class RouteType
+{
+    Closed,
+    Connecting
+};
 
 AGTB_ADJUSTMENT_END
 

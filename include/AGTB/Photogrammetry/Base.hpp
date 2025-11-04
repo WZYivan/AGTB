@@ -1,13 +1,15 @@
-#ifndef AGTB_PHOTOGRAPHIC_BASE_HPP
-#define AGTB_PHOTOGRAPHIC_BASE_HPP
+#ifndef __AGTB_PHOTOGRAPHIC_BASE_HPP__
+#define __AGTB_PHOTOGRAPHIC_BASE_HPP__
 
 #include "../details/Macros.hpp"
 
+#include "../Linalg/Base.hpp"
+
 #include <Eigen/Dense>
 
-AGTB_PHOTOGRAPHIC_BEGIN
+AGTB_PHOTOGRAMMETRY_BEGIN
 
-using Matrix = Eigen::MatrixXd;
+using Linalg::Matrix;
 
 enum class IterativeSolutionInfo : size_t
 {
@@ -47,6 +49,6 @@ struct ExteriorOrientationElements
     }
 };
 
-AGTB_PHOTOGRAPHIC_END
+AGTB_PHOTOGRAMMETRY_END
 
 #endif

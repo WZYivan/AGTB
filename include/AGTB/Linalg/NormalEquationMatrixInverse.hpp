@@ -1,22 +1,25 @@
-#ifndef AGTB_PHOTOGRAPHIC_NORMALIZATION_SOLVER_HPP
-#define AGTB_PHOTOGRAPHIC_NORMALIZATION_SOLVER_HPP
+#ifndef __AGTB_LINALG_NORMAL_EQUATION_MATRIX_INVERSE_HPP__
+#define __AGTB_LINALG_NORMAL_EQUATION_MATRIX_INVERSE_HPP__
 
-#include "../details/Macros.hpp"
 #include "Base.hpp"
 
-AGTB_PHOTOGRAPHIC_BEGIN
+AGTB_LINALG_BEGIN
 
-enum class NormalizationMethod : size_t
+namespace NormalEquationMatrixInverseSolve
 {
-    Cholesky,
-    SVD
-};
-
-namespace NormalizationSolve
-{
-    namespace details
+    template <LinalgOption opt>
+    struct Impl
     {
-        Matrix Cholesky(const Matrix &A)
+        static Matrix Invoke(const Matrix &A)
+        {
+            AGTB_NOT_IMPLEMENT();
+        }
+    };
+
+    template <>
+    struct Impl<LinalgOption::Cholesky>
+    {
+        static Matrix Invoke(const Matrix &A)
         {
             Matrix AtA = A.transpose() * A;
             Eigen::LLT<Matrix> llt(AtA);
@@ -32,8 +35,12 @@ namespace NormalizationSolve
                 return invAtA;
             }
         }
+    };
 
-        Matrix SVD(const Matrix &A)
+    template <>
+    struct Impl<LinalgOption::SVD>
+    {
+        static Matrix Invoke(const Matrix &A)
         {
             Matrix AtA = A.transpose() * A;
             Eigen::JacobiSVD<Matrix> svd(AtA, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -52,27 +59,13 @@ namespace NormalizationSolve
                             svd.matrixU().transpose();
             return invAtA;
         }
+    };
+}
 
-    }
+template <LinalgOption opt>
+    requires InvokerConcept<NormalEquationMatrixInverseSolve::Impl<opt>, Matrix, const Matrix &>
+using NormalEquationMatrixInverseSolver = NormalEquationMatrixInverseSolve::Impl<opt>;
 
-    template <NormalizationMethod mtd>
-    void Invoke(Matrix &N, const Matrix &A)
-    {
-        if constexpr (mtd == NormalizationMethod::Cholesky)
-        {
-            N = details::Cholesky(A);
-        }
-        else if constexpr (mtd == NormalizationMethod::SVD)
-        {
-            N = details::SVD(A);
-        }
-        else
-        {
-            static_assert(false, "invoke with invalid tag");
-        }
-    }
-};
-
-AGTB_PHOTOGRAPHIC_END
+AGTB_LINALG_END
 
 #endif

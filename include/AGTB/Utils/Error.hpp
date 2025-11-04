@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AGTB_UTILS_ERROR_HPP
-#define AGTB_UTILS_ERROR_HPP
+#ifndef __AGTB_UTILS_ERROR_HPP__
+#define __AGTB_UTILS_ERROR_HPP__
 
 #include <exception>
 

@@ -1,5 +1,5 @@
-#ifndef AGTB_GEODESY_MERIDIAN_ARC_HPP
-#define AGTB_GEODESY_MERIDIAN_ARC_HPP
+#ifndef __AGTB_GEODESY_MERIDIAN_ARC_HPP__
+#define __AGTB_GEODESY_MERIDIAN_ARC_HPP__
 
 #include "../details/Macros.hpp"
 #include "../Utils/Angles.hpp"
@@ -93,13 +93,16 @@ namespace MeridianArcSolve
         using coeff = MeridianArcLengthCoefficient<_ellipsoid, _opt>;
         using ellipsoid = _ellipsoid;
         constexpr static EllipsoidBasedOption option = _opt;
+
         static GeodeticLatitude Inverse(double len_m, double iter_threshold)
         {
-            double Bf_cur = len_m / coeff::a0, Bf_next = Bf_cur, FB = 0;
+            using Utils::Angles::FromDMS;
+            using Utils::Angles::ToSeconds;
+            double Bf_cur = FromDMS(len_m / coeff::a0), Bf_next = Bf_cur, FB = 0;
 
             if (gcem::abs(Bf_cur - 0.0) < std::numeric_limits<double>::epsilon())
             {
-                return Bf_cur; // this is deg -> 0.0, so treat it as deg
+                return Bf_cur;
             }
 
             do
@@ -110,8 +113,8 @@ namespace MeridianArcSolve
                     coeff::a4 * gcem::sin(4 * Bf_cur) -
                     coeff::a6 * gcem::sin(6 * Bf_cur);
                 Bf_next = (len_m - FB) / coeff::a0;
-            } while (Bf_next - Bf_cur > iter_threshold);
-            return Utils::Angles::FromDMS(Bf_cur); // return rad
+            } while (ToSeconds(Bf_next - Bf_cur) > iter_threshold);
+            return FromDMS(Bf_cur); // return rad
         }
 
         static GeodeticLatitude Inverse(double len_m)

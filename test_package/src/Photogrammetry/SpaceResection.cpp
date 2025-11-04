@@ -1,10 +1,11 @@
-#include <AGTB/Photographic/SpaceResection.hpp>
+#include <AGTB/Photogrammetry/SpaceResection.hpp>
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
 
 namespace aei = AGTB::EigenIO;
-namespace ap = AGTB::Photographic;
+namespace ap = AGTB::Photogrammetry;
 namespace apsr = ap::SpaceResection;
+namespace al = AGTB::Linalg;
 
 int main()
 {
@@ -29,7 +30,7 @@ int main()
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
-    auto result = apsr::QuickSolve<ap::NormalizationMethod::SVD>(internal, photo, obj);
+    auto result = apsr::QuickSolve<al::LinalgOption::SVD>(internal, photo, obj);
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());
