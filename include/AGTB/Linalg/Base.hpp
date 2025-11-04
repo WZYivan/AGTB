@@ -16,11 +16,6 @@ enum class LinalgOption
     SVD
 };
 
-template <typename T, typename RT, typename... PT>
-concept InvokerConcept = requires(PT... p) {
-    { T::Invoke(p...) } -> std::convertible_to<RT>;
-};
-
 AGTB_LINALG_END
 
 #endif

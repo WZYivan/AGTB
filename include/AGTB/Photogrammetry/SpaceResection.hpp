@@ -1,5 +1,5 @@
-#ifndef __AGTB_SPACERESECTION_HPP__
-#define __AGTB_SPACERESECTION_HPP__
+#ifndef __AGTB_PHOTOGRAMMETRY_SPACE_RESECTION_HPP__
+#define __AGTB_PHOTOGRAMMETRY_SPACE_RESECTION_HPP__
 
 #pragma once
 
@@ -66,33 +66,7 @@ namespace SpaceResection
         }
     }
 
-    ExteriorOrientationElements InitExternalElements(const InteriorOrientationElements &internal, const Matrix &object)
-    {
-        const double &x0 = internal.x0,
-                     &y0 = internal.y0,
-                     &f = internal.f,
-                     &m = internal.m;
-        auto cols = object.cols();
-        return ExteriorOrientationElements{
-            .Xs = object.col(0).mean(),
-            .Ys = object.col(1).mean(),
-            .Zs = object.col(2).mean() + m * f,
-            .Phi = 0,
-            .Omega = 0,
-            .Kappa = 0};
-    }
-
-    Matrix RotationMatrix(const ExteriorOrientationElements &external)
-    {
-        const double
-            &phi = external.Phi,
-            &omega = external.Omega,
-            &kappa = external.Kappa;
-
-        return Linalg::RotateY(phi) * Linalg::RotateX(omega) * Linalg::RotateZ(kappa);
-    }
-
-    Matrix TransformedObjectiveCoordinates(const Matrix &rotate, const Matrix &object, const ExteriorOrientationElements &external)
+    Matrix TransformToImageSpaceCoordinateSystem(const Matrix &rotate, const Matrix &object, const ExteriorOrientationElements &external)
     {
         auto pc = object.rows();
         const double &Xs = external.Xs,
@@ -112,7 +86,7 @@ namespace SpaceResection
         return trans_o;
     }
 
-    Matrix TransformedPhotoCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
+    Matrix TransformToImagePlaneCoordinateSystem(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
     {
         Matrix trans_p(transformed_obj.rows(), 2);
         const auto &XBar = transformed_obj.col(0),
@@ -363,18 +337,18 @@ namespace SpaceResection
         }
 
         SpaceResectionSolveResult result{
-            .external = InitExternalElements(internal, object),
+            .external = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(internal, object),
             .info = IterativeSolutionInfo::NotConverged};
         ExteriorOrientationElements &external = result.external;
 
         while (max_loop-- > 0)
         {
+            Matrix rotate = external.RotationMatrix_YXZ_CN();
 
-            Matrix rotate = RotationMatrix(external);
             Matrix transformed_obj =
-                TransformedObjectiveCoordinates(rotate, object, external);
+                TransformToImageSpaceCoordinateSystem(rotate, object, external);
             Matrix transformed_photo =
-                TransformedPhotoCoordinates(internal, transformed_obj);
+                TransformToImagePlaneCoordinateSystem(internal, transformed_obj);
             Matrix residual =
                 ResidualMatrix(photo, transformed_photo);
 

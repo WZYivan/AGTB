@@ -2,6 +2,7 @@
 #define __AGTB_LINALG_NORMAL_EQUATION_MATRIX_INVERSE_HPP__
 
 #include "Base.hpp"
+#include "../Utils/Concept.hpp"
 
 AGTB_LINALG_BEGIN
 
@@ -63,7 +64,7 @@ namespace NormalEquationMatrixInverseSolve
 }
 
 template <LinalgOption opt>
-    requires InvokerConcept<NormalEquationMatrixInverseSolve::Impl<opt>, Matrix, const Matrix &>
+    requires Utils::InvokerConcept<NormalEquationMatrixInverseSolve::Impl<opt>, Matrix, const Matrix &>
 using NormalEquationMatrixInverseSolver = NormalEquationMatrixInverseSolve::Impl<opt>;
 
 AGTB_LINALG_END

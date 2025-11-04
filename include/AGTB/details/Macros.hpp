@@ -95,15 +95,15 @@ AGTB_END
 
 #include "../Utils/Error.hpp"
 
-#define AGTB_MACROS ::AGTB::macros::
-#define AGTB_UTILS ::AGTB::Utils::
+#define __AGTB_MACROS ::AGTB::macros::
+#define __AGTB_UTILS ::AGTB::Utils::
 
-#define AGTB_ERROR_MSG(__msg) AGTB_MACROS error_msg(__msg)
+#define AGTB_ERROR_MSG(__msg) __AGTB_MACROS error_msg(__msg)
 
-#define AGTB_THROW(__error_type, __msg) AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
+#define AGTB_THROW(__error_type, __msg) __AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
 
 #define AGTB_NOT_IMPLEMENT() \
-    AGTB_THROW(AGTB_UTILS not_implement_error, "AGTB::Not implement this")
+    AGTB_THROW(__AGTB_UTILS not_implement_error, "AGTB::[ Not implement this ]")
 
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
