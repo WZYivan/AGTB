@@ -5,6 +5,7 @@
 
 #include "../details/Macros.hpp"
 #include "Base.hpp"
+#include "../Utils/Concept.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -97,33 +98,69 @@ struct PrincipleCurvatureRadiiResult
     double M, N;
 };
 
-template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
-PrincipleCurvatureRadiiResult PrincipleCurvatureRadii(GeodeticLatitude B)
+namespace PrincipleCurvatureRadiiSolve
 {
-    using coeff = PrincipleCurvatureCoefficient<ellipsoid, opt>;
-    double
-        k = gcem::sin(static_cast<double>(B)),
-        k2 = gcem::pow(k, 2),
-        k4 = gcem::pow(k, 4),
-        k6 = gcem::pow(k, 6),
-        k8 = gcem::pow(k, 8),
+    template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
+    struct Impl
+    {
+        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        {
+            AGTB_NOT_IMPLEMENT();
+        }
+    };
 
-        m0 = coeff::m0,
-        m2 = coeff::m2,
-        m4 = coeff::m4,
-        m6 = coeff::m6,
-        m8 = coeff::m8,
+    template <EllipsoidConcept ellipsoid>
+    struct Impl<ellipsoid, EllipsoidBasedOption::General>
+    {
+        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        {
+            double sinBp2 = gcem::pow(gcem::sin(B.Value()), 2),
+                   a = ellipsoid::a,
+                   e1_2 = ellipsoid::e1_2,
+                   k = 1 - e1_2 * sinBp2;
+            double M = a * (1.0 - e1_2) * gcem::pow(k, -3.0 / 2.0),
+                   N = a * gcem::pow(k, -1.0 / 2.0);
+            return {
+                .M = M,
+                .N = N};
+        }
+    };
 
-        n0 = coeff::n0,
-        n2 = coeff::n2,
-        n4 = coeff::n4,
-        n6 = coeff::n6,
-        n8 = coeff::n8,
+    template <EllipsoidConcept ellipsoid>
+    struct Impl<ellipsoid, EllipsoidBasedOption::Specified>
+    {
+        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        {
+            using coeff = PrincipleCurvatureCoefficient<ellipsoid, EllipsoidBasedOption::Specified>;
+            double
+                k = gcem::sin(static_cast<double>(B)),
+                k2 = gcem::pow(k, 2),
+                k4 = gcem::pow(k, 4),
+                k6 = gcem::pow(k, 6),
+                k8 = gcem::pow(k, 8),
 
-        M = m0 + m2 * k2 + m4 * k4 + m6 * k6 + m8 * k8,
-        N = n0 + n2 * k2 + n4 * k4 + n6 * k6 + n8 * k8;
-    return {.M = M, .N = N};
-};
+                m0 = coeff::m0,
+                m2 = coeff::m2,
+                m4 = coeff::m4,
+                m6 = coeff::m6,
+                m8 = coeff::m8,
+
+                n0 = coeff::n0,
+                n2 = coeff::n2,
+                n4 = coeff::n4,
+                n6 = coeff::n6,
+                n8 = coeff::n8,
+
+                M = m0 + m2 * k2 + m4 * k4 + m6 * k6 + m8 * k8,
+                N = n0 + n2 * k2 + n4 * k4 + n6 * k6 + n8 * k8;
+            return {.M = M, .N = N};
+        }
+    };
+}
+
+template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
+    requires Utils::InvokerConcept<PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>, PrincipleCurvatureRadiiResult, GeodeticLatitude>
+using PrincipleCurvatureRadiiSolver = PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>;
 
 AGTB_GEODESY_END
 
