@@ -143,7 +143,7 @@ namespace age = ag::Ellipsoid;
 using Solver = ag::MeridianArcSolver<age::Krasovski, ag::EllipsoidBasedOption::Specified>;
 
 double len = Solver::Forward(B);
-GeodeticLatitude  B = Solver::Inverse(len);
+GeodeticLatitude  B = Solver::Inverse(len /* , threshold *for an iterative solution* */);
 ```
 
 #### Principle Curvature Radii
