@@ -44,7 +44,7 @@ int main()
         .x_beg = 506.32,
         .y_beg = 215.65};
     aat::ClosedAdjustor a1(p1);
-    a1.Solve(2);
+    a1.Adjust(2);
 
     std::println(">>> Closed:\n{}", aat::SolveResultOf(a1));
 
@@ -59,7 +59,7 @@ int main()
         .x_end = 2166.70,
         .y_end = 1757.28};
     aat::ConnectingAdjustor a2(p2);
-    a2.Solve(2);
+    a2.Adjust(2);
 
     std::println(">>> Connecting:\n{}", aat::SolveResultOf(a2));
 }
@@ -190,7 +190,7 @@ int main()
 }
 ```
 
-### Photographic
+### Photogrammetry
 
 #### Space Resection
 
