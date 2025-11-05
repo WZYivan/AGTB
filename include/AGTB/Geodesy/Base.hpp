@@ -70,7 +70,7 @@ namespace Ellipsoid
         6'356'755.288'157'528'7,
         6'399'596.651'988'010'5,
         1.0 / 298.257,
-        0.066'694'384'999'588,
+        0.006'694'384'999'588,
         0.006'739'501'819'473);
 
     AGTB_DEFINE_PRECISE_ELLIPSOID(
@@ -111,6 +111,19 @@ public:
     constexpr operator T() const noexcept
     {
         return Value();
+    }
+
+    constexpr double Sin() const noexcept
+    {
+        return gcem::sin(Value());
+    }
+    constexpr double Cos() const noexcept
+    {
+        return gcem::cos(Value());
+    }
+    constexpr double Tan() const noexcept
+    {
+        return gcem::tan(Value());
     }
 };
 

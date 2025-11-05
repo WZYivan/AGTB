@@ -220,7 +220,7 @@ namespace Traverse
             return param;
         }
 
-        virtual bool Solve(int precision)
+        virtual bool Adjust(int precision)
         {
             AGTB_NOT_IMPLEMENT();
         }
@@ -235,7 +235,7 @@ namespace Traverse
         {
         }
 
-        bool Solve(int take_precision = 2) override
+        bool Adjust(int take_precision = 2) override
         {
             auto &a = param.angles;
             auto n = a.size();
@@ -320,7 +320,7 @@ namespace Traverse
         {
         }
 
-        bool Solve(int take_precision = 2) override
+        bool Adjust(int take_precision = 2) override
         {
             auto &a = param.angles;
             auto n_a = a.size(), n_d = param.distances.size();

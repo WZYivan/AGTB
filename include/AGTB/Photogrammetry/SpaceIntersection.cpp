@@ -1,12 +1,12 @@
 #ifndef __AGTB_PHOTOGRAMMETRY_ANALYTICAL_SPACE_INTERSECTION__
 #define __AGTB_PHOTOGRAMMETRY_ANALYTICAL_SPACE_INTERSECTION__
 
-#include "../Base.hpp"
-#include "../../Linalg/RotationMatrix.hpp"
+#include "Base.hpp"
+#include "../Linalg/RotationMatrix.hpp"
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-namespace Analytical::DoubleImage::SpaceIntersection
+namespace SpaceIntersection
 {
 
     struct SpaceIntersectionParam
@@ -22,7 +22,7 @@ namespace Analytical::DoubleImage::SpaceIntersection
         double X, Y, Z;
     };
 
-    SpaceIntersectionResult Solve(const SpaceIntersectionParam &p)
+    SpaceIntersectionResult Adjust(const SpaceIntersectionParam &p)
     {
         Matrix image_space_coord_1(3, 1), image_space_coord_2(3, 1);
         image_space_coord_1 << p.x1, p.y1, -p.f1;

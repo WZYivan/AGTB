@@ -37,20 +37,31 @@ private:
 
 public:
     constexpr static double
-        a0 = m0 +
-             m2 / 2.0 +
-             m4 * 3.0 / 8.0 +
-             m6 * 5.0 / 16.0 +
-             m8 * 35.0 / 128.0,
-        a2 = m2 / 2.0 +
-             m4 / 2.0 +
-             m6 * 15.0 / 32.0 +
-             m8 * 7.0 / 16.0,
-        a4 = m4 / 8.0 +
-             m6 * 3.0 / 16.0 +
-             m8 * 7.0 / 32.0,
-        a6 = m6 / 32.0 +
-             m8 / 16.0;
+        a0 = (m0 +
+              m2 / 2.0 +
+              m4 * 3.0 / 8.0 +
+              m6 * 5.0 / 16.0 +
+              m8 * 35.0 / 128.0) *
+             Utils::Angles::Deg2Rad,
+        a2 = (m2 / 2.0 +
+              m4 / 2.0 +
+              m6 * 15.0 / 32.0 +
+              m8 * 7.0 / 16.0) /
+             2.0,
+        a4 = (m4 / 8.0 +
+              m6 * 3.0 / 16.0 +
+              m8 * 7.0 / 32.0) /
+             4.0,
+        a6 = (m6 / 32.0 +
+              m8 / 16.0) /
+             6.0;
+
+    static std::string ToString()
+    {
+        return std::format("{:=^50}\n a0 = {}\n a2 = {}\n a4 = {}\n a6 = {}",
+                           "Meridian Arc Length Coefficient",
+                           a0, a2, a4, a6);
+    }
 };
 
 #define AGTB_DEFINE_SPECIFIED_MeridianArcLengthCoefficient(_ellipsoid, _a0, _a2, _a4, _a6) \
@@ -62,6 +73,13 @@ public:
             a2 = _a2,                                                                      \
             a4 = _a4,                                                                      \
             a6 = _a6;                                                                      \
+                                                                                           \
+        static std::string ToString()                                                      \
+        {                                                                                  \
+            return std::format("{:=^50}\n a0 = {}\n a2 = {}\n a4 = {}\n a6 = {}",          \
+                               "Meridian Arc Length Coefficient",                          \
+                               a0, a2, a4, a6);                                            \
+        }                                                                                  \
     }
 
 AGTB_DEFINE_SPECIFIED_MeridianArcLengthCoefficient(
@@ -131,6 +149,28 @@ namespace MeridianArcSolve
     template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
     struct Impl : public ImplBase<ellipsoid, opt>
     {
+    };
+
+    template <EllipsoidConcept ellipsoid>
+    struct Impl<ellipsoid, EllipsoidBasedOption::General> : public ImplBase<ellipsoid, EllipsoidBasedOption::General>
+    {
+        static double Forward(GeodeticLatitude _B)
+        {
+            using coeff = MeridianArcLengthCoefficient<ellipsoid, EllipsoidBasedOption::General>;
+            double a0 = coeff::a0,
+                   a2 = coeff::a2,
+                   a4 = coeff::a4,
+                   a6 = coeff::a6;
+            double B = _B,
+                   sin2B = gcem::sin(2 * B),
+                   sin4B = gcem::sin(4 * B),
+                   sin6B = gcem::sin(6 * B);
+            double X = a0 * Utils::Angles::ToDegrees(B) -
+                       a2 * sin2B +
+                       a4 * sin4B -
+                       a6 * sin6B;
+            return X;
+        }
     };
 
     template <>

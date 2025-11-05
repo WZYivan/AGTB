@@ -367,7 +367,7 @@ namespace SpaceResection
 
             if (IsExternalElementsConverged(correction, threshold))
             {
-                Matrix N = Linalg::NormalEquationMatrixInverseSolver<mtd>::Invoke(coefficient);
+                Matrix N = Linalg::NormalEquationMatrixInverse<mtd>(coefficient);
                 CompleteResult(
                     result,
                     coefficient,

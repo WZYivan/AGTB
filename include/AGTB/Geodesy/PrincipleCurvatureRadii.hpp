@@ -36,16 +36,22 @@ struct PrincipleCurvatureCoefficient
         e2 = ellipsoid::e1_2,
 
         m0 = a * (1 - e2),
-        m2 = 3.0 / 2 * e2 * m0,
-        m4 = 5.0 / 4 * e2 * m2,
-        m6 = 7.0 / 6 * e2 * m4,
-        m8 = 9.0 / 8 * e2 * m6,
+        m2 = 3.0 / 2.0 * e2 * m0,
+        m4 = 5.0 / 4.0 * e2 * m2,
+        m6 = 7.0 / 6.0 * e2 * m4,
+        m8 = 9.0 / 8.0 * e2 * m6,
 
         n0 = a,
-        n2 = 1.0 / 2 * e2 * n0,
-        n4 = 3.0 / 4 * e2 * n2,
-        n6 = 5.0 / 6 * e2 * n4,
-        n8 = 7.0 / 8 * e2 * n6;
+        n2 = 1.0 / 2.0 * e2 * n0,
+        n4 = 3.0 / 4.0 * e2 * n2,
+        n6 = 5.0 / 6.0 * e2 * n4,
+        n8 = 7.0 / 8.0 * e2 * n6;
+    static std::string ToString()
+    {
+        return std::format("{:=^50}\n m0 = {}\n m2 = {}\n m4 = {}\n m6 = {}\n m8 = {}\n",
+                           "PrincipleCurvatureCoefficient",
+                           m0, m2, m4, m6, m8);
+    }
 };
 
 #define AGTB_DEFINE_SPECIFIED_PrincipleCurvatureSpecifiedCoefficient(_ellipsoid, _m0, _m2, _m4, _m6, _m8, _n0, _n2, _n4, _n6, _n8) \
@@ -63,6 +69,12 @@ struct PrincipleCurvatureCoefficient
             n4 = _n4,                                                                                                              \
             n6 = _n6,                                                                                                              \
             n8 = _n8;                                                                                                              \
+        static std::string ToString()                                                                                              \
+        {                                                                                                                          \
+            return std::format("{:=^50}\n m0 = {}\n m2 = {}\n m4 = {}\n m6 = {}\n m8 = {}\n",                                      \
+                               "PrincipleCurvatureCoefficient",                                                                    \
+                               m0, m2, m4, m6, m8);                                                                                \
+        }                                                                                                                          \
     }
 
 AGTB_DEFINE_SPECIFIED_PrincipleCurvatureSpecifiedCoefficient(
@@ -114,12 +126,12 @@ namespace PrincipleCurvatureRadiiSolve
     {
         static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
         {
-            double sinBp2 = gcem::pow(gcem::sin(B.Value()), 2),
+            double sinBp2 = gcem::pow(B.Sin(), 2),
                    a = ellipsoid::a,
                    e1_2 = ellipsoid::e1_2,
-                   k = 1 - e1_2 * sinBp2;
-            double M = a * (1.0 - e1_2) * gcem::pow(k, -3.0 / 2.0),
-                   N = a * gcem::pow(k, -1.0 / 2.0);
+                   k = 1.0 - e1_2 * sinBp2;
+            double M = a * (1.0 - e1_2) * gcem::pow(k, -1.5),
+                   N = a * gcem::pow(k, -0.5);
             return {
                 .M = M,
                 .N = N};
@@ -161,6 +173,12 @@ namespace PrincipleCurvatureRadiiSolve
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
     requires Utils::InvokerConcept<PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>, PrincipleCurvatureRadiiResult, GeodeticLatitude>
 using PrincipleCurvatureRadiiSolver = PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>;
+
+template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
+auto PrincipleCurvatureRadii(GeodeticLatitude B)
+{
+    return PrincipleCurvatureRadiiSolver<ellipsoid, opt>::Invoke(B);
+}
 
 AGTB_GEODESY_END
 

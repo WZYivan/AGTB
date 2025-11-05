@@ -76,7 +76,7 @@ namespace macros
 {
     std::string error_msg(const std::string_view msg, const std::source_location location)
     {
-        return std::format("\n[ AGTB_THROW ]:\nfile: {}({}:{}) `{}`:{}\n",
+        return std::format("\n[ AGTB_THROW ]:\n> file: {}({}:{}) `{}`:\n> {}\n",
                            location.file_name(),
                            location.line(),
                            location.column(),

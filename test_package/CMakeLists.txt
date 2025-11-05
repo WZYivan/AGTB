@@ -15,7 +15,7 @@ endfunction()
 
 # create_new_executable(Geodesy_Base "src/Geodesy/Base.cpp")
 # create_new_executable(Geodesy_PrincipleCurvatureRadii "src/Geodesy/PrincipleCurvatureRadii.cpp")
-# create_new_executable(Geodesy_MeridianArc "src/Geodesy/MeridianArc.cpp")
+create_new_executable(Geodesy_MeridianArc "src/Geodesy/MeridianArc.cpp")
 # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
 
