@@ -72,18 +72,24 @@ int main()
     std::println("Testing IE1975 (Specified Option) Inverse:");
     test_inverse_length_specified<age::IE1975>(B_30_deg, 1e-2);
 
+    std::println("Testing Krasovski (Specified Option) Inverse:");
+    test_inverse_length_specified<age::Krasovski>(B_30_deg, 1);
+    test_inverse_length_specified<age::Krasovski>(B_30_deg, 1e-1);
+    test_inverse_length_specified<age::Krasovski>(B_30_deg, 1e-2);
+
     std::println("Testing IE1975 (General Option) Inverse with higher precision:");
     test_inverse_length_general<age::IE1975>(B_30_deg, 1e-5);
-    test_inverse_length_general<age::IE1975>(B_30_deg, std::numeric_limits<double>::epsilon());
+    test_inverse_length_general<age::Krasovski>(B_30_deg, std::numeric_limits<double>::epsilon());
+    test_inverse_length_general<age::Krasovski>(B_45_deg, std::numeric_limits<double>::epsilon());
 
-    std::println("{}",
-                 ag::MeridianArcLengthCoefficient<age::IE1975, ag::EllipsoidBasedOption::General>::ToString());
-    std::println("{}",
-                 ag::PrincipleCurvatureCoefficient<age::IE1975, ag::EllipsoidBasedOption::General>::ToString());
-    std::println("{}",
-                 ag::MeridianArcLengthCoefficient<age::IE1975, ag::EllipsoidBasedOption::Specified>::ToString());
-    std::println("{}",
-                 ag::PrincipleCurvatureCoefficient<age::IE1975, ag::EllipsoidBasedOption::Specified>::ToString());
+    // std::println("{}",
+    //              ag::MeridianArcLengthCoefficient<age::IE1975, ag::EllipsoidBasedOption::General>::ToString());
+    // std::println("{}",
+    //              ag::PrincipleCurvatureCoefficient<age::IE1975, ag::EllipsoidBasedOption::General>::ToString());
+    // std::println("{}",
+    //              ag::MeridianArcLengthCoefficient<age::IE1975, ag::EllipsoidBasedOption::Specified>::ToString());
+    // std::println("{}",
+    //              ag::PrincipleCurvatureCoefficient<age::IE1975, ag::EllipsoidBasedOption::Specified>::ToString());
 
     return 0;
 }

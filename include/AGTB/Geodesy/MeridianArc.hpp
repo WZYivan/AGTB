@@ -10,7 +10,6 @@
 
 #include <concepts>
 #include <limits>
-#include <type_traits>
 
 AGTB_GEODESY_BEGIN
 
@@ -131,7 +130,7 @@ namespace MeridianArcSolve
                     coeff::a4 * gcem::sin(4 * Bf_cur) -
                     coeff::a6 * gcem::sin(6 * Bf_cur);
                 Bf_next = (len_m - FB) / coeff::a0;
-            } while (ToSeconds(Bf_next - Bf_cur) > iter_threshold);
+            } while (Bf_next - Bf_cur >= iter_threshold);
             return FromDMS(Bf_cur); // return rad
         }
 

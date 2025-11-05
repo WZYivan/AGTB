@@ -22,7 +22,7 @@ namespace SpaceIntersection
         double X, Y, Z;
     };
 
-    SpaceIntersectionResult Adjust(const SpaceIntersectionParam &p)
+    SpaceIntersectionResult Solve(const SpaceIntersectionParam &p)
     {
         Matrix image_space_coord_1(3, 1), image_space_coord_2(3, 1);
         image_space_coord_1 << p.x1, p.y1, -p.f1;

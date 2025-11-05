@@ -326,10 +326,7 @@ namespace SpaceResection
     }
 
     template <SpaceResectionCoeffOption opt, Linalg::LinalgOption mtd>
-    SpaceResectionSolveResult GeneralSolve [[nodiscard]] (
-        const InteriorOrientationElements &internal,
-        const Matrix &photo, const Matrix &object,
-        size_t max_loop = 50, const double threshold = 3e-5)
+    SpaceResectionSolveResult GeneralSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
     {
         if (!IsInputValid(photo, object))
         {
@@ -384,19 +381,13 @@ namespace SpaceResection
     }
 
     template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult QuickSolve [[nodiscard]] (
-        const InteriorOrientationElements &internal,
-        const Matrix &photo, const Matrix &object,
-        size_t max_loop = 50, const double threshold = 3e-5)
+    SpaceResectionSolveResult QuickSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
     {
         return GeneralSolve<SpaceResectionCoeffOption::NoAngles, mtd>(internal, photo, object, max_loop, threshold);
     }
 
     template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult SimplifiedSolve [[nodiscard]] (
-        const InteriorOrientationElements &internal,
-        const Matrix &photo, const Matrix &object,
-        size_t max_loop = 50, const double threshold = 3e-5)
+    SpaceResectionSolveResult SimplifiedSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
     {
         return GeneralSolve<SpaceResectionCoeffOption::KappaOnly, mtd>(internal, photo, object, max_loop, threshold);
     }

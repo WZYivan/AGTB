@@ -7,8 +7,6 @@
 #include "../../Utils/Angles.hpp"
 #include "../../Utils/Concept.hpp"
 
-#include <print>
-
 AGTB_GEODESY_BEGIN
 
 namespace Projection::GaussKruger
