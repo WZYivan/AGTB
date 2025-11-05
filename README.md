@@ -23,7 +23,7 @@ conan create .
 
 #### Traverse
 
-AGTB provides adjustment solver for closed or attached traversing.
+AGTB provides adjustment solver for closed or connecting traversing.
 
 ```cpp
 #include <AGTB/Adjustment/Traverse.hpp>
