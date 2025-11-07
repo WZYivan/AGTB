@@ -28,8 +28,8 @@ namespace SpaceIntersection
         image_space_coord_1 << p.x1, p.y1, -p.f1;
         image_space_coord_2 << p.x2, p.y2, -p.f2;
         Matrix
-            image_space_aux_1 = p.ext1.RotationMatrix_YXZ_CN() * image_space_coord_1,
-            image_space_aux_2 = p.ext2.RotationMatrix_YXZ_CN() * image_space_coord_2;
+            image_space_aux_1 = p.ext1.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>() * image_space_coord_1,
+            image_space_aux_2 = p.ext2.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>() * image_space_coord_2;
         double Xs1 = p.ext1.Xs, Xs2 = p.ext2.Xs,
                Ys1 = p.ext1.Ys, Ys2 = p.ext2.Ys,
                Zs1 = p.ext1.Zs, Zs2 = p.ext2.Zs;

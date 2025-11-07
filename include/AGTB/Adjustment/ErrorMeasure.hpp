@@ -9,7 +9,7 @@ AGTB_ADJUSTMENT_BEGIN
 
 double MeanRootSquareError(const Matrix &V, int n, int t)
 {
-    return ((V.transpose() * V) / (2 * n - t)).cwiseSqrt()(0);
+    return ((V.transpose() * V) / (n - t)).cwiseSqrt()(0);
 }
 
 Matrix ErrorMatrix(double rmse, const Matrix &N)

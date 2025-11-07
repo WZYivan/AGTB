@@ -74,7 +74,7 @@ namespace SpaceResection
         const double &Xs = external.Xs,
                      &Ys = external.Ys,
                      &Zs = external.Zs;
-        return Linalg::CsRotate(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate);
+        return Linalg::CsRotateInverse(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate); // ImgAux -> ImgSp : Inverse
     }
 
     Matrix CalculateImagePlaneCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
@@ -285,7 +285,7 @@ namespace SpaceResection
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
-        result.m0 = Adjustment::MeanRootSquareError(V, coefficient.rows() / 2, 6);
+        result.m0 = Adjustment::MeanRootSquareError(V, coefficient.rows(), 6);
         result.sigma = Adjustment::ErrorMatrix(result.m0, N);
         result.rotate = std::move(rotate);
         result.photo = Matrix(photo);
@@ -327,6 +327,7 @@ namespace SpaceResection
                 Matrix N = Linalg::NormalEquationMatrixInverse<mtd>(coefficient);
                 CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
                 result.info = IterativeSolutionInfo::Success;
+                break;
             }
         }
 
