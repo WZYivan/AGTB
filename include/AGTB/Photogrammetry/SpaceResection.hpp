@@ -15,6 +15,8 @@
 #include "Base.hpp"
 #include "../Linalg/NormalEquationMatrixInverse.hpp"
 #include "../Linalg/RotationMatrix.hpp"
+#include "../Linalg/CorrectionOlsSolve.hpp"
+#include "../Adjustment/ErrorMeasure.hpp"
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
@@ -56,7 +58,7 @@ namespace SpaceResection
 
     bool IsInputValid(const Matrix &photo, const Matrix &object)
     {
-        if (photo.rows() == object.rows() && photo.cols() == 2 && object.cols() == 3 && object.rows() >= 4 && object.rows() % 2 == 0)
+        if (photo.rows() == object.rows() && photo.cols() == 2 && object.cols() == 3 && object.rows() >= 4)
         {
             return true;
         }
@@ -72,21 +74,10 @@ namespace SpaceResection
         const double &Xs = external.Xs,
                      &Ys = external.Ys,
                      &Zs = external.Zs;
-        Matrix trans_o(pc, 3);
-
-        for (auto pi = 0uz; pi != pc; ++pi)
-        {
-            Matrix obj_i = object.row(pi).transpose();
-            obj_i(0) -= Xs;
-            obj_i(1) -= Ys;
-            obj_i(2) -= Zs;
-            auto oib = rotate.transpose() * obj_i;
-            trans_o.row(pi) << oib(0), oib(1), oib(2);
-        }
-        return trans_o;
+        return Linalg::CsRotate(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate);
     }
 
-    Matrix TransformToImagePlaneCoordinateSystem(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
+    Matrix CalculateImagePlaneCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
     {
         Matrix trans_p(transformed_obj.rows(), 2);
         const auto &XBar = transformed_obj.col(0),
@@ -118,175 +109,156 @@ namespace SpaceResection
         NoAngles
     };
 
-    struct SpaceResectionCoeffParams
+    namespace details
     {
-        const Matrix &rotate;
-        const Matrix &transformed_obj;
-        const Matrix &transformed_photo;
-        const ExteriorOrientationElements &external;
-        const InteriorOrientationElements &internal;
-    };
-
-    namespace SpaceResectionCoefficient
-    {
-        namespace details
+        Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
         {
-            Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+            auto pc = transformed_photo.rows();
+            Matrix coefficient(pc * 2, 6);
+
+            const double &f = internal.f,
+                         &k = external.Kappa,
+                         &w = external.Omega;
+            const auto &a = rotate.row(0),
+                       &b = rotate.row(1),
+                       &c = rotate.row(2);
+            const double cosk = cos(k), sink = sin(k),
+                         cosw = cos(w), sinw = sin(w);
+
+            for (auto pi = 0uz; pi != pc; ++pi)
             {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f,
-                             &k = external.Kappa,
-                             &w = external.Omega;
-                const auto &a = rotate.row(0),
-                           &b = rotate.row(1),
-                           &c = rotate.row(2);
-                const double cosk = cos(k), sink = sin(k),
-                             cosw = cos(w), sinw = sin(w);
-
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &ZBar = transformed_obj(pi, 2),
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-
-                    const double
-                        a11 = 1 / ZBar * (a(0) * f + a(2) * dx),
-                        a12 = 1 / ZBar * (b(0) * f + b(2) * dx),
-                        a13 = 1 / ZBar * (c(0) * f + c(2) * dx),
-                        a21 = 1 / ZBar * (a(1) * f + a(2) * dy),
-                        a22 = 1 / ZBar * (b(1) * f + b(2) * dy),
-                        a23 = 1 / ZBar * (c(1) * f + c(2) * dy),
-
-                        a14 = dy * sinw - (dx / f * (dx * cosk - dy * sink) + f * cosk) * cosw,
-                        a15 = -f * sink - dx / f * (dx * sink + dy * cosk),
-                        a16 = dy,
-                        a24 = -dx * sinw - (dy / f * (dx * cosk - dy * sink) - f * sink) * cosw,
-                        a25 = -f * cosk - dy / f * (dx * sink + dy * cosk),
-                        a26 = -dx;
-
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
-
-                return coefficient;
-            }
-
-            Matrix KappaOnly(const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
-            {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f,
-                             &m = internal.m,
-                             &k = external.Kappa;
-
-                const double cosk = cos(k), sink = sin(k),
-                             H = m * f;
-                const double a11 = -f / H * cosk,
-                             a12 = -f / H * sink,
-                             a21 = f / H * sink,
-                             a22 = -f / H * cosk;
-
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-                    const double
-                        dxdx = f + pow(dx, 2) / f,
-                        dydy = f + pow(dy, 2) / f,
-                        dxdy = dx * dy / f;
-
-                    const double
-                        a13 = -dx / H,
-                        a23 = -dy / H,
-                        a14 = -dxdx * cosk + dxdy * sink,
-                        a15 = -dxdy * cosk - dxdx * sink,
-                        a16 = dy,
-                        a24 = -dxdy * cosk + dydy * sink,
-                        a25 = -dydy * cosk - dxdy * sink,
-                        a26 = -dx;
-
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
-
-                return coefficient;
-            }
-
-            Matrix NoAngles(const Matrix &transformed_photo, const InteriorOrientationElements &internal)
-            {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f;
                 const double
-                    H = f * internal.m,
-                    a11 = -f / H,
-                    a12 = 0,
-                    a21 = 0,
-                    a22 = -f / H;
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-                    const double
-                        dxdx = f + pow(dx, 2) / f,
-                        dydy = f + pow(dy, 2) / f,
-                        dxdy = dx * dy / f;
+                    &ZBar = transformed_obj(pi, 2),
+                    &dx = transformed_photo(pi, 0),
+                    &dy = transformed_photo(pi, 1);
 
-                    const double
-                        a13 = -dx / H,
-                        a23 = -dy / H,
-                        a14 = -dxdx,
-                        a15 = -dxdy,
-                        &a16 = dy,
-                        &a24 = a15,
-                        a25 = -dydy,
-                        a26 = -dx;
+                const double
+                    a11 = 1 / ZBar * (a(0) * f + a(2) * dx),
+                    a12 = 1 / ZBar * (b(0) * f + b(2) * dx),
+                    a13 = 1 / ZBar * (c(0) * f + c(2) * dx),
+                    a21 = 1 / ZBar * (a(1) * f + a(2) * dy),
+                    a22 = 1 / ZBar * (b(1) * f + b(2) * dy),
+                    a23 = 1 / ZBar * (c(1) * f + c(2) * dy),
 
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
+                    a14 = dy * sinw - (dx / f * (dx * cosk - dy * sink) + f * cosk) * cosw,
+                    a15 = -f * sink - dx / f * (dx * sink + dy * cosk),
+                    a16 = dy,
+                    a24 = -dx * sinw - (dy / f * (dx * cosk - dy * sink) - f * sink) * cosw,
+                    a25 = -f * cosk - dy / f * (dx * sink + dy * cosk),
+                    a26 = -dx;
 
-                return coefficient;
+                const auto &&l = 2 * pi;
+                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
             }
+
+            return coefficient;
         }
 
-        template <SpaceResectionCoeffOption opt>
-        void Invoke(Matrix &coefficient, SpaceResectionCoeffParams params)
+        Matrix KappaOnly(const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
         {
+            auto pc = transformed_photo.rows();
+            Matrix coefficient(pc * 2, 6);
 
-            if constexpr (opt == SpaceResectionCoeffOption::FullAngles)
+            const double &f = internal.f,
+                         &m = internal.m,
+                         &k = external.Kappa;
+
+            const double cosk = cos(k), sink = sin(k),
+                         H = m * f;
+            const double a11 = -f / H * cosk,
+                         a12 = -f / H * sink,
+                         a21 = f / H * sink,
+                         a22 = -f / H * cosk;
+
+            for (auto pi = 0uz; pi != pc; ++pi)
             {
-                coefficient = details::FullAngles(params.rotate, params.transformed_obj, params.transformed_photo, params.external, params.internal);
+                const double
+                    &dx = transformed_photo(pi, 0),
+                    &dy = transformed_photo(pi, 1);
+                const double
+                    dxdx = f + pow(dx, 2) / f,
+                    dydy = f + pow(dy, 2) / f,
+                    dxdy = dx * dy / f;
+
+                const double
+                    a13 = -dx / H,
+                    a23 = -dy / H,
+                    a14 = -dxdx * cosk + dxdy * sink,
+                    a15 = -dxdy * cosk - dxdx * sink,
+                    a16 = dy,
+                    a24 = -dxdy * cosk + dydy * sink,
+                    a25 = -dydy * cosk - dxdy * sink,
+                    a26 = -dx;
+
+                const auto &&l = 2 * pi;
+                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
             }
-            else if constexpr (opt == SpaceResectionCoeffOption::KappaOnly)
+
+            return coefficient;
+        }
+
+        Matrix NoAngles(const Matrix &transformed_photo, const InteriorOrientationElements &internal)
+        {
+            auto pc = transformed_photo.rows();
+            Matrix coefficient(pc * 2, 6);
+
+            const double &f = internal.f;
+            const double
+                H = f * internal.m,
+                a11 = -f / H,
+                a12 = 0,
+                a21 = 0,
+                a22 = -f / H;
+            for (auto pi = 0uz; pi != pc; ++pi)
             {
-                coefficient = details::KappaOnly(params.transformed_photo, params.external, params.internal);
+                const double
+                    &dx = transformed_photo(pi, 0),
+                    &dy = transformed_photo(pi, 1);
+                const double
+                    dxdx = f + pow(dx, 2) / f,
+                    dydy = f + pow(dy, 2) / f,
+                    dxdy = dx * dy / f;
+
+                const double
+                    a13 = -dx / H,
+                    a23 = -dy / H,
+                    a14 = -dxdx,
+                    a15 = -dxdy,
+                    &a16 = dy,
+                    &a24 = a15,
+                    a25 = -dydy,
+                    a26 = -dx;
+
+                const auto &&l = 2 * pi;
+                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
             }
-            else if constexpr (opt == SpaceResectionCoeffOption::NoAngles)
-            {
-                coefficient = details::NoAngles(params.transformed_photo, params.internal);
-            }
-            else
-            {
-                AGTB_NOT_IMPLEMENT();
-            }
+
+            return coefficient;
         }
     }
 
-    Matrix CorrectionMatrix(const Matrix &coefficient, const Matrix &residual)
+    template <SpaceResectionCoeffOption opt>
+    Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
     {
-        const Matrix &A = coefficient, &L = residual;
-        return A.colPivHouseholderQr().solve(L);
+        if constexpr (opt == SpaceResectionCoeffOption::FullAngles)
+        {
+            return details::FullAngles(rotate, transformed_obj, transformed_photo, external, internal);
+        }
+        else if constexpr (opt == SpaceResectionCoeffOption::KappaOnly)
+        {
+            return details::KappaOnly(transformed_photo, external, internal);
+        }
+        else if constexpr (opt == SpaceResectionCoeffOption::NoAngles)
+        {
+            return details::NoAngles(transformed_photo, internal);
+        }
+        else
+        {
+            AGTB_UNKNOWN_TEMPLATE_PARAM();
+        }
     }
 
     void UpdateExternalElements(ExteriorOrientationElements &external, const Matrix &correction)
@@ -313,8 +285,8 @@ namespace SpaceResection
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
-        result.m0 = ((V.transpose() * V) / (coefficient.rows() - 6)).cwiseSqrt()(0);
-        result.sigma = result.m0 * N.cwiseSqrt();
+        result.m0 = Adjustment::MeanRootSquareError(V, coefficient.rows() / 2, 6);
+        result.sigma = Adjustment::ErrorMatrix(result.m0, N);
         result.rotate = std::move(rotate);
         result.photo = Matrix(photo);
         Matrix &p = result.photo;
@@ -325,12 +297,12 @@ namespace SpaceResection
         }
     }
 
-    template <SpaceResectionCoeffOption opt, Linalg::LinalgOption mtd>
-    SpaceResectionSolveResult GeneralSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
+    template <SpaceResectionCoeffOption opt = SpaceResectionCoeffOption::NoAngles, Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
+    SpaceResectionSolveResult Solve(const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
     {
         if (!IsInputValid(photo, object))
         {
-            throw std::invalid_argument("Arguments of SymSolve are invalid");
+            throw std::invalid_argument("Arguments are invalid");
         }
 
         SpaceResectionSolveResult result{
@@ -340,65 +312,25 @@ namespace SpaceResection
 
         while (max_loop-- > 0)
         {
-            Matrix rotate = external.RotationMatrix_YXZ_CN();
+            Matrix rotate = external.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>();
 
-            Matrix transformed_obj =
-                TransformToImageSpaceCoordinateSystem(rotate, object, external);
-            Matrix transformed_photo =
-                TransformToImagePlaneCoordinateSystem(internal, transformed_obj);
-            Matrix residual =
-                ResidualMatrix(photo, transformed_photo);
-
-            Matrix coefficient(transformed_photo.rows() * 2, 6);
-            SpaceResectionCoefficient::Invoke<opt>(
-                coefficient,
-                {.rotate = rotate,
-                 .transformed_obj = transformed_obj,
-                 .transformed_photo = transformed_photo,
-                 .external = external,
-                 .internal = internal});
-
-            Matrix correction = CorrectionMatrix(coefficient, residual);
+            Matrix transformed_obj = TransformToImageSpaceCoordinateSystem(rotate, object, external);
+            Matrix transformed_photo = CalculateImagePlaneCoordinates(internal, transformed_obj);
+            Matrix residual = ResidualMatrix(photo, transformed_photo);
+            Matrix coefficient = SpaceResectionCoefficient<opt>(rotate, transformed_obj, transformed_photo, external, internal);
+            Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
 
             UpdateExternalElements(external, correction);
 
             if (IsExternalElementsConverged(correction, threshold))
             {
                 Matrix N = Linalg::NormalEquationMatrixInverse<mtd>(coefficient);
-                CompleteResult(
-                    result,
-                    coefficient,
-                    correction,
-                    residual,
-                    rotate,
-                    photo,
-                    N);
+                CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
                 result.info = IterativeSolutionInfo::Success;
             }
         }
 
         return result;
-    }
-
-    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult QuickSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
-    {
-        return GeneralSolve<SpaceResectionCoeffOption::NoAngles, mtd>(internal, photo, object, max_loop, threshold);
-    }
-
-    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult SimplifiedSolve [[nodiscard]] (const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5)
-    {
-        return GeneralSolve<SpaceResectionCoeffOption::KappaOnly, mtd>(internal, photo, object, max_loop, threshold);
-    }
-
-    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult PreciseSolve [[nodiscard]] (
-        const InteriorOrientationElements &internal,
-        const Matrix &photo, const Matrix &object,
-        size_t max_loop = 50, const double threshold = 3e-5)
-    {
-        return GeneralSolve<SpaceResectionCoeffOption::FullAngles, mtd>(internal, photo, object, max_loop, threshold);
     }
 }
 

@@ -105,6 +105,9 @@ AGTB_END
 #define AGTB_NOT_IMPLEMENT() \
     AGTB_THROW(__AGTB_UTILS not_implement_error, "AGTB::[ Not implement this ]")
 
+#define AGTB_UNKNOWN_TEMPLATE_PARAM() \
+    AGTB_THROW(__AGTB_UTILS unknown_template_parameter_error, "AGTB::[ Unknown template parameter ]")
+
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
 #define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>

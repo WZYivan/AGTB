@@ -28,6 +28,15 @@ public:
         : std::invalid_argument(msg) {}
 };
 
+class unknown_template_parameter_error : public std::invalid_argument
+{
+public:
+    explicit unknown_template_parameter_error(const std::string &msg = "Unknown template parameter")
+        : std::invalid_argument(msg) {}
+    explicit unknown_template_parameter_error(const char *msg = "Unknown template parameter")
+        : std::invalid_argument(msg) {}
+};
+
 AGTB_UTILS_END
 
 #endif

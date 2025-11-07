@@ -4,6 +4,7 @@
 #include "../details/Macros.hpp"
 
 #include "../Linalg/RotationMatrix.hpp"
+#include "../Linalg/CoordinateSystemTranform.hpp"
 
 #include <Eigen/Dense>
 
@@ -64,50 +65,10 @@ struct ExteriorOrientationElements
             .Kappa = 0};
     }
 
-    Matrix RotationMatrix_YXZ_CN() const noexcept
+    template <Linalg::Axis ax1, Linalg::Axis ax2, Linalg::Axis ax3>
+    Matrix ToRotationMatrix() const noexcept
     {
-        return Linalg::RotateY(Phi) * Linalg::RotateX(Omega) * Linalg::RotateZ(Kappa);
-    }
-
-    Matrix RotationMatrix_XYZ_EU() const noexcept
-    {
-        return Linalg::RotateX(Omega) * Linalg::RotateY(Phi) * Linalg::RotateZ(Kappa);
-    }
-
-    Matrix RotationMatrix_ZYX_USSR() const noexcept
-    {
-        return Linalg::RotateZ(Kappa) * Linalg::RotateY(Phi) * Linalg::RotateX(Omega);
-    }
-
-    enum RotationOption : size_t
-    {
-        YXZ,
-        CN,
-        XYZ,
-        EU,
-        ZYX,
-        USSR
-    };
-
-    template <RotationOption opt>
-    Matrix RotationMatrix() const noexcept
-    {
-        if constexpr (opt == RotationOption::CN || opt == RotationOption::YXZ)
-        {
-            return RotationMatrix_YXZ_CN();
-        }
-        else if constexpr (opt == RotationOption::EU || opt == RotationOption::XYZ)
-        {
-            return RotationMatrix_XYZ_EU();
-        }
-        else if constexpr (opt == RotationOption::USSR || opt == RotationOption::ZYX)
-        {
-            return RotationMatrix_ZYX_USSR();
-        }
-        else
-        {
-            AGTB_NOT_IMPLEMENT();
-        }
+        return Linalg::CsRotationMatrix<ax1, ax2, ax3>(Phi, Omega, Kappa);
     }
 };
 

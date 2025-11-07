@@ -43,6 +43,27 @@ Matrix RotateZ(double kappa)
     return std::move(Rk);
 }
 
+template <Axis ax>
+Matrix RotateByAxis(double angle)
+{
+    if constexpr (ax == Axis::X)
+    {
+        return RotateX(angle);
+    }
+    else if constexpr (ax == Axis::Y)
+    {
+        return RotateY(angle);
+    }
+    else if constexpr (ax == Axis::Z)
+    {
+        return RotateZ(angle);
+    }
+    else
+    {
+        AGTB_UNKNOWN_TEMPLATE_PARAM();
+    }
+}
+
 AGTB_LINALG_END
 
 #endif

@@ -2,10 +2,13 @@
 #define __AGTB_ADJUSTMENT_BASE_HPP__
 
 #include "../details/Macros.hpp"
+#include "../Linalg/Base.hpp"
 
 #include <gcem.hpp>
 
 AGTB_ADJUSTMENT_BEGIN
+
+using Linalg::Matrix;
 
 constexpr double TakePrecision(double x, int v)
 {

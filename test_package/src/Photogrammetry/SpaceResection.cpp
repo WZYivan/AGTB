@@ -30,7 +30,7 @@ int main()
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
-    auto result = apsr::QuickSolve<al::LinalgOption::SVD>(internal, photo, obj);
+    auto result = apsr::Solve(internal, photo, obj);
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());
