@@ -10,8 +10,6 @@
 #include <vector>
 #include <numeric>
 #include <format>
-#include <concepts>
-#include <print>
 
 AGTB_ADJUSTMENT_BEGIN
 
