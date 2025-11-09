@@ -17,12 +17,12 @@ namespace SpaceIntersection
         double x1, y1, f1, x2, y2, f2;
     };
 
-    struct SpaceIntersectionResult
+    struct SpaceIntersectionSolveResult
     {
         double X, Y, Z;
     };
 
-    SpaceIntersectionResult Solve(const SpaceIntersectionParam &p)
+    SpaceIntersectionSolveResult Solve(const SpaceIntersectionParam &p)
     {
         Matrix image_space_coord_1(3, 1), image_space_coord_2(3, 1);
         image_space_coord_1 << p.x1, p.y1, -p.f1;
@@ -50,6 +50,10 @@ namespace SpaceIntersection
             .Z = Z};
     }
 }
+
+using SpaceIntersection::Solve;
+using SpaceIntersection::SpaceIntersectionParam;
+using SpaceIntersection::SpaceIntersectionSolveResult;
 
 AGTB_PHOTOGRAMMETRY_END
 

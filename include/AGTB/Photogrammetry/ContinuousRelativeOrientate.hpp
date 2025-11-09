@@ -32,7 +32,13 @@ namespace ContinuousRelativeOrientate
         }
     };
 
-    struct ContinuousRelativeOrienteResult
+    struct ContinuousRelativeOrienteParam
+    {
+        Matrix xy1, xy2;
+        InteriorOrientationElements in1, in2;
+    };
+
+    struct ContinuousRelativeOrienteSolveResult
     {
         ContinuousRelativeOrientationElements cro;
         double m0;
@@ -120,15 +126,18 @@ namespace ContinuousRelativeOrientate
         return true;
     }
 
-    template <Linalg::LinalgOption opt>
-    ContinuousRelativeOrienteResult Solve(const Matrix &xy1, const Matrix xy2, const InteriorOrientationElements &in1, const InteriorOrientationElements &in2, int max_loop = 50, double threshold = 3e-5)
+    template <Linalg::LinalgOption opt = Linalg::LinalgOption::Cholesky>
+    ContinuousRelativeOrienteSolveResult Solve(const ContinuousRelativeOrienteParam &param, int max_loop = 50, double threshold = 3e-5)
     {
-        if (!(xy1.rows() != 0 && xy2.rows() != 0 && xy1.cols() == xy2.cols() && xy1.cols() > 5))
+        auto &xy1 = param.xy1, xy2 = param.xy2;
+        auto &in1 = param.in1, in2 = param.in2;
+
+        k if (!(xy1.rows() != 0 && xy2.rows() != 0 && xy1.cols() == xy2.cols() && xy1.cols() > 5))
         {
             AGTB_THROW(std::invalid_argument, "Input coordinate must have same count and larger than 5.");
         }
 
-        ContinuousRelativeOrienteResult cro_res{
+        ContinuousRelativeOrienteSolveResult cro_res{
             .cro = {
                 .Mu = 0,
                 .Nu = 0,
@@ -162,6 +171,11 @@ namespace ContinuousRelativeOrientate
         return cro_res;
     }
 }
+
+using ContinuousRelativeOrientate::ContinuousRelativeOrientationElements;
+using ContinuousRelativeOrientate::ContinuousRelativeOrienteParam;
+using ContinuousRelativeOrientate::ContinuousRelativeOrienteSolveResult;
+using ContinuousRelativeOrientate::Solve;
 
 AGTB_PHOTOGRAMMETRY_END
 

@@ -22,6 +22,11 @@ AGTB_PHOTOGRAMMETRY_BEGIN
 
 namespace SpaceResection
 {
+    struct SpaceResectionParam
+    {
+        InteriorOrientationElements interior;
+        Matrix photo, object;
+    };
     struct SpaceResectionSolveResult
     {
         ExteriorOrientationElements external;
@@ -299,8 +304,12 @@ namespace SpaceResection
     }
 
     template <SpaceResectionCoeffOption opt = SpaceResectionCoeffOption::NoAngles, Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
-    SpaceResectionSolveResult Solve(const InteriorOrientationElements &internal, const Matrix &photo, const Matrix &object, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
+    SpaceResectionSolveResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
     {
+        auto &internal = param.interior;
+        auto &photo = param.photo;
+        auto &object = param.object;
+
         if (!IsInputValid(photo, object))
         {
             throw std::invalid_argument("Arguments are invalid");
@@ -335,6 +344,11 @@ namespace SpaceResection
         return result;
     }
 }
+
+using SpaceResection::Solve;
+using SpaceResection::SpaceResectionCoeffOption;
+using SpaceResection::SpaceResectionParam;
+using SpaceResection::SpaceResectionSolveResult;
 
 AGTB_PHOTOGRAMMETRY_END
 

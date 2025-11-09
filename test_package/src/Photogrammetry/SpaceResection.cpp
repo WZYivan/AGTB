@@ -4,7 +4,6 @@
 
 namespace aei = AGTB::EigenIO;
 namespace ap = AGTB::Photogrammetry;
-namespace apsr = ap::SpaceResection;
 namespace al = AGTB::Linalg;
 
 int main()
@@ -30,7 +29,12 @@ int main()
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
-    auto result = apsr::Solve(internal, photo, obj);
+
+    ap::SpaceResectionParam p = {
+        .interior = internal,
+        .photo = std::move(photo),
+        .object = std::move(obj)};
+    auto result = ap::Solve(p);
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());

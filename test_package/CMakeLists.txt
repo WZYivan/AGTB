@@ -12,7 +12,7 @@ endfunction()
 
 
 # create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
-create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
+# create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
 
 # create_new_executable(Geodesy_Base "src/Geodesy/Base.cpp")
 # create_new_executable(Geodesy_PrincipleCurvatureRadii "src/Geodesy/PrincipleCurvatureRadii.cpp")
@@ -22,8 +22,9 @@ create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 
-# create_new_executable(Photographic_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
+create_new_executable(Photographic_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
 # create_new_executable(Photographic_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")
+# create_new_executable(Photographic_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp")
 
 # create_new_executable(Utils_Angle "src/Utils/Angles.cpp")
 # create_new_executable(Utils_String "src/Utils/String.cpp")

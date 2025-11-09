@@ -212,6 +212,8 @@ int main()
 
 ### Photogrammetry
 
+To solution problems in photogrammetry, AGTB provides an uniform and linalg-option-based ```solve``` interface.
+
 #### Space Resection
 
 AGTB provides an Ordinary Least Squares (OLS) iterative optimization method for space resection with a pure functional interface.
@@ -223,7 +225,6 @@ AGTB provides an Ordinary Least Squares (OLS) iterative optimization method for 
 
 namespace aei = AGTB::EigenIO;
 namespace ap = AGTB::Photogrammetry;
-namespace apsr = ap::SpaceResection;
 namespace al = AGTB::Linalg;
 
 int main()
@@ -249,7 +250,12 @@ int main()
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
-    auto result = apsr::QuickSolve<al::LinalgOption::SVD>(internal, photo, obj);
+
+    ap::SpaceResectionParam p = {
+        .interior = internal,
+        .photo = std::move(photo),
+        .object = std::move(obj)};
+    auto result = ap::Solve(p);
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());
@@ -258,6 +264,38 @@ int main()
     {
         throw std::runtime_error("QuickSolve failed");
     }
+}
+```
+
+#### Space Intersection
+
+**Implemented but not evaluated**
+
+```cpp
+#include <AGTB/Photogrammetry/SpaceIntersection.hpp>
+
+namespace ap = AGTB::Photogrammetry;
+
+int main()
+{
+    ap::SpaceIntersectionParam p{};
+    ap::SpaceIntersectionSolveResult r = ap::Solve(p);
+}
+```
+
+#### Continuous Relative Orientate
+
+**Implemented but not evaluated**
+
+```cpp
+#include <AGTB/Photogrammetry/ContinuousRelativeOrientate.hpp>
+
+namespace ap = AGTB::Photogrammetry;
+
+int main()
+{
+    ap::ContinuousRelativeOrienteParam p{};
+    ap::ContinuousRelativeOrienteSolveResult r = ap::Solve(p);
 }
 ```
 
