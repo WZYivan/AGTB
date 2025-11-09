@@ -74,7 +74,8 @@ namespace SpaceResection
         const double &Xs = external.Xs,
                      &Ys = external.Ys,
                      &Zs = external.Zs;
-        return Linalg::CsRotateInverse(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate); // ImgAux -> ImgSp : Inverse
+        // rotate(matrix) : ImgAux -> ImgSp
+        return Linalg::CsRotateForward(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate); // ImgAux -> ImgSp : forward
     }
 
     Matrix CalculateImagePlaneCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)

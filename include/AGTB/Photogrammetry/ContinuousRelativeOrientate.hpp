@@ -9,6 +9,8 @@
 
 #include <gcem.hpp>
 #include <tuple>
+#include <format>
+#include <sstream>
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
@@ -61,7 +63,8 @@ namespace ContinuousRelativeOrientate
         ipc.col(5).array() = -in2.f;
 
         Matrix rotate = Linalg::CsRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>(cro.Phi, cro.Omega, cro.Kappa);
-        ipc.rightCols(3) = Linalg::CsRotateForward(ipc.rightCols(3), rotate); // ImgSp2 -> ImgSp1(like ImgAux) : Forward
+        // rotate(matrix) : ImgSp_1 -> ImgSp_2
+        ipc.rightCols(3) = Linalg::CsRotateInverse(ipc.rightCols(3), rotate); // ImgSp2 -> ImgSp1 : Inverse
 
         return ipc;
     }
