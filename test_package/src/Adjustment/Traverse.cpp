@@ -3,7 +3,6 @@
 #include <print>
 
 namespace aa = AGTB::Adjustment;
-namespace aat = aa::Traverse;
 using AGTB::Utils::Angles::Angle;
 
 int main()
