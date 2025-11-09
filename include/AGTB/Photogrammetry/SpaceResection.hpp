@@ -303,7 +303,7 @@ namespace SpaceResection
         }
     }
 
-    template <SpaceResectionCoeffOption opt = SpaceResectionCoeffOption::NoAngles, Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky>
+    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky, SpaceResectionCoeffOption opt = SpaceResectionCoeffOption::NoAngles>
     SpaceResectionSolveResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
     {
         auto &internal = param.interior;
