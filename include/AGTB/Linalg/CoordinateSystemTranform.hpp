@@ -34,19 +34,19 @@ Matrix CsTranslate(const Matrix &XYZ, double x, double y, double z)
 Matrix CsRotateInverse(const Matrix &XYZ, const Matrix &rotate)
 {
     CheckIsCoordinateMatrixValid(XYZ);
-    // new = R * ori -> (X, Y, Z).T => XYZ * R.T
-    // ori = R.T * new -> (X, Y, Z).T => XYZ * R
+    // new = R.T * ori -> (X, Y, Z).T => XYZ * R
+    // ori = R * new -> (X, Y, Z).T => XYZ * R.T <--------
     // ori -> (X, Y, Z).T
-    return XYZ * rotate;
+    return XYZ * rotate.transpose();
 }
 
 Matrix CsRotateForward(const Matrix &XYZ, const Matrix &rotate)
 {
     CheckIsCoordinateMatrixValid(XYZ);
-    // new = R * ori -> (X, Y, Z).T => XYZ * R.T
-    // ori = R.T * new -> (X, Y, Z).T => XYZ * R
+    // new = R.T * ori -> (X, Y, Z).T => XYZ * R <-------
+    // ori = R * new -> (X, Y, Z).T => XYZ * R.T
     // ori -> (X, Y, Z).T
-    return XYZ * rotate.transpose();
+    return XYZ * rotate;
 }
 
 Matrix CsScale(const Matrix &XYZ, double scale)
