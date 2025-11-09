@@ -3,22 +3,14 @@
 
 #include "../details/Macros.hpp"
 #include "../Linalg/Base.hpp"
+#include "../Utils/Math.hpp"
 
 #include <gcem.hpp>
+#include <numeric>
 
 AGTB_ADJUSTMENT_BEGIN
 
 using Linalg::Matrix;
-
-constexpr double TakePrecision(double x, int v)
-{
-    if (v == 0)
-    {
-        return gcem::round(x);
-    }
-    double scale = gcem::pow(10, v);
-    return gcem::round(x * scale) / scale;
-}
 
 enum class RouteType
 {

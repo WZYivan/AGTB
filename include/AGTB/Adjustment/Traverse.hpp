@@ -3,12 +3,15 @@
 
 #include "../details/Macros.hpp"
 #include "../Utils/Angles.hpp"
+#include "../Utils/Std.hpp"
 #include "Base.hpp"
+#include "RefineCorrection.hpp"
 
 #include <vector>
 #include <numeric>
 #include <format>
 #include <concepts>
+#include <print>
 
 AGTB_ADJUSTMENT_BEGIN
 
@@ -16,9 +19,10 @@ namespace Traverse
 {
     using AGTB::Utils::Angles::Angle;
 
+    template <RouteType __rt>
     struct TraverseParam
     {
-        RouteType route_type;
+        constexpr static RouteType route_type = __rt;
         std::vector<double> distances;
         std::vector<Angle> angles;
         Angle azi_beg, azi_end;
@@ -40,10 +44,10 @@ namespace Traverse
                 std::format_to(sbb, "[{}] ", a.ToString());
             }
             std::format_to(sbb, "\n{:-^50}\n", " (X,Y) (m) ");
-            std::format_to(sbb, "X_beg = {}, Y_beg = {}\n", x_beg, y_beg);
+            std::format_to(sbb, "X_beg = {}, Y_beg = {}", x_beg, y_beg);
             if (route_type == RouteType::Connecting)
             {
-                std::format_to(sbb, "X_end = {}, Y_end = {}\n", x_end, y_end);
+                std::format_to(sbb, "\nX_end = {}, Y_end = {}\n", x_end, y_end);
             }
 
             std::format_to(sbb, "\n{:-^50}\n", " Azimuth ");
@@ -78,10 +82,11 @@ namespace Traverse
 
     struct TraverseVariable
     {
-        Angle delta_a, a_c_sum;
-        std::vector<Angle> a_c, azi_c;
+        Angle a_c_sum, a_sum, da_sum;
+        std::vector<Angle> a_c, azi_c, delta_a;
         std::vector<double> dx, dy, dx_c, dy_c, x, y, ddx, ddy;
         double dis_sum, dx_sum, dy_sum, dx_c_sum, dy_c_sum;
+        double ddx_sum, ddy_sum;
 
         std::string ToString() const noexcept
         {
@@ -90,9 +95,12 @@ namespace Traverse
             std::format_to(sbb, "{:=^100}\n", " TraverseVariable ");
 
             std::format_to(sbb, "{:-^50}\n", " Correction of Angles ");
-            std::format_to(sbb, "[{}]\n", delta_a.ToString());
+            for (auto &e : delta_a)
+            {
+                std::format_to(sbb, "[{}] ", e.ToString());
+            }
 
-            std::format_to(sbb, "{:-^50}\n", " Corrected Angles ");
+            std::format_to(sbb, "\n{:-^50}\n", " Corrected Angles ");
             for (auto &e : a_c)
             {
                 std::format_to(sbb, "[{}] ", e.ToString());
@@ -154,269 +162,266 @@ namespace Traverse
 
             std::format_to(sbb, "\n{:-^50}\n", " Sum Of ");
             std::format_to(sbb,
-                           " Corrected Azimuth = {}\n Distance = {} (m)\n Delta X = {} (m)\n Delta Y = {} (m)\n Delta X_c = {} (m)\n Delta Y_c = {} (m)\n",
-                           a_c_sum.ToString(), dis_sum, dx_sum, dy_sum, dx_c_sum, dy_c_sum);
+                           " Angle = {}\n Delta Angle = {}\n Corrected Angle = {}\n Distance = {} (m)\n Delta X = {} (m)\n Delta Y = {} (m)\n Delta X_c = {} (m)\n Delta Y_c = {} (m)\n",
+                           a_sum.ToString(), da_sum.ToString(), a_c_sum.ToString(), dis_sum, dx_sum, dy_sum, dx_c_sum, dy_c_sum);
 
             return sb;
         };
     };
 
-    template <RouteType route_type>
-    class AdjustorBase
+    struct TraverseAdjustResult
     {
-    protected:
-        TraverseParam param;
-        TraverseVariable va;
+        TraverseVariable variable;
         TraverseInfo info;
-        bool is_solved;
-
-    public:
-        AdjustorBase(TraverseParam _p)
-            : param(std::move(_p)), is_solved(false)
-        {
-            if (param.route_type != route_type)
-            {
-                AGTB_THROW(Utils::constructor_error, "Param.route_type not correct");
-            }
-
-            auto a_s = param.angles.size(), d_s = param.distances.size();
-            if (route_type == RouteType::Closed && a_s != d_s)
-            {
-                AGTB_THROW(Utils::constructor_error, "[RouteType::Closed] Angles and distances must have same size");
-            }
-            else if (route_type == RouteType::Connecting && a_s != d_s + 1)
-            {
-                AGTB_THROW(Utils::constructor_error, "[RouteType::Connecting] Angles.size must equals to distances.size + 1");
-            }
-        }
-        virtual ~AdjustorBase() = default;
-
-        const TraverseInfo &Info() const
-        {
-            if (is_solved)
-            {
-                return info;
-            }
-            else
-            {
-                AGTB_THROW(std::runtime_error, "ClosedLoopSolver haven't solve it.");
-            }
-        }
-
-        const TraverseVariable &Variable() const
-        {
-            if (is_solved)
-            {
-                return va;
-            }
-            else
-            {
-                AGTB_THROW(std::runtime_error, "ClosedLoopSolver haven't solve it.");
-            }
-        }
-
-        const TraverseParam &Param() const noexcept
-        {
-            return param;
-        }
-
-        virtual bool Adjust(int precision)
-        {
-            AGTB_NOT_IMPLEMENT();
-        }
     };
 
-    class ClosedAdjustor : public AdjustorBase<RouteType::Closed>
+    template <RouteType __rt>
+    void InitTraverseVariableSizeFromParam(const TraverseParam<__rt> &param, TraverseVariable &va)
     {
+        size_t dn = param.distances.size(), an = param.angles.size();
+        va.dx.resize(dn);
+        va.dy.resize(dn);
+        va.ddx.resize(dn);
+        va.ddy.resize(dn);
+        va.dx_c.resize(dn);
+        va.dy_c.resize(dn);
+        va.x.resize(dn + 1);
+        va.y.resize(dn + 1);
+        va.delta_a.resize(an);
+        va.a_c.resize(an);
+        va.azi_c.resize(an + 1);
+    }
 
-    public:
-        ClosedAdjustor(TraverseParam _p)
-            : AdjustorBase<RouteType::Closed>(std::move(_p))
-        {
-        }
-
-        bool Adjust(int take_precision = 2) override
-        {
-            auto &a = param.angles;
-            auto n = a.size();
-
-            Angle a_sum = std::accumulate(a.begin(), a.end(), Angle());
-            Angle a_sum_expect = Angle((n - 2) * 180, 0, 0);
-            info.f_beta = a_sum - a_sum_expect;
-            va.delta_a = -info.f_beta / n;
-
-            va.a_c.resize(n);
-            va.azi_c.resize(n + 1);
-            va.azi_c.at(0) = param.azi_beg;
-            for (auto i = 0uz; i != n; ++i)
-            {
-                va.a_c.at(i) = (a.at(i) + va.delta_a).NormStd();
-                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - Utils::Angles::A180d).NormStd();
-            }
-            va.a_c_sum = std::accumulate(va.a_c.begin(), va.a_c.end(), Angle());
-
-            va.dx.resize(n);
-            va.ddx.resize(n);
-            va.dy.resize(n);
-            va.ddy.resize(n);
-            va.dx_c.resize(n);
-            va.dy_c.resize(n);
-            va.x.resize(n + 1);
-            va.y.resize(n + 1);
-            va.x.at(0) = param.x_beg;
-            va.y.at(0) = param.y_beg;
-
-            auto &dis = param.distances;
-            va.dis_sum = std::accumulate(dis.begin(), dis.end(), 0);
-
-            for (auto i = 0; i != n; ++i)
-            {
-                auto dis_i = dis.at(i);
-                auto azi_i = va.azi_c.at(i);
-                va.dx.at(i) = TakePrecision(azi_i.Cos() * dis_i, take_precision);
-                va.dy.at(i) = TakePrecision(azi_i.Sin() * dis_i, take_precision);
-            }
-
-            va.dx_sum = TakePrecision(std::accumulate(va.dx.begin(), va.dx.end(), 0.0), take_precision);
-            va.dy_sum = TakePrecision(std::accumulate(va.dy.begin(), va.dy.end(), 0.0), take_precision);
-
-            info.f_x = va.dx_sum;
-            info.f_y = va.dy_sum;
-            info.f = TakePrecision(
-                gcem::sqrt(
-                    gcem::pow(info.f_x, 2) +
-                    gcem::pow(info.f_y, 2)),
-                take_precision);
-            info.K_inv = gcem::ceil(va.dis_sum / info.f);
-
-            for (auto i = 0; i != n; ++i)
-            {
-                auto &dis_i = param.distances.at(i);
-                va.ddx.at(i) = -info.f_x * dis_i / va.dis_sum;
-                va.ddy.at(i) = -info.f_y * dis_i / va.dis_sum;
-
-                va.dx_c.at(i) = TakePrecision(va.dx.at(i) + va.ddx.at(i), take_precision);
-                va.dy_c.at(i) = TakePrecision(va.dy.at(i) + va.ddy.at(i), take_precision);
-            }
-
-            va.dx_c_sum = std::accumulate(va.dx_c.begin(), va.dx_c.end(), 0.0);
-            va.dy_c_sum = std::accumulate(va.dy_c.begin(), va.dy_c.end(), 0.0);
-
-            for (auto i = 0; i != n; ++i)
-            {
-                va.x.at(i + 1) = TakePrecision(va.x.at(i) + va.dx_c.at(i), take_precision);
-                va.y.at(i + 1) = TakePrecision(va.y.at(i) + va.dy_c.at(i), take_precision);
-            }
-
-            return is_solved = true;
-        }
-    };
-
-    class ConnectingAdjustor : public AdjustorBase<RouteType::Connecting>
+    template <RouteType __rt>
+    void __CalculateFBeta(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info)
     {
-    public:
-        ConnectingAdjustor(TraverseParam _p)
-            : AdjustorBase<RouteType::Connecting>(std::move(_p))
+        AGTB_UNKNOWN_TEMPLATE_PARAM();
+    }
+    template <>
+    void __CalculateFBeta<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info)
+    {
+        info.f_beta = va.a_sum - Angle((param.angles.size() - 2) * 180, 0, 0);
+    }
+    template <>
+    void __CalculateFBeta<RouteType::Connecting>(const TraverseParam<RouteType::Connecting> &param, TraverseVariable &va, TraverseInfo &info)
+    {
+        info.f_beta = va.a_sum - (param.azi_end - param.azi_beg) - Angle((param.angles.size()) * 180, 0, 0);
+    }
+
+    template <RouteType __rt>
+    void CalculateAngleCorrections(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info)
+    {
+        auto &angles = param.angles;
+        auto &corrections = va.delta_a;
+
+        va.a_sum = std::accumulate(angles.begin(), angles.end(), Angle());
+        __CalculateFBeta(param, va, info);
+
+        double ang_seconds = TakePlace((-info.f_beta / angles.size()).Seconds(), 0);
+        std::fill(corrections.begin(), corrections.end(), Angle(ang_seconds));
+
+        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle());
+
+        if (va.da_sum == -info.f_beta)
         {
+            return;
         }
 
-        bool Adjust(int take_precision = 2) override
+        Angle dif = info.f_beta + va.da_sum;
+        RefineCorrections(corrections, dif, dif.Sign());
+        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle());
+    }
+
+    template <RouteType __rt>
+    void AdjustAngles(const TraverseParam<__rt> &param, TraverseVariable &va)
+    {
+        auto &angles = param.angles;
+        auto &corrections = va.delta_a;
+        auto &corrected_angles = va.a_c;
+        auto &azimuth = va.azi_c;
+        azimuth.at(0) = param.azi_beg;
+
+        for (auto i = 0uz; i != angles.size(); ++i)
         {
-            auto &a = param.angles;
-            auto n_a = a.size(), n_d = param.distances.size();
-
-            Angle a_sum = std::accumulate(a.begin(), a.end(), Angle());
-            info.f_beta = a_sum - (param.azi_end - param.azi_beg) - Angle(n_a * 180, 0, 0);
-            va.delta_a = -info.f_beta / n_a;
-
-            va.a_c.resize(n_a);
-            va.azi_c.resize(n_a + 1);
-            va.azi_c.at(0) = param.azi_beg;
-            for (auto i = 0uz; i != n_a; ++i)
-            {
-                va.a_c.at(i) = (a.at(i) + va.delta_a).NormStd();
-                va.azi_c.at(i + 1) = (va.a_c.at(i) + va.azi_c.at(i) - Utils::Angles::A180d).NormStd();
-            }
-            va.a_c_sum = std::accumulate(va.a_c.begin(), va.a_c.end(), Angle());
-
-            va.dx.resize(n_d);
-            va.ddx.resize(n_d);
-            va.dy.resize(n_d);
-            va.ddy.resize(n_d);
-            va.dx_c.resize(n_d);
-            va.dy_c.resize(n_d);
-            va.x.resize(n_a);
-            va.y.resize(n_a);
-            va.x.at(0) = param.x_beg;
-            va.y.at(0) = param.y_beg;
-
-            auto &dis = param.distances;
-            va.dis_sum = std::accumulate(dis.begin(), dis.end(), 0);
-
-            for (auto i = 0; i != n_d; ++i)
-            {
-                auto dis_i = dis.at(i);
-                auto azi_i = va.azi_c.at(i + 1);
-                va.dx.at(i) = TakePrecision(azi_i.Cos() * dis_i, take_precision);
-                va.dy.at(i) = TakePrecision(azi_i.Sin() * dis_i, take_precision);
-            }
-
-            va.dx_sum = TakePrecision(std::accumulate(va.dx.begin(), va.dx.end(), 0.0), take_precision);
-            va.dy_sum = TakePrecision(std::accumulate(va.dy.begin(), va.dy.end(), 0.0), take_precision);
-
-            info.f_x = va.dx_sum - (param.x_end - param.x_beg);
-            info.f_y = va.dy_sum - (param.y_end - param.y_beg);
-            info.f = TakePrecision(
-                gcem::sqrt(
-                    gcem::pow(info.f_x, 2) +
-                    gcem::pow(info.f_y, 2)),
-                take_precision);
-            info.K_inv = gcem::ceil(va.dis_sum / info.f);
-
-            for (auto i = 0; i != n_d; ++i)
-            {
-                auto &dis_i = param.distances.at(i);
-                va.ddx.at(i) = -info.f_x * dis_i / va.dis_sum;
-                va.ddy.at(i) = -info.f_y * dis_i / va.dis_sum;
-
-                va.dx_c.at(i) = TakePrecision(va.dx.at(i) + va.ddx.at(i), take_precision);
-                va.dy_c.at(i) = TakePrecision(va.dy.at(i) + va.ddy.at(i), take_precision);
-            }
-
-            va.dx_c_sum = std::accumulate(va.dx_c.begin(), va.dx_c.end(), 0.0);
-            va.dy_c_sum = std::accumulate(va.dy_c.begin(), va.dy_c.end(), 0.0);
-
-            for (auto i = 0; i != n_d; ++i)
-            {
-                va.x.at(i + 1) = TakePrecision(va.x.at(i) + va.dx_c.at(i), take_precision);
-                va.y.at(i + 1) = TakePrecision(va.y.at(i) + va.dy_c.at(i), take_precision);
-            }
-
-            return is_solved = true;
+            corrected_angles.at(i) = (angles.at(i) + corrections.at(i)).NormStd();
+            azimuth.at(i + 1) = (corrected_angles.at(i) + azimuth.at(i) - Utils::Angles::A180d).NormStd();
         }
-    };
 
-    std::string SolveResult(const TraverseParam &p, const TraverseVariable &v, const TraverseInfo &i)
+        va.a_c_sum = std::accumulate(corrected_angles.begin(), corrected_angles.end(), Angle());
+    }
+
+    template <RouteType __rt>
+    inline size_t __CorrespondingAzimuthIdx(size_t dis_i)
+    {
+        AGTB_UNKNOWN_TEMPLATE_PARAM();
+    }
+    template <>
+    inline size_t __CorrespondingAzimuthIdx<RouteType::Closed>(size_t dis_i)
+    {
+        return dis_i;
+    }
+    template <>
+    inline size_t __CorrespondingAzimuthIdx<RouteType::Connecting>(size_t dis_i)
+    {
+        return dis_i + 1;
+    }
+
+    template <RouteType __rt>
+    void __CalculateFxFyFK(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        AGTB_UNKNOWN_TEMPLATE_PARAM();
+    }
+    template <>
+    void __CalculateFxFyFK<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        info.f_x = va.dx_sum;
+        info.f_y = va.dy_sum;
+        info.f = TakePlace(gcem::sqrt(
+                               gcem::pow(info.f_x, 2) +
+                               gcem::pow(info.f_y, 2)),
+                           place);
+        info.K_inv = gcem::ceil(va.dis_sum / info.f);
+    }
+    template <>
+    void __CalculateFxFyFK<RouteType::Connecting>(const TraverseParam<RouteType::Connecting> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        info.f_x = TakePlace(va.dx_sum - (param.x_end - param.x_beg), place);
+        info.f_y = TakePlace(va.dy_sum - (param.y_end - param.y_beg), place);
+        info.f = TakePlace(gcem::sqrt(
+                               gcem::pow(info.f_x, 2) +
+                               gcem::pow(info.f_y, 2)),
+                           place);
+        info.K_inv = gcem::ceil(va.dis_sum / info.f);
+    }
+
+    template <RouteType __rt>
+    void CalculateDeltaCoordinates(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        auto &distances = param.distances;
+        auto &azimuth = va.azi_c;
+        auto &dx = va.dx;
+        auto &dy = va.dy;
+
+        for (auto i = 0uz; i != distances.size(); ++i)
+        {
+            auto di = distances.at(i);
+            auto ai = azimuth.at(
+                __CorrespondingAzimuthIdx<__rt>(i));
+            dx.at(i) = TakePlace(ai.Cos() * di, place);
+            dy.at(i) = TakePlace(ai.Sin() * di, place);
+        }
+        va.dx_sum = TakePlace(
+            std::accumulate(dx.begin(), dx.end(), 0.0), place);
+        va.dy_sum = TakePlace(
+            std::accumulate(dy.begin(), dy.end(), 0.0), place);
+
+        va.dis_sum = std::accumulate(distances.begin(), distances.end(), 0.0);
+        __CalculateFxFyFK<__rt>(param, va, info, place);
+    }
+
+    template <RouteType __rt>
+    void CalculateDeltaCoordinateCorrections(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        auto &distances = param.distances;
+        auto &ddx = va.ddx;
+        auto &ddy = va.ddy;
+
+        for (auto i = 0uz; i != distances.size(); ++i)
+        {
+            auto dis_i = distances.at(i);
+            ddx.at(i) = TakePlace(-info.f_x * dis_i / va.dis_sum, place);
+            ddy.at(i) = TakePlace(-info.f_y * dis_i / va.dis_sum, place);
+        }
+
+        va.ddx_sum = std::accumulate(ddx.begin(), ddx.end(), 0.0);
+        va.ddy_sum = std::accumulate(ddy.begin(), ddy.end(), 0.0);
+
+        if (!ApproxEq(va.ddx_sum, -info.f_x))
+        {
+            auto dif = va.ddx_sum + info.f_x;
+            auto idx = RefineCorrections(va.ddx, dif, std::signbit(dif));
+            ddx.at(idx) = TakePlace(ddx.at(idx), place);
+        }
+
+        if (!ApproxEq(va.ddy_sum, -info.f_y))
+        {
+            auto dif = va.ddy_sum + info.f_y;
+            auto idx = RefineCorrections(va.ddy, dif, std::signbit(dif));
+            ddy.at(idx) = TakePlace(ddy.at(idx), place);
+        }
+    }
+
+    template <RouteType __rt>
+    void AdjustCoordinates(const TraverseParam<__rt> &param, TraverseVariable &va, int place)
+    {
+        auto &dx = va.dx;
+        auto &dy = va.dy;
+        auto &ddx = va.ddx;
+        auto &ddy = va.ddy;
+        auto &dx_c = va.dx_c;
+        auto &dy_c = va.dy_c;
+        auto &x = va.x;
+        auto &y = va.y;
+        x.at(0) = param.x_beg;
+        y.at(0) = param.y_beg;
+
+        for (auto i = 0uz; i != dx.size(); ++i)
+        {
+            dx_c.at(i) = TakePlace(dx.at(i) + ddx.at(i), place);
+            dy_c.at(i) = TakePlace(dy.at(i) + ddy.at(i), place);
+        }
+        va.dx_c_sum = std::accumulate(dx_c.begin(), dx_c.end(), 0.0);
+        va.dy_c_sum = std::accumulate(dy_c.begin(), dy_c.end(), 0.0);
+
+        for (auto i = 0uz; i != dx.size(); ++i)
+        {
+            x.at(i + 1) = TakePlace(x.at(i) + dx_c.at(i), place);
+            y.at(i + 1) = TakePlace(y.at(i) + dy_c.at(i), place);
+        }
+    }
+
+    template <RouteType __rt>
+    TraverseAdjustResult Adjust(const TraverseParam<__rt> &param, int place)
+    {
+        TraverseVariable variable{};
+        TraverseInfo info{};
+
+        InitTraverseVariableSizeFromParam(param, variable);
+
+        CalculateAngleCorrections(param, variable, info);
+        AdjustAngles(param, variable);
+
+        CalculateDeltaCoordinates(param, variable, info, place);
+        CalculateDeltaCoordinateCorrections(param, variable, info, place);
+        AdjustCoordinates(param, variable, place);
+
+        return {variable, info};
+    }
+
+    template <RouteType __rt>
+    std::string TraverseAdjustTable(const TraverseParam<__rt> &p, const TraverseVariable &v, const TraverseInfo &i)
     {
         std::string sb{};
         auto sbb = std::back_inserter(sb);
         std::format_to(sbb, "{}\n{}\n{}\n", p.ToString(), v.ToString(), i.ToString());
         return sb;
     }
-
-    template <typename T>
-    concept TraverseSolverConcept = requires(T t) {
-        { t.Info() } -> std::convertible_to<TraverseInfo>;
-        { t.Variable() } -> std::convertible_to<TraverseVariable>;
-        { t.Param() } -> std::convertible_to<TraverseParam>;
-    };
-
-    template <TraverseSolverConcept solver>
-    std::string SolveResultOf(const solver &s)
+    template <RouteType __rt>
+    std::string TraverseAdjustTable(const TraverseParam<__rt> &p, const TraverseAdjustResult &r)
     {
-        return SolveResult(s.Param(), s.Variable(), s.Info());
+        std::string sb{};
+        auto sbb = std::back_inserter(sb);
+        std::format_to(sbb, "{}\n{}\n{}\n", p.ToString(), r.variable.ToString(), r.info.ToString());
+        return sb;
     }
 } // namespace Traverse
+
+using Traverse::Adjust;
+using Traverse::TraverseAdjustResult;
+using Traverse::TraverseAdjustTable;
+using Traverse::TraverseInfo;
+using Traverse::TraverseParam;
+using Traverse::TraverseVariable;
 
 AGTB_ADJUSTMENT_END
 
