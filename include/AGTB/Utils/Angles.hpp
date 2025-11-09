@@ -185,10 +185,23 @@ namespace Angles
         {
             return gcem::tan(Rad());
         }
+        constexpr double Sign() const noexcept
+        {
+            return seconds < 0;
+        }
+        constexpr double Abs() const noexcept
+        {
+            return gcem::abs(Rad());
+        }
 
         constexpr auto operator<=>(const Angle &rhs) const
         {
-            return std::strong_order(this->seconds, rhs.seconds);
+            return seconds <=> rhs.seconds;
+        }
+
+        constexpr bool operator==(const Angle &rhs) const
+        {
+            return std::abs(seconds - rhs.seconds) < std::numeric_limits<double>::epsilon();
         }
 
         Angle NormStd()

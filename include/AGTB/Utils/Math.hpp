@@ -1,0 +1,54 @@
+#ifndef __AGTB_UTILS_MATH_HPP__
+#define __AGTB_UTILS_MATH_HPP__
+
+#include "../details/Macros.hpp"
+#include <cmath>
+#include <limits>
+#include "gcem.hpp"
+
+AGTB_BEGIN
+
+constexpr bool ApproxEq(double x, double y)
+{
+    return gcem::abs(x - y) < std::numeric_limits<double>::epsilon();
+}
+
+constexpr double Round(double x)
+{
+    double int_part;
+    double frac_part = std::modf(x, &int_part);
+
+    if (ApproxEq(frac_part, 0.5))
+    {
+        if (ApproxEq(gcem::fmod(int_part, 2), 0))
+        {
+            return int_part;
+        }
+        else
+        {
+            return int_part + (x >= 0 ? 1 : -1);
+        }
+    }
+    else if (gcem::abs(frac_part) < 0.5)
+    {
+        return int_part;
+    }
+    else if (gcem::abs(frac_part) > 0.5)
+    {
+        return int_part + (x >= 0 ? 1 : -1);
+    }
+}
+
+constexpr double TakePlace(double x, int p)
+{
+    if (p == 0)
+    {
+        return Round(x);
+    }
+    double scale = gcem::pow(10, p);
+    return Round(x * scale) / scale;
+}
+
+AGTB_END
+
+#endif
