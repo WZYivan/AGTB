@@ -24,12 +24,12 @@ namespace Elevation
             auto sbb = std::back_inserter(sb);
 
             std::format_to(sbb, "{:=^100}\n", " ElevationParam ");
-            std::format_to(sbb, "{:=^50}\n", " distances (km) ");
+            std::format_to(sbb, "{:-^50}\n", " distances (km) ");
             for (auto &e : distances)
             {
                 std::format_to(sbb, "{} ", e);
             }
-            std::format_to(sbb, "\n{:=^50}\n", " Delta Height (m) ");
+            std::format_to(sbb, "\n{:-^50}\n", " Delta Height (m) ");
             for (auto &e : h)
             {
                 std::format_to(sbb, "{} ", e);
@@ -54,22 +54,22 @@ namespace Elevation
             auto sbb = std::back_inserter(sb);
 
             std::format_to(sbb, "{:=^100}\n", " ElevationVariable ");
-            std::format_to(sbb, "{:=^50}\n", " Delta Height Correction (m) ");
+            std::format_to(sbb, "{:-^50}\n", " Delta Height Correction (m) ");
             for (auto &e : dh)
             {
                 std::format_to(sbb, "{} ", e);
             }
-            std::format_to(sbb, "\n{:=^50}\n", " Corrected Delta Height (m) ");
+            std::format_to(sbb, "\n{:-^50}\n", " Corrected Delta Height (m) ");
             for (auto &e : h_c)
             {
                 std::format_to(sbb, "{} ", e);
             }
-            std::format_to(sbb, "\n{:=^50}\n", " Height (m) ");
+            std::format_to(sbb, "\n{:-^50}\n", " Height (m) ");
             for (auto &e : H)
             {
                 std::format_to(sbb, "{} ", e);
             }
-            std::format_to(sbb, "\n{:=^50}\n", " Sum of ");
+            std::format_to(sbb, "\n{:-^50}\n", " Sum of ");
             std::format_to(sbb, " distances (km) = {}\n Delta Height (m) = {}\n Corrections (mm) = {}\n Corrected Delta Height (m) = {}",
                            dis_sum, h_sum, dh_sum, h_c_sum);
 
@@ -100,7 +100,7 @@ namespace Elevation
     };
 
     template <RouteType __rt>
-    std::string ElevationAdjustTable(const ElevationParam<__rt> &p, const ElevationVariable &v, const ElevationInfo &i)
+    std::string AdjustmentTable(const ElevationParam<__rt> &p, const ElevationVariable &v, const ElevationInfo &i)
     {
         std::string sb{};
         auto sbb = std::back_inserter(sb);
@@ -108,7 +108,7 @@ namespace Elevation
         return sb;
     }
     template <RouteType __rt>
-    std::string ElevationAdjustTable(const ElevationParam<__rt> &p, const ElevationAdjustResult &r)
+    std::string AdjustmentTable(const ElevationParam<__rt> &p, const ElevationAdjustResult &r)
     {
         std::string sb{};
         auto sbb = std::back_inserter(sb);
@@ -218,8 +218,8 @@ namespace Elevation
 }
 
 using Elevation::Adjust;
+using Elevation::AdjustmentTable;
 using Elevation::ElevationAdjustResult;
-using Elevation::ElevationAdjustTable;
 using Elevation::ElevationInfo;
 using Elevation::ElevationParam;
 using Elevation::ElevationVariable;

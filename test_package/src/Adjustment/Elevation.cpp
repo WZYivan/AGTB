@@ -9,7 +9,7 @@ int main()
         .h = {0.230, 0.260, -0.550, -0.450, 0.490},
         .H_beg = 12.000};
     aa::ElevationAdjustResult r1 = aa::Adjust(p1, 3);
-    std::println(">>> Closed \n{}", aa::ElevationAdjustTable(p1, r1));
+    std::println(">>> Closed \n{}", aa::AdjustmentTable(p1, r1));
 
     aa::ElevationParam<aa::RouteType::Connecting> p2{
         .distances = {1.6, 2.1, 1.7, 2.0},
@@ -17,5 +17,5 @@ int main()
         .H_beg = 45.286,
         .H_end = 49.579};
     aa::ElevationAdjustResult r2 = aa::Adjust(p2, 3);
-    std::println(">>> Connecting \n{}", aa::ElevationAdjustTable(p2, r2));
+    std::println(">>> Connecting \n{}", aa::AdjustmentTable(p2, r2));
 }

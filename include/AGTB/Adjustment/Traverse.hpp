@@ -397,7 +397,7 @@ namespace Traverse
     }
 
     template <RouteType __rt>
-    std::string TraverseAdjustTable(const TraverseParam<__rt> &p, const TraverseVariable &v, const TraverseInfo &i)
+    std::string AdjustmentTable(const TraverseParam<__rt> &p, const TraverseVariable &v, const TraverseInfo &i)
     {
         std::string sb{};
         auto sbb = std::back_inserter(sb);
@@ -405,7 +405,7 @@ namespace Traverse
         return sb;
     }
     template <RouteType __rt>
-    std::string TraverseAdjustTable(const TraverseParam<__rt> &p, const TraverseAdjustResult &r)
+    std::string AdjustmentTable(const TraverseParam<__rt> &p, const TraverseAdjustResult &r)
     {
         std::string sb{};
         auto sbb = std::back_inserter(sb);
@@ -415,8 +415,8 @@ namespace Traverse
 } // namespace Traverse
 
 using Traverse::Adjust;
+using Traverse::AdjustmentTable;
 using Traverse::TraverseAdjustResult;
-using Traverse::TraverseAdjustTable;
 using Traverse::TraverseInfo;
 using Traverse::TraverseParam;
 using Traverse::TraverseVariable;

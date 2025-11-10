@@ -14,7 +14,7 @@ int main()
         .x_beg = 506.32,
         .y_beg = 215.65};
     auto r1 = aa::Adjust(p1, 2);
-    std::println(">>> Closed:\n{}", aa::TraverseAdjustTable(p1, r1));
+    std::println(">>> Closed:\n{}", aa::AdjustmentTable(p1, r1));
 
     aa::TraverseParam<aa::RouteType::Connecting> p2{
         .distances = {225.85, 139.03, 172.57, 100.07, 102.48},
@@ -27,5 +27,5 @@ int main()
         .y_end = 1757.28};
     auto r2 = aa::Adjust(p2, 2);
 
-    std::println(">>> Connecting:\n{}", aa::TraverseAdjustTable(p2, r2));
+    std::println(">>> Connecting:\n{}", aa::AdjustmentTable(p2, r2));
 }
