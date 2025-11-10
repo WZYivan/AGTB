@@ -13,6 +13,7 @@
 #include "../details/Macros.hpp"
 #include "../IO/Eigen.hpp"
 #include "Base.hpp"
+#include "SpaceMath/CollinearityEquation.hpp"
 #include "../Linalg/NormalEquationMatrixInverse.hpp"
 #include "../Linalg/RotationMatrix.hpp"
 #include "../Linalg/CorrectionOlsSolve.hpp"
@@ -50,11 +51,11 @@ namespace SpaceResection
 
             std::ostringstream oss;
             oss << "New Photo:\n"
-                << photo.format(EigenIO::Fmt::python_style) << "\n"
+                << photo.format(IO::EigenFmt::python_style) << "\n"
                 << "Final Rotation:\n"
-                << rotate.format(EigenIO::Fmt::python_style) << "\n"
+                << rotate.format(IO::EigenFmt::python_style) << "\n"
                 << "Error Matrix:\n"
-                << sigma.format(EigenIO::Fmt::python_style) << "\n";
+                << sigma.format(IO::EigenFmt::python_style) << "\n";
             sb.append(oss.str());
 
             return sb;
@@ -117,45 +118,174 @@ namespace SpaceResection
 
     namespace details
     {
+        namespace unsupported
+        {
+            Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+            {
+                auto pc = transformed_photo.rows();
+                Matrix coefficient(pc * 2, 6);
+
+                const double &f = internal.f,
+                             &k = external.Kappa,
+                             &w = external.Omega;
+                const auto &a = rotate.row(0),
+                           &b = rotate.row(1),
+                           &c = rotate.row(2);
+                const double cosk = cos(k), sink = sin(k),
+                             cosw = cos(w), sinw = sin(w);
+
+                for (auto pi = 0uz; pi != pc; ++pi)
+                {
+                    const double
+                        &ZBar = transformed_obj(pi, 2),
+                        &dx = transformed_photo(pi, 0),
+                        &dy = transformed_photo(pi, 1);
+
+                    const double
+                        a11 = 1 / ZBar * (a(0) * f + a(2) * dx),
+                        a12 = 1 / ZBar * (b(0) * f + b(2) * dx),
+                        a13 = 1 / ZBar * (c(0) * f + c(2) * dx),
+                        a21 = 1 / ZBar * (a(1) * f + a(2) * dy),
+                        a22 = 1 / ZBar * (b(1) * f + b(2) * dy),
+                        a23 = 1 / ZBar * (c(1) * f + c(2) * dy),
+
+                        a14 = dy * sinw - (dx / f * (dx * cosk - dy * sink) + f * cosk) * cosw,
+                        a15 = -f * sink - dx / f * (dx * sink + dy * cosk),
+                        a16 = dy,
+                        a24 = -dx * sinw - (dy / f * (dx * cosk - dy * sink) - f * sink) * cosw,
+                        a25 = -f * cosk - dy / f * (dx * sink + dy * cosk),
+                        a26 = -dx;
+
+                    const auto &&l = 2 * pi;
+                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                }
+
+                return coefficient;
+            }
+
+            Matrix KappaOnly(const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+            {
+                auto pc = transformed_photo.rows();
+                Matrix coefficient(pc * 2, 6);
+
+                const double &f = internal.f,
+                             &m = internal.m,
+                             &k = external.Kappa;
+
+                const double cosk = cos(k), sink = sin(k),
+                             H = m * f;
+                const double a11 = -f / H * cosk,
+                             a12 = -f / H * sink,
+                             a21 = f / H * sink,
+                             a22 = -f / H * cosk;
+
+                for (auto pi = 0uz; pi != pc; ++pi)
+                {
+                    const double
+                        &dx = transformed_photo(pi, 0),
+                        &dy = transformed_photo(pi, 1);
+                    const double
+                        dxdx = f + pow(dx, 2) / f,
+                        dydy = f + pow(dy, 2) / f,
+                        dxdy = dx * dy / f;
+
+                    const double
+                        a13 = -dx / H,
+                        a23 = -dy / H,
+                        a14 = -dxdx * cosk + dxdy * sink,
+                        a15 = -dxdy * cosk - dxdx * sink,
+                        a16 = dy,
+                        a24 = -dxdy * cosk + dydy * sink,
+                        a25 = -dydy * cosk - dxdy * sink,
+                        a26 = -dx;
+
+                    const auto &&l = 2 * pi;
+                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                }
+
+                return coefficient;
+            }
+
+            Matrix NoAngles(const Matrix &transformed_photo, const InteriorOrientationElements &internal)
+            {
+                auto pc = transformed_photo.rows();
+                Matrix coefficient(pc * 2, 6);
+
+                const double &f = internal.f;
+                const double
+                    H = f * internal.m,
+                    a11 = -f / H,
+                    a12 = 0,
+                    a21 = 0,
+                    a22 = -f / H;
+                for (auto pi = 0uz; pi != pc; ++pi)
+                {
+                    const double
+                        &dx = transformed_photo(pi, 0),
+                        &dy = transformed_photo(pi, 1);
+                    const double
+                        dxdx = f + pow(dx, 2) / f,
+                        dydy = f + pow(dy, 2) / f,
+                        dxdy = dx * dy / f;
+
+                    const double
+                        a13 = -dx / H,
+                        a23 = -dy / H,
+                        a14 = -dxdx,
+                        a15 = -dxdy,
+                        &a16 = dy,
+                        &a24 = a15,
+                        a25 = -dydy,
+                        a26 = -dx;
+
+                    const auto &&l = 2 * pi;
+                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
+                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                }
+
+                return coefficient;
+            }
+        }
+
         Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
         {
             auto pc = transformed_photo.rows();
             Matrix coefficient(pc * 2, 6);
 
             const double &f = internal.f,
+                         &m = internal.m,
                          &k = external.Kappa,
                          &w = external.Omega;
             const auto &a = rotate.row(0),
                        &b = rotate.row(1),
                        &c = rotate.row(2);
-            const double cosk = cos(k), sink = sin(k),
-                         cosw = cos(w), sinw = sin(w);
+            double H = f * m;
+
+            CollinearityEquationCoefficientParam param{
+                .f = f,
+                .H = H,
+                .kappa = k,
+                .omega = w,
+                .rotate = rotate};
 
             for (auto pi = 0uz; pi != pc; ++pi)
             {
                 const double
-                    &ZBar = transformed_obj(pi, 2),
-                    &dx = transformed_photo(pi, 0),
-                    &dy = transformed_photo(pi, 1);
+                    &x = transformed_photo(pi, 0),
+                    &y = transformed_photo(pi, 1),
+                    &z = transformed_obj(pi, 2);
+                param.x = x;
+                param.y = y;
+                param.z = z;
 
-                const double
-                    a11 = 1 / ZBar * (a(0) * f + a(2) * dx),
-                    a12 = 1 / ZBar * (b(0) * f + b(2) * dx),
-                    a13 = 1 / ZBar * (c(0) * f + c(2) * dx),
-                    a21 = 1 / ZBar * (a(1) * f + a(2) * dy),
-                    a22 = 1 / ZBar * (b(1) * f + b(2) * dy),
-                    a23 = 1 / ZBar * (c(1) * f + c(2) * dy),
-
-                    a14 = dy * sinw - (dx / f * (dx * cosk - dy * sink) + f * cosk) * cosw,
-                    a15 = -f * sink - dx / f * (dx * sink + dy * cosk),
-                    a16 = dy,
-                    a24 = -dx * sinw - (dy / f * (dx * cosk - dy * sink) - f * sink) * cosw,
-                    a25 = -f * cosk - dy / f * (dx * sink + dy * cosk),
-                    a26 = -dx;
+                auto c =
+                    CalculateCoeff<CollinearityEquationOption::FullAngles>(param);
 
                 const auto &&l = 2 * pi;
-                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
             }
 
             return coefficient;
@@ -170,36 +300,25 @@ namespace SpaceResection
                          &m = internal.m,
                          &k = external.Kappa;
 
-            const double cosk = cos(k), sink = sin(k),
-                         H = m * f;
-            const double a11 = -f / H * cosk,
-                         a12 = -f / H * sink,
-                         a21 = f / H * sink,
-                         a22 = -f / H * cosk;
-
+            double H = f * m;
+            CollinearityEquationCoefficientParam param{
+                .f = f,
+                .H = H,
+                .kappa = k};
             for (auto pi = 0uz; pi != pc; ++pi)
             {
                 const double
-                    &dx = transformed_photo(pi, 0),
-                    &dy = transformed_photo(pi, 1);
-                const double
-                    dxdx = f + pow(dx, 2) / f,
-                    dydy = f + pow(dy, 2) / f,
-                    dxdy = dx * dy / f;
+                    &x = transformed_photo(pi, 0),
+                    &y = transformed_photo(pi, 1);
+                param.x = x;
+                param.y = y;
 
-                const double
-                    a13 = -dx / H,
-                    a23 = -dy / H,
-                    a14 = -dxdx * cosk + dxdy * sink,
-                    a15 = -dxdy * cosk - dxdx * sink,
-                    a16 = dy,
-                    a24 = -dxdy * cosk + dydy * sink,
-                    a25 = -dydy * cosk - dxdy * sink,
-                    a26 = -dx;
+                auto c =
+                    CalculateCoeff<CollinearityEquationOption::KappaOnly>(param);
 
                 const auto &&l = 2 * pi;
-                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
             }
 
             return coefficient;
@@ -211,35 +330,24 @@ namespace SpaceResection
             Matrix coefficient(pc * 2, 6);
 
             const double &f = internal.f;
-            const double
-                H = f * internal.m,
-                a11 = -f / H,
-                a12 = 0,
-                a21 = 0,
-                a22 = -f / H;
+            double H = f * internal.m;
+            CollinearityEquationCoefficientParam param{
+                .f = f,
+                .H = H};
             for (auto pi = 0uz; pi != pc; ++pi)
             {
                 const double
-                    &dx = transformed_photo(pi, 0),
-                    &dy = transformed_photo(pi, 1);
-                const double
-                    dxdx = f + pow(dx, 2) / f,
-                    dydy = f + pow(dy, 2) / f,
-                    dxdy = dx * dy / f;
+                    &x = transformed_photo(pi, 0),
+                    &y = transformed_photo(pi, 1);
+                param.x = x;
+                param.y = y;
 
-                const double
-                    a13 = -dx / H,
-                    a23 = -dy / H,
-                    a14 = -dxdx,
-                    a15 = -dxdy,
-                    &a16 = dy,
-                    &a24 = a15,
-                    a25 = -dydy,
-                    a26 = -dx;
+                auto c =
+                    CalculateCoeff<CollinearityEquationOption::NoAngles>(param);
 
                 const auto &&l = 2 * pi;
-                coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
+                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
             }
 
             return coefficient;
