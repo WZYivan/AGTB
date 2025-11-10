@@ -203,6 +203,14 @@ namespace Elevation
             std::accumulate(h_c.begin(), h_c.end(), 0.0), place);
     }
 
+    /**
+     * @brief Elevation adjustment.
+     *
+     * @tparam __rt
+     * @param param
+     * @param place
+     * @return ElevationAdjustResult
+     */
     template <RouteType __rt>
     ElevationAdjustResult Adjust(const ElevationParam<__rt> &param, int place)
     {

@@ -6,6 +6,15 @@
 
 AGTB_ADJUSTMENT_BEGIN
 
+/**
+ * @brief Refine corrections according to residual and its sign
+ *
+ * @tparam value_type
+ * @param vec std::vector of corrections
+ * @param dif residual
+ * @param dif_sign sign of residual. true -> ( dif <0 )
+ * @return size_t Index if refined correction.
+ */
 template <typename value_type>
 size_t RefineCorrections(std::vector<value_type> &vec, value_type dif, bool dif_sign) noexcept
 {

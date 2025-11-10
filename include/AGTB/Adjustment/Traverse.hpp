@@ -3,7 +3,6 @@
 
 #include "../details/Macros.hpp"
 #include "../Utils/Angles.hpp"
-#include "../Utils/Std.hpp"
 #include "Base.hpp"
 #include "RefineCorrection.hpp"
 
@@ -378,6 +377,14 @@ namespace Traverse
         }
     }
 
+    /**
+     * @brief Traverse adjustment.
+     *
+     * @tparam __rt
+     * @param param
+     * @param place precision
+     * @return TraverseAdjustResult
+     */
     template <RouteType __rt>
     TraverseAdjustResult Adjust(const TraverseParam<__rt> &param, int place)
     {
