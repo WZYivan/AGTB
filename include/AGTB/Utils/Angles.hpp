@@ -3,6 +3,7 @@
 
 #include "../details/Macros.hpp"
 #include "../Utils/Error.hpp"
+#include "../Utils/Std/CharConv.hpp"
 #include "Math.hpp"
 
 #include <gcem.hpp>
@@ -367,26 +368,27 @@ namespace Angles
                 std::string d_str = match[1].str(),
                             m_str = match[2].str(),
                             s_str = match[3].str();
-                auto [_dptr, d_ec] =
-                    std::from_chars(d_str.data(), d_str.data() + d_str.size(), d);
-                auto [_mptr, m_ec] =
-                    std::from_chars(m_str.data(), m_str.data() + m_str.size(), m);
-                auto [_sptr, s_ec] =
-                    std::from_chars(s_str.data(), s_str.data() + s_str.size(), s);
+                // auto [_dptr, d_ec] =
+                //     std::from_chars(d_str.data(), d_str.data() + d_str.size(), d);
+                // auto [_mptr, m_ec] =
+                //     std::from_chars(m_str.data(), m_str.data() + m_str.size(), m);
+                // auto [_sptr, s_ec] =
+                //     std::from_chars(s_str.data(), s_str.data() + s_str.size(), s);
+
+                if (
+                    !(Utils::FromString(d_str, d) &&
+                      Utils::FromString(m_str, m) &&
+                      Utils::FromString(s_str, s)))
+                {
+                    AGTB_THROW(std::invalid_argument, "Can't convert input str to double");
+                }
 
                 if (s_str.size() > 2)
                 {
                     s /= gcem::pow(10, s_str.size() - 2);
                 }
 
-                if (d_ec == std::errc{} && m_ec == std::errc{} && s_ec == std::errc{})
-                {
-                    return Angle(d, m, s);
-                }
-                else
-                {
-                    AGTB_THROW(std::invalid_argument, "Can't convert input str to double");
-                }
+                return Angle(d, m, s);
             }
             else
             {

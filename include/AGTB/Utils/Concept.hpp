@@ -17,10 +17,8 @@ concept InvokerConcept = requires(PT... p) {
     { T::Invoke(p...) } -> std::convertible_to<RT>;
 };
 
-// template <typename T, typename RT, typename... PT>
-// concept TemplateInvokerConcept = requires(PT... p) {
-//     { T::Invoke(p...) } -> std::convertible_to<RT>;
-// };
+template <typename T, typename... Tp>
+concept IsOneOf = (std::is_same_v<T, Tp> || ...);
 
 AGTB_UTILS_END
 
