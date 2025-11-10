@@ -38,7 +38,7 @@ namespace ContinuousRelativeOrientate
         InteriorOrientationElements in1, in2;
     };
 
-    struct ContinuousRelativeOrienteSolveResult
+    struct ContinuousRelativeOrienteResult
     {
         ContinuousRelativeOrientationElements cro;
         double m0;
@@ -53,7 +53,7 @@ namespace ContinuousRelativeOrientate
                            " Continuous Relative Oriente Result",
                            cro.ToString(), m0);
             std::ostringstream oss{};
-            oss << sigma.format(EigenIO::Fmt::python_style) << "\n";
+            oss << sigma.format(IO::EigenFmt::python_style) << "\n";
             sb.append(oss.str());
             return sb;
         }
@@ -127,7 +127,7 @@ namespace ContinuousRelativeOrientate
     }
 
     template <Linalg::LinalgOption opt = Linalg::LinalgOption::Cholesky>
-    ContinuousRelativeOrienteSolveResult Solve(const ContinuousRelativeOrienteParam &param, int max_loop = 50, double threshold = 3e-5)
+    ContinuousRelativeOrienteResult Solve(const ContinuousRelativeOrienteParam &param, int max_loop = 50, double threshold = 3e-5)
     {
         auto &xy1 = param.xy1, xy2 = param.xy2;
         auto &in1 = param.in1, in2 = param.in2;
@@ -137,7 +137,7 @@ namespace ContinuousRelativeOrientate
             AGTB_THROW(std::invalid_argument, "Input coordinate must have same count and larger than 5.");
         }
 
-        ContinuousRelativeOrienteSolveResult cro_res{
+        ContinuousRelativeOrienteResult cro_res{
             .cro = {
                 .Mu = 0,
                 .Nu = 0,
@@ -174,7 +174,7 @@ namespace ContinuousRelativeOrientate
 
 using ContinuousRelativeOrientate::ContinuousRelativeOrientationElements;
 using ContinuousRelativeOrientate::ContinuousRelativeOrienteParam;
-using ContinuousRelativeOrientate::ContinuousRelativeOrienteSolveResult;
+using ContinuousRelativeOrientate::ContinuousRelativeOrienteResult;
 using ContinuousRelativeOrientate::Solve;
 
 AGTB_PHOTOGRAMMETRY_END

@@ -15,14 +15,42 @@ namespace SpaceIntersection
             ext1,
             ext2;
         double x1, y1, f1, x2, y2, f2;
+
+        std::string ToString() const noexcept
+        {
+            std::string sb{};
+            auto sbb = std::back_inserter(sb);
+            std::format_to(sbb,
+                           "{:=^100}\n"
+                           "{:-^50}\n{}\n"
+                           "{:-^50}\n{}\n"
+                           "{:-^50}\n"
+                           " x1 = {}\n y1 = {}\n f1 = {}\n"
+                           "{:-^50}\n"
+                           "x2 = {}\n y2 = {}\n f2 = {}\n",
+                           " Space Intersection Param ",
+                           " Exterior Orientation Elements <1> ", ext1.ToString(),
+                           " Exterior Orientation Elements <2> ", ext2.ToString(),
+                           " Image Coordinate and f <1> ", x1, y1, f1,
+                           " Image Coordinate and f <2> ", x2, y2, f2);
+            return sb;
+        }
     };
 
-    struct SpaceIntersectionSolveResult
+    struct SpaceIntersectionResult
     {
         double X, Y, Z;
+
+        std::string ToString() const noexcept
+        {
+            return std::format("{:=^100}\n"
+                               " X = {}\n Y = {}\n Z = {}",
+                               " Space Intersection Solve Result",
+                               X, Y, Z);
+        }
     };
 
-    SpaceIntersectionSolveResult Solve(const SpaceIntersectionParam &p)
+    SpaceIntersectionResult Solve(const SpaceIntersectionParam &p)
     {
         Matrix image_space_coord_1(3, 1), image_space_coord_2(3, 1);
         image_space_coord_1 << p.x1, p.y1, -p.f1;
@@ -53,7 +81,7 @@ namespace SpaceIntersection
 
 using SpaceIntersection::Solve;
 using SpaceIntersection::SpaceIntersectionParam;
-using SpaceIntersection::SpaceIntersectionSolveResult;
+using SpaceIntersection::SpaceIntersectionResult;
 
 AGTB_PHOTOGRAMMETRY_END
 

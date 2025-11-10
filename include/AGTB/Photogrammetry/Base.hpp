@@ -12,6 +12,10 @@ AGTB_PHOTOGRAMMETRY_BEGIN
 
 using Linalg::Matrix;
 
+/**
+ * @brief Represent status of iterative solution in photogrammetry
+ *
+ */
 enum class IterativeSolutionInfo : size_t
 {
     Success,

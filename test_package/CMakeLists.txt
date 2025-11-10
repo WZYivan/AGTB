@@ -22,10 +22,10 @@ endfunction()
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 
-# create_new_executable(Photographic_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
+create_new_executable(Photographic_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
 # create_new_executable(Photographic_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")
 # create_new_executable(Photographic_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp")
 
-create_new_executable(Utils_Angle "src/Utils/Angles.cpp")
+# create_new_executable(Utils_Angle "src/Utils/Angles.cpp")
 # create_new_executable(Utils_String "src/Utils/String.cpp")
 

@@ -28,7 +28,8 @@ namespace SpaceResection
         InteriorOrientationElements interior;
         Matrix photo, object;
     };
-    struct SpaceResectionSolveResult
+
+    struct SpaceResectionResult
     {
         ExteriorOrientationElements external;
         Matrix rotate;
@@ -46,7 +47,7 @@ namespace SpaceResection
                            "{:=^100}\n"
                            "ExteriorOrientationElements:\n{}\n"
                            "Median Error:\n{}\n",
-                           " SpaceResectionSolveResult ",
+                           " SpaceResectionResult ",
                            external.ToString(), m0);
 
             std::ostringstream oss;
@@ -74,6 +75,14 @@ namespace SpaceResection
         }
     }
 
+    /**
+     * @brief Image space aux system -> Image space system
+     *
+     * @param rotate
+     * @param object
+     * @param external
+     * @return Matrix
+     */
     Matrix TransformToImageSpaceCoordinateSystem(const Matrix &rotate, const Matrix &object, const ExteriorOrientationElements &external)
     {
         auto pc = object.rows();
@@ -84,6 +93,13 @@ namespace SpaceResection
         return Linalg::CsRotateForward(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate); // ImgAux -> ImgSp : forward
     }
 
+    /**
+     * @brief Image space system -> Image plane system
+     *
+     * @param internal
+     * @param transformed_obj
+     * @return Matrix
+     */
     Matrix CalculateImagePlaneCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
     {
         Matrix trans_p(transformed_obj.rows(), 2);
@@ -109,146 +125,8 @@ namespace SpaceResection
         return residual;
     }
 
-    enum class SpaceResectionCoeffOption : size_t
-    {
-        FullAngles,
-        KappaOnly,
-        NoAngles
-    };
-
     namespace details
     {
-        namespace unsupported
-        {
-            Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
-            {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f,
-                             &k = external.Kappa,
-                             &w = external.Omega;
-                const auto &a = rotate.row(0),
-                           &b = rotate.row(1),
-                           &c = rotate.row(2);
-                const double cosk = cos(k), sink = sin(k),
-                             cosw = cos(w), sinw = sin(w);
-
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &ZBar = transformed_obj(pi, 2),
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-
-                    const double
-                        a11 = 1 / ZBar * (a(0) * f + a(2) * dx),
-                        a12 = 1 / ZBar * (b(0) * f + b(2) * dx),
-                        a13 = 1 / ZBar * (c(0) * f + c(2) * dx),
-                        a21 = 1 / ZBar * (a(1) * f + a(2) * dy),
-                        a22 = 1 / ZBar * (b(1) * f + b(2) * dy),
-                        a23 = 1 / ZBar * (c(1) * f + c(2) * dy),
-
-                        a14 = dy * sinw - (dx / f * (dx * cosk - dy * sink) + f * cosk) * cosw,
-                        a15 = -f * sink - dx / f * (dx * sink + dy * cosk),
-                        a16 = dy,
-                        a24 = -dx * sinw - (dy / f * (dx * cosk - dy * sink) - f * sink) * cosw,
-                        a25 = -f * cosk - dy / f * (dx * sink + dy * cosk),
-                        a26 = -dx;
-
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
-
-                return coefficient;
-            }
-
-            Matrix KappaOnly(const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
-            {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f,
-                             &m = internal.m,
-                             &k = external.Kappa;
-
-                const double cosk = cos(k), sink = sin(k),
-                             H = m * f;
-                const double a11 = -f / H * cosk,
-                             a12 = -f / H * sink,
-                             a21 = f / H * sink,
-                             a22 = -f / H * cosk;
-
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-                    const double
-                        dxdx = f + pow(dx, 2) / f,
-                        dydy = f + pow(dy, 2) / f,
-                        dxdy = dx * dy / f;
-
-                    const double
-                        a13 = -dx / H,
-                        a23 = -dy / H,
-                        a14 = -dxdx * cosk + dxdy * sink,
-                        a15 = -dxdy * cosk - dxdx * sink,
-                        a16 = dy,
-                        a24 = -dxdy * cosk + dydy * sink,
-                        a25 = -dydy * cosk - dxdy * sink,
-                        a26 = -dx;
-
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
-
-                return coefficient;
-            }
-
-            Matrix NoAngles(const Matrix &transformed_photo, const InteriorOrientationElements &internal)
-            {
-                auto pc = transformed_photo.rows();
-                Matrix coefficient(pc * 2, 6);
-
-                const double &f = internal.f;
-                const double
-                    H = f * internal.m,
-                    a11 = -f / H,
-                    a12 = 0,
-                    a21 = 0,
-                    a22 = -f / H;
-                for (auto pi = 0uz; pi != pc; ++pi)
-                {
-                    const double
-                        &dx = transformed_photo(pi, 0),
-                        &dy = transformed_photo(pi, 1);
-                    const double
-                        dxdx = f + pow(dx, 2) / f,
-                        dydy = f + pow(dy, 2) / f,
-                        dxdy = dx * dy / f;
-
-                    const double
-                        a13 = -dx / H,
-                        a23 = -dy / H,
-                        a14 = -dxdx,
-                        a15 = -dxdy,
-                        &a16 = dy,
-                        &a24 = a15,
-                        a25 = -dydy,
-                        a26 = -dx;
-
-                    const auto &&l = 2 * pi;
-                    coefficient.row(l) << a11, a12, a13, a14, a15, a16;
-                    coefficient.row(l + 1) << a21, a22, a23, a24, a25, a26;
-                }
-
-                return coefficient;
-            }
-        }
-
         Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
         {
             auto pc = transformed_photo.rows();
@@ -263,7 +141,7 @@ namespace SpaceResection
                        &c = rotate.row(2);
             double H = f * m;
 
-            CollinearityEquationCoefficientParam param{
+            CollinearityEquationCoeffParam param{
                 .f = f,
                 .H = H,
                 .kappa = k,
@@ -281,7 +159,7 @@ namespace SpaceResection
                 param.z = z;
 
                 auto c =
-                    CalculateCoeff<CollinearityEquationOption::FullAngles>(param);
+                    CalculateCoeff<CollinearityEquationCoeffOption::FullAngles>(param);
 
                 const auto &&l = 2 * pi;
                 coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
@@ -301,7 +179,7 @@ namespace SpaceResection
                          &k = external.Kappa;
 
             double H = f * m;
-            CollinearityEquationCoefficientParam param{
+            CollinearityEquationCoeffParam param{
                 .f = f,
                 .H = H,
                 .kappa = k};
@@ -314,7 +192,7 @@ namespace SpaceResection
                 param.y = y;
 
                 auto c =
-                    CalculateCoeff<CollinearityEquationOption::KappaOnly>(param);
+                    CalculateCoeff<CollinearityEquationCoeffOption::KappaOnly>(param);
 
                 const auto &&l = 2 * pi;
                 coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
@@ -331,7 +209,7 @@ namespace SpaceResection
 
             const double &f = internal.f;
             double H = f * internal.m;
-            CollinearityEquationCoefficientParam param{
+            CollinearityEquationCoeffParam param{
                 .f = f,
                 .H = H};
             for (auto pi = 0uz; pi != pc; ++pi)
@@ -343,7 +221,7 @@ namespace SpaceResection
                 param.y = y;
 
                 auto c =
-                    CalculateCoeff<CollinearityEquationOption::NoAngles>(param);
+                    CalculateCoeff<CollinearityEquationCoeffOption::NoAngles>(param);
 
                 const auto &&l = 2 * pi;
                 coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
@@ -354,18 +232,18 @@ namespace SpaceResection
         }
     }
 
-    template <SpaceResectionCoeffOption opt>
+    template <CollinearityEquationCoeffOption __equation_opt>
     Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
     {
-        if constexpr (opt == SpaceResectionCoeffOption::FullAngles)
+        if constexpr (__equation_opt == CollinearityEquationCoeffOption::FullAngles)
         {
             return details::FullAngles(rotate, transformed_obj, transformed_photo, external, internal);
         }
-        else if constexpr (opt == SpaceResectionCoeffOption::KappaOnly)
+        else if constexpr (__equation_opt == CollinearityEquationCoeffOption::KappaOnly)
         {
             return details::KappaOnly(transformed_photo, external, internal);
         }
-        else if constexpr (opt == SpaceResectionCoeffOption::NoAngles)
+        else if constexpr (__equation_opt == CollinearityEquationCoeffOption::NoAngles)
         {
             return details::NoAngles(transformed_photo, internal);
         }
@@ -385,6 +263,14 @@ namespace SpaceResection
         external.Kappa += correction(5);
     }
 
+    /**
+     * @brief Check if angle corrections are converged
+     *
+     * @param correction
+     * @param threshold
+     * @return true
+     * @return false
+     */
     bool IsExternalElementsConverged(const Matrix &correction, const double threshold)
     {
         const std::array<std::reference_wrapper<const double>, 3> angles{
@@ -395,7 +281,7 @@ namespace SpaceResection
                                    { return abs(a) < threshold; });
     }
 
-    void CompleteResult(SpaceResectionSolveResult &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
+    void CompleteResult(SpaceResectionResult &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
@@ -411,8 +297,18 @@ namespace SpaceResection
         }
     }
 
-    template <Linalg::LinalgOption mtd = Linalg::LinalgOption::Cholesky, SpaceResectionCoeffOption opt = SpaceResectionCoeffOption::NoAngles>
-    SpaceResectionSolveResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
+    /**
+     * @brief Execute space resection algorithm.
+     *
+     * @tparam __linalg_opt Inverse method
+     * @tparam __equation_opt Coefficient method
+     * @param param
+     * @param max_loop
+     * @param threshold
+     * @return SpaceResectionResult
+     */
+    template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
+    SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
     {
         auto &internal = param.interior;
         auto &photo = param.photo;
@@ -423,7 +319,7 @@ namespace SpaceResection
             throw std::invalid_argument("Arguments are invalid");
         }
 
-        SpaceResectionSolveResult result{
+        SpaceResectionResult result{
             .external = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(internal, object),
             .info = IterativeSolutionInfo::NotConverged};
         ExteriorOrientationElements &external = result.external;
@@ -435,14 +331,14 @@ namespace SpaceResection
             Matrix transformed_obj = TransformToImageSpaceCoordinateSystem(rotate, object, external);
             Matrix transformed_photo = CalculateImagePlaneCoordinates(internal, transformed_obj);
             Matrix residual = ResidualMatrix(photo, transformed_photo);
-            Matrix coefficient = SpaceResectionCoefficient<opt>(rotate, transformed_obj, transformed_photo, external, internal);
+            Matrix coefficient = SpaceResectionCoefficient<__equation_opt>(rotate, transformed_obj, transformed_photo, external, internal);
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
 
             UpdateExternalElements(external, correction);
 
             if (IsExternalElementsConverged(correction, threshold))
             {
-                Matrix N = Linalg::NormalEquationMatrixInverse<mtd>(coefficient);
+                Matrix N = Linalg::NormalEquationMatrixInverse<__linalg_opt>(coefficient);
                 CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
                 result.info = IterativeSolutionInfo::Success;
                 break;
@@ -451,12 +347,47 @@ namespace SpaceResection
 
         return result;
     }
+
+    /**
+     * @brief Space resection template param pack
+     *
+     * @tparam __linalg_opt Inverse method
+     * @tparam __equation_opt Coefficient method
+     */
+    template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
+    struct SpaceResectionTParam
+    {
+        constexpr static Linalg::LinalgOption linalg_option = __linalg_opt;
+        constexpr static CollinearityEquationCoeffOption equation_option = __equation_opt;
+    };
+
+    template <typename T>
+    concept SpaceResectionTParamConcept = requires {
+        { T::linalg_option } -> std::convertible_to<Linalg::LinalgOption>;
+        { T::equation_option } -> std::convertible_to<CollinearityEquationCoeffOption>;
+    };
+
+    /**
+     * @brief Execute space resection algorithm.
+     *
+     * @tparam Tp Space resection template param pack
+     * @param param
+     * @param max_loop
+     * @param threshold
+     * @return SpaceResectionResult
+     */
+    template <SpaceResectionTParamConcept Tp>
+    SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
+    {
+        return Solve<Tp::linalg_option, Tp::equation_option>(param, max_loop, threshold);
+    }
+
 }
 
 using SpaceResection::Solve;
-using SpaceResection::SpaceResectionCoeffOption;
 using SpaceResection::SpaceResectionParam;
-using SpaceResection::SpaceResectionSolveResult;
+using SpaceResection::SpaceResectionResult;
+using SpaceResection::SpaceResectionTParam;
 
 AGTB_PHOTOGRAMMETRY_END
 

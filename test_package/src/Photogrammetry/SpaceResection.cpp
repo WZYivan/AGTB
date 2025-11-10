@@ -2,7 +2,7 @@
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
 
-namespace aei = AGTB::EigenIO;
+namespace ai = AGTB::IO;
 namespace ap = AGTB::Photogrammetry;
 namespace al = AGTB::Linalg;
 
@@ -16,12 +16,12 @@ int main()
         "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
 
     ap::Matrix photo(4, 2), obj(4, 3), all(4, 5);
-    aei::ReadEigen(iss, all);
+    ai::ReadEigen(iss, all);
     photo = all.leftCols(2),
     obj = all.rightCols(3);
 
-    aei::PrintEigen(photo, "photo"); // mm
-    aei::PrintEigen(obj, "obj");
+    ai::PrintEigen(photo, "photo"); // mm
+    ai::PrintEigen(obj, "obj");
     photo /= 1000; // mm -> m
 
     ap::InteriorOrientationElements internal{
@@ -34,7 +34,10 @@ int main()
         .interior = internal,
         .photo = std::move(photo),
         .object = std::move(obj)};
-    auto result = ap::Solve(p);
+
+    using spTp = ap::SpaceResectionTParam<al::LinalgOption::Cholesky, ap::CollinearityEquationCoeffOption::FullAngles>;
+    auto result = ap::Solve<spTp>(p);
+
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());
