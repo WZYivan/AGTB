@@ -13,7 +13,7 @@
 #include "../Utils/StreamReader.hpp"
 #include "../Utils/String.hpp"
 
-AGTB_BEGIN
+AGTB_IO_BEGIN
 
 namespace EigenIO
 {
@@ -167,6 +167,14 @@ namespace EigenIO
         }
     }
 
+    /**
+     * @brief Read eigen matrix from stream, each line is separated by `sep`
+     *
+     * @tparam em Eigen matrix type
+     * @param is
+     * @param mat
+     * @param sep
+     */
     template <EigenMatrix em>
     void ReadEigen(std::istream &is, em &mat, const std::string sep = ",")
     {
@@ -183,6 +191,15 @@ namespace EigenIO
             python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
     }
 
+    /**
+     * @brief Print eigen matrix in specified format with message
+     *
+     * @tparam em
+     * @param m
+     * @param msg
+     * @param fmt
+     * @param os
+     */
     template <EigenMatrix em>
     void PrintEigen(
         const em &m,
@@ -196,6 +213,10 @@ namespace EigenIO
 
 }
 
-AGTB_END
+using EigenIO::PrintEigen;
+using EigenIO::ReadEigen;
+namespace EigenFmt = EigenIO::Fmt;
+
+AGTB_IO_END
 
 #endif

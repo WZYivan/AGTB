@@ -208,6 +208,16 @@ void test_Predefined_Constants()
     std::cout << "  Predefined Constants OK\n\n";
 }
 
+void test_FromStringDMS()
+{
+    using AGTB::Utils::Angles::Angle;
+
+    std::cout << "Testing From String DMS...\n";
+
+    Angle dms = Angle::FromStringDMS("11.22333");
+    std::cout << dms.ToStringDMS(1) << std::endl;
+}
+
 int main()
 {
     std::cout << "Starting AGTB Angles Tests...\n\n";
@@ -220,6 +230,7 @@ int main()
     test_ToDMS();
     test_Normalization();
     test_Predefined_Constants();
+    test_FromStringDMS();
 
     std::cout << "All Tests Passed!\n";
 

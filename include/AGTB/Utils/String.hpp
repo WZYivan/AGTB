@@ -14,6 +14,12 @@
 
 AGTB_UTILS_BEGIN
 
+/**
+ * @brief Remove left whitespaces
+ *
+ * @param str
+ * @return std::string
+ */
 std::string LStrip(const std::string &str)
 {
     auto beg = str.begin(),
@@ -30,6 +36,13 @@ std::string LStrip(const std::string &str)
 
     return std::string(beg, end);
 }
+
+/**
+ * @brief Remove right whitespaces
+ *
+ * @param str
+ * @return std::string
+ */
 std::string RStrip(const std::string &str)
 {
     auto end = str.rbegin();
@@ -47,16 +60,39 @@ std::string RStrip(const std::string &str)
 
     return std::string(str.begin(), last_non_ws_pos + 1);
 }
+
+/**
+ * @brief Remove left and right white spaces
+ *
+ * @param str
+ * @return std::string
+ */
 std::string LRStrip(const std::string &str)
 {
     return LStrip(RStrip(str));
 }
+
+/**
+ * @brief Remove all whitespaces in string
+ *
+ * @param str
+ * @return std::string
+ */
 std::string SkipWhiteSpace(const std::string &str)
 {
     return str | std::views::filter([](const auto &chr)
                                     { return !isspace(chr); }) |
            std::ranges::to<std::string>();
 }
+
+/**
+ * @brief Split string to token, then convert token to value
+ *
+ * @tparam T value_type
+ * @param str
+ * @param sep separator to split string
+ * @return std::vector<T>
+ */
 template <typename T>
     requires std::is_arithmetic_v<T>
 std::vector<T> SplitThenConv(const std::string &str, const std::string &sep)

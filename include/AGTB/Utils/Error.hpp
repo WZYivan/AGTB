@@ -9,6 +9,10 @@
 
 AGTB_UTILS_BEGIN
 
+/**
+ * @brief Represent functions that exist but are not implemented.
+ *
+ */
 class not_implement_error : public std::runtime_error
 {
 public:
@@ -19,6 +23,10 @@ public:
         : std::runtime_error(message) {}
 };
 
+/**
+ * @brief Exception should only throw in constructor
+ *
+ */
 class constructor_error : public std::invalid_argument
 {
 public:
@@ -28,6 +36,10 @@ public:
         : std::invalid_argument(msg) {}
 };
 
+/**
+ * @brief Represent unsupported template parameter
+ *
+ */
 class unknown_template_parameter_error : public std::invalid_argument
 {
 public:

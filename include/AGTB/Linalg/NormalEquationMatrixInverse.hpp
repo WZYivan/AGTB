@@ -6,6 +6,13 @@
 
 AGTB_LINALG_BEGIN
 
+/**
+ * @brief To equation `Ax - L = V`, return (A.T * A).Inverse
+ *
+ * @tparam opt
+ * @param A
+ * @return Matrix
+ */
 template <LinalgOption opt>
 Matrix NormalEquationMatrixInverse(const Matrix &A)
 {

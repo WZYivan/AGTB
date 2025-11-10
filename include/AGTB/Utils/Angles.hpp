@@ -3,10 +3,14 @@
 
 #include "../details/Macros.hpp"
 #include "../Utils/Error.hpp"
+#include "Math.hpp"
 
 #include <gcem.hpp>
 #include <numbers>
 #include <tuple>
+#include <format>
+#include <regex>
+#include <charconv>
 
 AGTB_UTILS_BEGIN
 
@@ -16,11 +20,27 @@ namespace Angles
     constexpr double Rad2Deg = 180 / std::numbers::pi;
     constexpr double Pi = std::numbers::pi;
 
+    /**
+     * @brief min in [0,59], seconds in [0, 60)
+     *
+     * @param minutes
+     * @param seconds
+     * @return true
+     * @return false
+     */
     constexpr inline bool IsValidMS(double minutes, double seconds)
     {
         return !(minutes < 0 || minutes > 59 || seconds < 0 || seconds >= 60);
     }
 
+    /**
+     * @brief Convert dms to rad
+     *
+     * @param degrees
+     * @param minutes
+     * @param seconds
+     * @return constexpr double
+     */
     constexpr inline double FromDMS(double degrees = 0, double minutes = 0, double seconds = 0)
     {
         if (minutes < 0 || minutes > 59 || seconds < 0 || seconds >= 60)
@@ -40,15 +60,34 @@ namespace Angles
         rad_90d = FromDMS(90),
         rad_180d = FromDMS(180);
 
+    /**
+     * @brief Convert rad to degrees
+     *
+     * @param rad
+     * @return constexpr double
+     */
     constexpr inline double ToDegrees(double rad)
     {
         return rad * Rad2Deg;
     }
+
+    /**
+     * @brief Convert rad to seconds
+     *
+     * @param rad
+     * @return constexpr double
+     */
     constexpr inline double ToSeconds(double rad)
     {
         return ToDegrees(rad) * 3600.0;
     }
 
+    /**
+     * @brief Convert rad to signed dms
+     *
+     * @param rad
+     * @return constexpr auto
+     */
     constexpr inline auto ToSignDMS(double rad)
     {
         bool neg = gcem::signbit(rad);
@@ -61,6 +100,12 @@ namespace Angles
         return std::make_tuple(neg, degrees, minutes, seconds);
     }
 
+    /**
+     * @brief Convert rad to dms( auto signed)
+     *
+     * @param rad
+     * @return constexpr auto
+     */
     constexpr inline auto ToDMS(double rad)
     {
         auto [neg, d, m, s] = ToSignDMS(rad);
@@ -83,6 +128,12 @@ namespace Angles
         }
     }
 
+    /**
+     * @brief Normalize rad to (-pi, pi)
+     *
+     * @param rad
+     * @return constexpr double
+     */
     constexpr inline double NormalizedSym(double rad)
     {
         double result = gcem::fmod(rad + Pi, 2.0 * Pi);
@@ -93,6 +144,12 @@ namespace Angles
         return result - Pi;
     }
 
+    /**
+     * @brief Normalized rad to (0, 2*pi)
+     *
+     * @param rad
+     * @return constexpr double
+     */
     constexpr inline double NormalizedStd(double rad)
     {
         double result = gcem::fmod(rad, 2.0 * Pi);
@@ -103,6 +160,10 @@ namespace Angles
         return result;
     }
 
+    /**
+     * @brief Represent (d,m,s) angle
+     *
+     */
     class Angle
     {
     private:
@@ -124,6 +185,11 @@ namespace Angles
             : Angle(0, 0, 0)
         {
         }
+        /**
+         * @brief initializer_list must in size of 3
+         *
+         * @throw AGTB::Utils::constructor_error : initializer_list.size() != 3
+         */
         constexpr Angle(std::initializer_list<double> il)
             : Angle(
                   il.size() == 3 ? *il.begin() : (AGTB_THROW(Utils::constructor_error, "Initializer list size must be 3"), 0.0),
@@ -131,34 +197,72 @@ namespace Angles
                   il.size() == 3 ? *(il.begin() + 2) : 0.0)
         {
         }
+        /**
+         * @brief Construct from rad
+         *
+         * @param rad
+         * @return constexpr Angle
+         */
         static constexpr Angle FromRad(double rad)
         {
             return Angle(ToSeconds(rad));
         }
         ~Angle() = default;
 
+        /**
+         * @brief To string in format "{}d{}m{}s"
+         *
+         * @return std::string
+         */
         std::string ToString() const noexcept
         {
             auto [d, m, s] = DMS();
             return std::format("{}d{}m{}s", d, m, s);
         }
 
+        /**
+         * @brief To degrees(double)
+         *
+         * @return constexpr double
+         */
         constexpr inline double Degrees() const noexcept
         {
             return seconds / 3600;
         }
+        /**
+         * @brief To minutes(double)
+         *
+         * @return constexpr double
+         */
         constexpr inline double Minutes() const noexcept
         {
             return gcem::fmod(seconds, 3600.0) / 60;
         }
+        /**
+         * @brief To seconds(double)
+         *
+         * @return constexpr double
+         */
         constexpr inline double Seconds() const noexcept
         {
             return gcem::fmod(seconds, 60.0);
         }
+
+        /**
+         * @brief Same as Utils::ToDMS
+         *
+         * @return std::tuple<double, double, double>
+         */
         std::tuple<double, double, double> DMS() const noexcept
         {
             return ToDMS(Rad());
         }
+
+        /**
+         * @brief Convert this dms to rad
+         *
+         * @return constexpr double
+         */
         constexpr inline double Rad() const noexcept
         {
             return FromDMS(Degrees());
@@ -185,10 +289,17 @@ namespace Angles
         {
             return gcem::tan(Rad());
         }
+
+        /**
+         * @brief Sign of internal seconds(all) value
+         *
+         * @return constexpr double
+         */
         constexpr double Sign() const noexcept
         {
             return seconds < 0;
         }
+
         constexpr double Abs() const noexcept
         {
             return gcem::abs(Rad());
@@ -204,6 +315,11 @@ namespace Angles
             return std::abs(seconds - rhs.seconds) < std::numeric_limits<double>::epsilon();
         }
 
+        /**
+         * @brief Normalize to (0, 360)
+         *
+         * @return Angle
+         */
         Angle NormStd()
         {
             double s = gcem::fmod(seconds, d360);
@@ -217,6 +333,65 @@ namespace Angles
             }
 
             return Angle(s);
+        }
+
+        /**
+         * @brief To string in format "dd.mmss..."
+         *
+         * @param place 0 -> int
+         * @return std::string
+         */
+        std::string ToStringDMS(int place = 0) const noexcept
+        {
+            auto [d, m, s] = DMS();
+            int d_i = Round(d);
+            int m_i = Round(m);
+            s = TakePlace(s, place) * gcem::pow(10, place);
+            return std::format("{}.{}{}", d_i, m_i, s);
+        }
+
+        /**
+         * @brief construct from string "dd.mmss..."
+         *
+         * @return std::string
+         * @throw std::invalid_argument : regex match fail or convert string to double fail
+         */
+        static Angle FromStringDMS(std::string str)
+        {
+            std::regex pattern(R"(^([0-9]{1,3}).([0-9]{2})([0-9]{2,})$)");
+            std::smatch match;
+
+            if (std::regex_match(str, match, pattern))
+            {
+                double d, m, s;
+                std::string d_str = match[1].str(),
+                            m_str = match[2].str(),
+                            s_str = match[3].str();
+                auto [_dptr, d_ec] =
+                    std::from_chars(d_str.data(), d_str.data() + d_str.size(), d);
+                auto [_mptr, m_ec] =
+                    std::from_chars(m_str.data(), m_str.data() + m_str.size(), m);
+                auto [_sptr, s_ec] =
+                    std::from_chars(s_str.data(), s_str.data() + s_str.size(), s);
+
+                if (s_str.size() > 2)
+                {
+                    s /= gcem::pow(10, s_str.size() - 2);
+                }
+
+                if (d_ec == std::errc{} && m_ec == std::errc{} && s_ec == std::errc{})
+                {
+                    return Angle(d, m, s);
+                }
+                else
+                {
+                    AGTB_THROW(std::invalid_argument, "Can't convert input str to double");
+                }
+            }
+            else
+            {
+                AGTB_THROW(std::invalid_argument, R"(^([0-9]{1,3}).([0-9]{2})([0-9]{2,})$ : match failed)");
+            }
         }
     };
 

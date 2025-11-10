@@ -8,11 +8,25 @@
 
 AGTB_BEGIN
 
+/**
+ * @brief Abs difference less than epsilon
+ *
+ * @param x
+ * @param y
+ * @return true
+ * @return false
+ */
 constexpr bool ApproxEq(double x, double y)
 {
     return gcem::abs(x - y) < std::numeric_limits<double>::epsilon();
 }
 
+/**
+ * @brief ( > 0.5) -> 1; ( < 0.5) -> 0; ( == 0.5) -> 0(even) | 1(odd)
+ *
+ * @param x
+ * @return constexpr double
+ */
 constexpr double Round(double x)
 {
     double int_part;
@@ -39,6 +53,13 @@ constexpr double Round(double x)
     }
 }
 
+/**
+ * @brief Take specifed precision
+ *
+ * @param x
+ * @param p precision place
+ * @return constexpr double
+ */
 constexpr double TakePlace(double x, int p)
 {
     if (p == 0)

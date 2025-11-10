@@ -70,10 +70,26 @@
     }                   \
     AGTB_END
 
+#define AGTB_IO_BEGIN \
+    AGTB_BEGIN        \
+    namespace IO      \
+    {
+
+#define AGTB_IO_END \
+    }               \
+    AGTB_END
+
 AGTB_BEGIN
 
 namespace macros
 {
+    /**
+     * @brief Styled error message
+     *
+     * @param msg Context message
+     * @param location source location where you throw
+     * @return std::string AGTB style message
+     */
     std::string error_msg(const std::string_view msg, const std::source_location location)
     {
         return std::format("\n[ AGTB_THROW ]:\n> file: {}({}:{}) `{}`:\n> {}\n",
@@ -84,6 +100,13 @@ namespace macros
                            msg);
     }
 
+    /**
+     * @brief Noreturn throw exception
+     *
+     * @tparam error_type exception type with constructor(std::string)
+     * @param msg error_type init param
+     * @param location source location where you throw
+     */
     template <typename error_type>
     [[noreturn]] void msg_throw(const std::string_view msg, const std::source_location location)
     {

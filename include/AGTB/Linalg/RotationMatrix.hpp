@@ -7,6 +7,12 @@
 
 AGTB_LINALG_BEGIN
 
+/**
+ * @brief Rotate in axis X
+ *
+ * @param omega
+ * @return Matrix
+ */
 Matrix RotateX(double omega)
 {
     const double
@@ -19,6 +25,12 @@ Matrix RotateX(double omega)
     return std::move(Rw);
 }
 
+/**
+ * @brief Rotate in axis Y
+ *
+ * @param phi
+ * @return Matrix
+ */
 Matrix RotateY(double phi)
 {
     const double
@@ -31,6 +43,12 @@ Matrix RotateY(double phi)
     return std::move(Rp);
 }
 
+/**
+ * @brief Rotate in axis Z
+ *
+ * @param kappa
+ * @return Matrix
+ */
 Matrix RotateZ(double kappa)
 {
     const double
@@ -43,6 +61,13 @@ Matrix RotateZ(double kappa)
     return std::move(Rk);
 }
 
+/**
+ * @brief Uniform interface of Rotate<X | Y | Z>
+ *
+ * @tparam ax
+ * @param angle
+ * @return Matrix
+ */
 template <Axis ax>
 Matrix RotateByAxis(double angle)
 {

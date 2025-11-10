@@ -56,6 +56,10 @@ public:
     }
 };
 
+/**
+ * @brief Read any stream support std::getline
+ *
+ */
 class StreamReader
 {
 private:
@@ -64,6 +68,12 @@ private:
     std::string next_line;
 
 public:
+    /**
+     * @brief Check if stream is readable currently and store next line
+     *
+     * @return true
+     * @return false
+     */
     bool Ok()
     {
         if (std::getline(is, next_line))
@@ -80,6 +90,11 @@ public:
     {
         stream_ok = !is.eof();
     }
+    /**
+     * @brief Get stored line
+     *
+     * @return std::string
+     */
     std::string NextLine()
     {
         if (!next_used)

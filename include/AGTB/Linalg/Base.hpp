@@ -8,14 +8,26 @@
 
 AGTB_LINALG_BEGIN
 
+/**
+ * @brief Alias of Eigen::MatrixXd
+ *
+ */
 using Matrix = Eigen::MatrixXd;
 
+/**
+ * @brief Options to control Linalg functions
+ *
+ */
 enum class LinalgOption : size_t
 {
     Cholesky,
     SVD
 };
 
+/**
+ * @brief Represents axis
+ *
+ */
 enum class Axis : size_t
 {
     X,

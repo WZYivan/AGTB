@@ -5,6 +5,13 @@
 
 AGTB_LINALG_BEGIN
 
+/**
+ * @brief To equation `Ax - L = V`, x = (A.T * A).Inverse * (A.T * L). Also equals to QR solution of Linear system (A, L).
+ *
+ * @param A
+ * @param L
+ * @return Matrix
+ */
 Matrix CorrectionOlsSolve(const Matrix &A, const Matrix &L)
 {
     return A.colPivHouseholderQr().solve(L);
