@@ -125,132 +125,116 @@ namespace SpaceResection
         return residual;
     }
 
-    namespace details
-    {
-        Matrix FullAngles(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
-        {
-            auto pc = transformed_photo.rows();
-            Matrix coefficient(pc * 2, 6);
-
-            const double &f = internal.f,
-                         &m = internal.m,
-                         &k = external.Kappa,
-                         &w = external.Omega;
-            const auto &a = rotate.row(0),
-                       &b = rotate.row(1),
-                       &c = rotate.row(2);
-            double H = f * m;
-
-            CollinearityEquationCoeffParam param{
-                .f = f,
-                .H = H,
-                .kappa = k,
-                .omega = w,
-                .rotate = rotate};
-
-            for (auto pi = 0uz; pi != pc; ++pi)
-            {
-                const double
-                    &x = transformed_photo(pi, 0),
-                    &y = transformed_photo(pi, 1),
-                    &z = transformed_obj(pi, 2);
-                param.x = x;
-                param.y = y;
-                param.z = z;
-
-                auto c =
-                    CalculateCoeff<CollinearityEquationCoeffOption::FullAngles>(param);
-
-                const auto &&l = 2 * pi;
-                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
-                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
-            }
-
-            return coefficient;
-        }
-
-        Matrix KappaOnly(const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
-        {
-            auto pc = transformed_photo.rows();
-            Matrix coefficient(pc * 2, 6);
-
-            const double &f = internal.f,
-                         &m = internal.m,
-                         &k = external.Kappa;
-
-            double H = f * m;
-            CollinearityEquationCoeffParam param{
-                .f = f,
-                .H = H,
-                .kappa = k};
-            for (auto pi = 0uz; pi != pc; ++pi)
-            {
-                const double
-                    &x = transformed_photo(pi, 0),
-                    &y = transformed_photo(pi, 1);
-                param.x = x;
-                param.y = y;
-
-                auto c =
-                    CalculateCoeff<CollinearityEquationCoeffOption::KappaOnly>(param);
-
-                const auto &&l = 2 * pi;
-                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
-                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
-            }
-
-            return coefficient;
-        }
-
-        Matrix NoAngles(const Matrix &transformed_photo, const InteriorOrientationElements &internal)
-        {
-            auto pc = transformed_photo.rows();
-            Matrix coefficient(pc * 2, 6);
-
-            const double &f = internal.f;
-            double H = f * internal.m;
-            CollinearityEquationCoeffParam param{
-                .f = f,
-                .H = H};
-            for (auto pi = 0uz; pi != pc; ++pi)
-            {
-                const double
-                    &x = transformed_photo(pi, 0),
-                    &y = transformed_photo(pi, 1);
-                param.x = x;
-                param.y = y;
-
-                auto c =
-                    CalculateCoeff<CollinearityEquationCoeffOption::NoAngles>(param);
-
-                const auto &&l = 2 * pi;
-                coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
-                coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
-            }
-
-            return coefficient;
-        }
-    }
-
     template <CollinearityEquationCoeffOption __equation_opt>
     Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
     {
-        if constexpr (__equation_opt == CollinearityEquationCoeffOption::FullAngles)
+        AGTB_UNKNOWN_TEMPLATE_PARAM();
+    }
+
+    template <>
+    Matrix SpaceResectionCoefficient<CollinearityEquationCoeffOption::FullAngles>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    {
+        auto pc = transformed_photo.rows();
+        Matrix coefficient(pc * 2, 6);
+
+        const double &f = internal.f,
+                     &m = internal.m,
+                     &k = external.Kappa,
+                     &w = external.Omega;
+        const auto &a = rotate.row(0),
+                   &b = rotate.row(1),
+                   &c = rotate.row(2);
+        double H = f * m;
+
+        CollinearityEquationCoeffParam param{
+            .f = f,
+            .H = H,
+            .kappa = k,
+            .omega = w,
+            .rotate = rotate};
+
+        for (auto pi = 0uz; pi != pc; ++pi)
         {
-            return details::FullAngles(rotate, transformed_obj, transformed_photo, external, internal);
+            const double
+                &x = transformed_photo(pi, 0),
+                &y = transformed_photo(pi, 1),
+                &z = transformed_obj(pi, 2);
+            param.x = x;
+            param.y = y;
+            param.z = z;
+
+            auto c =
+                CalculateCoeff<CollinearityEquationCoeffOption::FullAngles>(param);
+
+            const auto &&l = 2 * pi;
+            coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+            coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
         }
-        else if constexpr (__equation_opt == CollinearityEquationCoeffOption::KappaOnly)
+
+        return coefficient;
+    }
+
+    template <>
+    Matrix SpaceResectionCoefficient<CollinearityEquationCoeffOption::KappaOnly>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    {
+        auto pc = transformed_photo.rows();
+        Matrix coefficient(pc * 2, 6);
+
+        const double &f = internal.f,
+                     &m = internal.m,
+                     &k = external.Kappa;
+
+        double H = f * m;
+        CollinearityEquationCoeffParam param{
+            .f = f,
+            .H = H,
+            .kappa = k};
+        for (auto pi = 0uz; pi != pc; ++pi)
         {
-            return details::KappaOnly(transformed_photo, external, internal);
+            const double
+                &x = transformed_photo(pi, 0),
+                &y = transformed_photo(pi, 1);
+            param.x = x;
+            param.y = y;
+
+            auto c =
+                CalculateCoeff<CollinearityEquationCoeffOption::KappaOnly>(param);
+
+            const auto &&l = 2 * pi;
+            coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+            coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
         }
-        else if constexpr (__equation_opt == CollinearityEquationCoeffOption::NoAngles)
+
+        return coefficient;
+    }
+    template <>
+    Matrix SpaceResectionCoefficient<CollinearityEquationCoeffOption::NoAngles>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    {
+        auto pc = transformed_photo.rows();
+        Matrix coefficient(pc * 2, 6);
+
+        const double &f = internal.f;
+        double H = f * internal.m;
+        CollinearityEquationCoeffParam param{
+            .f = f,
+            .H = H};
+        for (auto pi = 0uz; pi != pc; ++pi)
         {
-            return details::NoAngles(transformed_photo, internal);
+            const double
+                &x = transformed_photo(pi, 0),
+                &y = transformed_photo(pi, 1);
+            param.x = x;
+            param.y = y;
+
+            auto c =
+                CalculateCoeff<CollinearityEquationCoeffOption::NoAngles>(param);
+
+            const auto &&l = 2 * pi;
+            coefficient.row(l) << c.a11, c.a12, c.a13, c.a14, c.a15, c.a16;
+            coefficient.row(l + 1) << c.a21, c.a22, c.a23, c.a24, c.a25, c.a26;
         }
-        else
-        {
-            AGTB_UNKNOWN_TEMPLATE_PARAM();
-        }
+
+        return coefficient;
     }
 
     void UpdateExternalElements(ExteriorOrientationElements &external, const Matrix &correction)
@@ -381,7 +365,6 @@ namespace SpaceResection
     {
         return Solve<Tp::linalg_option, Tp::equation_option>(param, max_loop, threshold);
     }
-
 }
 
 using SpaceResection::Solve;
