@@ -1,5 +1,5 @@
-#ifndef __AGTB_COORDINATE_SYSTEM_TRANSFORM_HPP__
-#define __AGTB_COORDINATE_SYSTEM_TRANSFORM_HPP__
+#ifndef __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_HPP__
+#define __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_HPP__
 
 #include "Base.hpp"
 #include "RotationMatrix.hpp"
@@ -10,7 +10,7 @@ AGTB_LINALG_BEGIN
  * @brief AGTB internal macros to check input `xyz` size
  *
  */
-#define __AGTB_CheckIsCoordinateMatrixValid(__XYZ)                                                  \
+#define __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_CheckIsCoordinateMatrixValid(__XYZ)               \
     if (__XYZ.rows() == 0 || __XYZ.cols() != 3)                                                     \
     {                                                                                               \
         AGTB_THROW(std::invalid_argument, "Input matrix must have 3 columns refer to X, Y and Z."); \
@@ -44,7 +44,7 @@ Matrix CsRotationMatrix(double a1, double a2, double a3)
  */
 Matrix CsTranslate(const Matrix &XYZ, double x, double y, double z)
 {
-    __AGTB_CheckIsCoordinateMatrixValid(XYZ);
+    __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_CheckIsCoordinateMatrixValid(XYZ);
 
     Matrix translated(XYZ.rows(), XYZ.cols());
 
@@ -64,7 +64,7 @@ Matrix CsTranslate(const Matrix &XYZ, double x, double y, double z)
  */
 Matrix CsRotateInverse(const Matrix &XYZ, const Matrix &rotate)
 {
-    __AGTB_CheckIsCoordinateMatrixValid(XYZ);
+    __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_CheckIsCoordinateMatrixValid(XYZ);
     // new = R.T * ori -> (X, Y, Z).T => XYZ * R
     // ori = R * new -> (X, Y, Z).T => XYZ * R.T <--------
     // ori -> (X, Y, Z).T
@@ -80,7 +80,7 @@ Matrix CsRotateInverse(const Matrix &XYZ, const Matrix &rotate)
  */
 Matrix CsRotateForward(const Matrix &XYZ, const Matrix &rotate)
 {
-    __AGTB_CheckIsCoordinateMatrixValid(XYZ);
+    __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_CheckIsCoordinateMatrixValid(XYZ);
     // new = R.T * ori -> (X, Y, Z).T => XYZ * R <-------
     // ori = R * new -> (X, Y, Z).T => XYZ * R.T
     // ori -> (X, Y, Z).T
@@ -96,7 +96,7 @@ Matrix CsRotateForward(const Matrix &XYZ, const Matrix &rotate)
  */
 Matrix CsScale(const Matrix &XYZ, double scale)
 {
-    __AGTB_CheckIsCoordinateMatrixValid(XYZ);
+    __AGTB_LINALG_COORDINATE_SYSTEM_TRANSFORM_CheckIsCoordinateMatrixValid(XYZ);
 
     return (XYZ.array() * scale).matrix();
 }

@@ -7,7 +7,7 @@ namespace age = ag::Ellipsoid;
 namespace au = AGTB::Utils;
 
 template <ag::EllipsoidConcept e>
-void print_MN(ag::GeodeticLatitude B)
+void print_MN(ag::Latitude B)
 {
     auto [M, N] = ag::PrincipleCurvatureRadii<e, ag::EllipsoidBasedOption::General>(B);
     std::println("B(90 deg):\nM={}\nN={}\na={}\nc={}", M, N, e::a, e::c);
@@ -15,6 +15,6 @@ void print_MN(ag::GeodeticLatitude B)
 
 int main()
 {
-    ag::GeodeticLatitude B = au::Angles::FromDMS(90);
+    ag::Latitude B = au::Angles::FromDMS(90);
     print_MN<age::Krasovski>(B);
 }

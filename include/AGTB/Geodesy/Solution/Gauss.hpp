@@ -20,8 +20,8 @@ namespace Solution::Gauss
 {
     struct InverseParams
     {
-        GeodeticLatitude B1, B2;
-        GeodeticLongitude L1, L2;
+        Latitude B1, B2;
+        Longitude L1, L2;
     };
 
     struct InverseResult

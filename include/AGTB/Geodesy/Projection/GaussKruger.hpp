@@ -18,7 +18,7 @@ namespace Projection::GaussKruger
     };
 
     template <ZoneInterval zi>
-    GeodeticLongitude CenterLongitude(int zone)
+    Longitude CenterLongitude(int zone)
     {
         using Utils::Angles::FromDMS;
         if constexpr (zi == ZoneInterval::D6)
@@ -36,7 +36,7 @@ namespace Projection::GaussKruger
     }
 
     template <ZoneInterval zi>
-    int Zone(GeodeticLongitude l)
+    int Zone(Longitude l)
     {
         using Utils::Angles::FromDMS;
         if constexpr (zi == ZoneInterval::D6)
@@ -54,7 +54,7 @@ namespace Projection::GaussKruger
     }
 
     template <ZoneInterval zi>
-    GeodeticLongitude CenterLongitude(GeodeticLongitude l)
+    Longitude CenterLongitude(Longitude l)
     {
         return CenterLongitude<zi>(Zone<zi>(l));
     }
@@ -72,8 +72,8 @@ namespace Projection::GaussKruger
 
     struct InverseResult
     {
-        GeodeticLatitude B;
-        GeodeticLongitude L;
+        Latitude B;
+        Longitude L;
     };
 
     namespace Project
@@ -82,7 +82,7 @@ namespace Projection::GaussKruger
         struct Impl
         {
             template <ZoneInterval zi = ZoneInterval::D6>
-            static ForwardResult Forward(GeodeticLongitude L, GeodeticLatitude B)
+            static ForwardResult Forward(Longitude L, Latitude B)
             {
                 AGTB_NOT_IMPLEMENT();
             }
@@ -94,7 +94,7 @@ namespace Projection::GaussKruger
             static constexpr EllipsoidBasedOption Option = EllipsoidBasedOption::General;
 
             template <ZoneInterval zi = ZoneInterval::D6>
-            static ForwardResult Forward(GeodeticLongitude L, GeodeticLatitude B)
+            static ForwardResult Forward(Longitude L, Latitude B)
             {
                 using Utils::Angles::ToSeconds;
 
@@ -141,7 +141,7 @@ namespace Projection::GaussKruger
             template <ZoneInterval zi = ZoneInterval::D6>
             static InverseResult Inverse(double x, double y, int zone)
             {
-                GeodeticLatitude Bf = MeridianArcSolver<ellipsoid, Option>::Inverse(x, 1e-15);
+                Latitude Bf = MeridianArcSolver<ellipsoid, Option>::Inverse(x, 1e-15);
 
                 auto [Mf, Nf] = PrincipleCurvatureRadii<ellipsoid, Option>(Bf);
                 GeodeticLatitudeConstants<ellipsoid> glc(Bf);
@@ -167,7 +167,7 @@ namespace Projection::GaussKruger
                 double dl = 1.0 / (Nf * cosBf) * y -
                             1.0 / (6.0 * Nf3 * cosBf) * (1 + 2 * tf2 + nf2) * y3 +
                             1.0 / (120 * Nf5 * cosBf) * (5 + 28 * tf2 + 24 * tf4 + 6 * nf2 + 8 * nf2 * tf2) * y5;
-                GeodeticLongitude Lc = CenterLongitude<zi>(zone);
+                Longitude Lc = CenterLongitude<zi>(zone);
                 return {
                     .B = B,
                     .L = Lc.Value() + dl};

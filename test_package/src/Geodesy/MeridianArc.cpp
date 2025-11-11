@@ -9,7 +9,7 @@ namespace au = AGTB::Utils;
 namespace aua = au::Angles;
 
 template <ag::EllipsoidConcept e, ag::EllipsoidBasedOption opt>
-void test_meridian_length(ag::GeodeticLatitude B)
+void test_meridian_length(ag::Latitude B)
 {
     using Solver = ag::MeridianArcSolver<e, opt>;
     double arc_length = Solver::Forward(B);
@@ -19,7 +19,7 @@ void test_meridian_length(ag::GeodeticLatitude B)
 }
 
 template <ag::EllipsoidConcept e>
-void test_inverse_length_general(ag::GeodeticLatitude B_expected, double threshold)
+void test_inverse_length_general(ag::Latitude B_expected, double threshold)
 {
     using Solver = ag::MeridianArcSolver<e, ag::EllipsoidBasedOption::General>;
 
@@ -36,7 +36,7 @@ void test_inverse_length_general(ag::GeodeticLatitude B_expected, double thresho
 }
 
 template <ag::EllipsoidConcept e>
-void test_inverse_length_specified(ag::GeodeticLatitude B_expected, double threshold)
+void test_inverse_length_specified(ag::Latitude B_expected, double threshold)
 {
     using Solver = ag::MeridianArcSolver<e, ag::EllipsoidBasedOption::Specified>;
 
@@ -54,10 +54,10 @@ void test_inverse_length_specified(ag::GeodeticLatitude B_expected, double thres
 
 int main()
 {
-    ag::GeodeticLatitude B_45_deg = au::Angles::FromDMS(45.0);
-    ag::GeodeticLatitude B_0_deg = au::Angles::FromDMS(0.0);
-    ag::GeodeticLatitude B_90_deg = au::Angles::FromDMS(90.0);
-    ag::GeodeticLatitude B_30_deg = au::Angles::FromDMS(30.0);
+    ag::Latitude B_45_deg = au::Angles::FromDMS(45.0);
+    ag::Latitude B_0_deg = au::Angles::FromDMS(0.0);
+    ag::Latitude B_90_deg = au::Angles::FromDMS(90.0);
+    ag::Latitude B_30_deg = au::Angles::FromDMS(30.0);
 
     std::println("\n--- Testing Specified Meridian Arc Length Calculation ---");
 

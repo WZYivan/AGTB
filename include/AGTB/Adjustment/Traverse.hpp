@@ -192,7 +192,7 @@ namespace Traverse
     template <RouteType __rt>
     void __CalculateFBeta(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info)
     {
-        AGTB_UNKNOWN_TEMPLATE_PARAM();
+        AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
     void __CalculateFBeta<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info)
@@ -250,7 +250,7 @@ namespace Traverse
     template <RouteType __rt>
     inline size_t __CorrespondingAzimuthIdx(size_t dis_i)
     {
-        AGTB_UNKNOWN_TEMPLATE_PARAM();
+        AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
     inline size_t __CorrespondingAzimuthIdx<RouteType::Closed>(size_t dis_i)
@@ -266,7 +266,7 @@ namespace Traverse
     template <RouteType __rt>
     void __CalculateFxFyFK(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
     {
-        AGTB_UNKNOWN_TEMPLATE_PARAM();
+        AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
     void __CalculateFxFyFK<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info, int place)

@@ -96,16 +96,16 @@ template <std::floating_point T>
 class GeoLatLonBase
 {
 private:
-    T _value;
+    T _rad;
 
 public:
-    constexpr GeoLatLonBase(T rad) : _value(rad)
+    constexpr GeoLatLonBase(T rad) : _rad(rad)
     {
     }
     virtual ~GeoLatLonBase() = default;
     constexpr T Value() const noexcept
     {
-        return _value;
+        return _rad;
     }
     virtual constexpr bool IsValid() const noexcept = 0;
     constexpr operator T() const noexcept
@@ -127,7 +127,7 @@ public:
     }
 };
 
-class GeodeticLatitude : public GeoLatLonBase<double>
+class Latitude : public GeoLatLonBase<double>
 {
 public:
     virtual constexpr bool IsValid() const noexcept override
@@ -135,7 +135,7 @@ public:
         return gcem::abs(Value()) <= max;
     }
 
-    GeodeticLatitude(double rad) : GeoLatLonBase<double>(rad)
+    Latitude(double rad) : GeoLatLonBase<double>(rad)
     {
         if (!IsValid())
         {
@@ -147,7 +147,7 @@ private:
     constexpr static double max = Utils::Angles::FromDMS(90);
 };
 
-class GeodeticLongitude : public GeoLatLonBase<double>
+class Longitude : public GeoLatLonBase<double>
 {
 public:
     virtual constexpr bool IsValid() const noexcept override
@@ -155,7 +155,7 @@ public:
         return gcem::abs(Value()) <= max;
     }
 
-    GeodeticLongitude(double rad) : GeoLatLonBase<double>(rad)
+    Longitude(double rad) : GeoLatLonBase<double>(rad)
     {
         if (!IsValid())
         {
@@ -176,7 +176,7 @@ struct GeodeticLatitudeConstants
         nu_2,
         W,
         V;
-    constexpr GeodeticLatitudeConstants(GeodeticLatitude _B) : B(static_cast<double>(_B))
+    constexpr GeodeticLatitudeConstants(Latitude _B) : B(static_cast<double>(_B))
     {
         t = gcem::tan(B);
         nu_2 = ellipsoid::e2_2 * gcem::pow(gcem::cos(B), 2);

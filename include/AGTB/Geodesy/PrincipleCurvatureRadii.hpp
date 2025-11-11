@@ -115,7 +115,7 @@ namespace PrincipleCurvatureRadiiSolve
     template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
     struct Impl
     {
-        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        static PrincipleCurvatureRadiiResult Invoke(Latitude B)
         {
             AGTB_NOT_IMPLEMENT();
         }
@@ -124,7 +124,7 @@ namespace PrincipleCurvatureRadiiSolve
     template <EllipsoidConcept ellipsoid>
     struct Impl<ellipsoid, EllipsoidBasedOption::General>
     {
-        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        static PrincipleCurvatureRadiiResult Invoke(Latitude B)
         {
             double sinBp2 = gcem::pow(B.Sin(), 2),
                    a = ellipsoid::a,
@@ -141,7 +141,7 @@ namespace PrincipleCurvatureRadiiSolve
     template <EllipsoidConcept ellipsoid>
     struct Impl<ellipsoid, EllipsoidBasedOption::Specified>
     {
-        static PrincipleCurvatureRadiiResult Invoke(GeodeticLatitude B)
+        static PrincipleCurvatureRadiiResult Invoke(Latitude B)
         {
             using coeff = PrincipleCurvatureCoefficient<ellipsoid, EllipsoidBasedOption::Specified>;
             double
@@ -171,11 +171,11 @@ namespace PrincipleCurvatureRadiiSolve
 }
 
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
-    requires Utils::InvokerConcept<PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>, PrincipleCurvatureRadiiResult, GeodeticLatitude>
+    requires Utils::InvokerConcept<PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>, PrincipleCurvatureRadiiResult, Latitude>
 using PrincipleCurvatureRadiiSolver = PrincipleCurvatureRadiiSolve::Impl<ellipsoid, opt>;
 
 template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
-auto PrincipleCurvatureRadii(GeodeticLatitude B)
+auto PrincipleCurvatureRadii(Latitude B)
 {
     return PrincipleCurvatureRadiiSolver<ellipsoid, opt>::Invoke(B);
 }

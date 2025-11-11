@@ -125,11 +125,13 @@ AGTB_END
 
 #define AGTB_THROW(__error_type, __msg) __AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
 
+#define AGTB_STATIC_THROW(__msg) static_assert(false, __msg)
+
 #define AGTB_NOT_IMPLEMENT() \
     AGTB_THROW(__AGTB_UTILS not_implement_error, "AGTB::[ Not implement this ]")
 
-#define AGTB_UNKNOWN_TEMPLATE_PARAM() \
-    AGTB_THROW(__AGTB_UTILS unknown_template_parameter_error, "AGTB::[ Unknown template parameter ]")
+#define AGTB_TEMPLATE_NOT_SPECIFIED() \
+    AGTB_STATIC_THROW("This template must be specified to implement")
 
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 

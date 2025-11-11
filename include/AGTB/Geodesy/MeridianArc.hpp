@@ -98,7 +98,7 @@ AGTB_DEFINE_SPECIFIED_MeridianArcLengthCoefficient(
 template <typename T>
 concept MeridianArcSolveImplConcept = requires {
     { T::Forward(0.0) } -> std::convertible_to<double>;
-    { T::Inverse(0.0, 0.0) } -> std::convertible_to<GeodeticLatitude>;
+    { T::Inverse(0.0, 0.0) } -> std::convertible_to<Latitude>;
 };
 
 namespace MeridianArcSolve
@@ -111,7 +111,7 @@ namespace MeridianArcSolve
         using ellipsoid = _ellipsoid;
         constexpr static EllipsoidBasedOption option = _opt;
 
-        static GeodeticLatitude Inverse(double len_m, double iter_threshold)
+        static Latitude Inverse(double len_m, double iter_threshold)
         {
             using Utils::Angles::FromDMS;
             using Utils::Angles::ToSeconds;
@@ -134,12 +134,12 @@ namespace MeridianArcSolve
             return FromDMS(Bf_cur); // return rad
         }
 
-        static GeodeticLatitude Inverse(double len_m)
+        static Latitude Inverse(double len_m)
         {
             AGTB_NOT_IMPLEMENT();
         }
 
-        static double Forward(GeodeticLatitude _B)
+        static double Forward(Latitude _B)
         {
             AGTB_NOT_IMPLEMENT();
         }
@@ -153,7 +153,7 @@ namespace MeridianArcSolve
     template <EllipsoidConcept ellipsoid>
     struct Impl<ellipsoid, EllipsoidBasedOption::General> : public ImplBase<ellipsoid, EllipsoidBasedOption::General>
     {
-        static double Forward(GeodeticLatitude _B)
+        static double Forward(Latitude _B)
         {
             using coeff = MeridianArcLengthCoefficient<ellipsoid, EllipsoidBasedOption::General>;
             double a0 = coeff::a0,
@@ -175,7 +175,7 @@ namespace MeridianArcSolve
     template <>
     struct Impl<Ellipsoid::Krasovski, EllipsoidBasedOption::Specified> : public ImplBase<Ellipsoid::Krasovski, EllipsoidBasedOption::Specified>
     {
-        static double Forward(GeodeticLatitude _B)
+        static double Forward(Latitude _B)
         {
             double B = static_cast<double>(_B),
                    Bd = Utils::Angles::ToDegrees(B);
@@ -190,7 +190,7 @@ namespace MeridianArcSolve
     template <>
     struct Impl<Ellipsoid::IE1975, EllipsoidBasedOption::Specified> : public ImplBase<Ellipsoid::IE1975, EllipsoidBasedOption::Specified>
     {
-        static double Forward(GeodeticLatitude _B)
+        static double Forward(Latitude _B)
         {
             double B = static_cast<double>(_B),
                    Bd = Utils::Angles::ToDegrees(B);

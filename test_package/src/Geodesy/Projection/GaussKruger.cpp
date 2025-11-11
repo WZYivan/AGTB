@@ -19,7 +19,7 @@ void GK_Zone()
     std::println("{} : {}", 3, Zone<ZoneInterval::D6>(FromDMS(3)));
     std::println("{} : {}", 10, Zone<ZoneInterval::D6>(FromDMS(10)));
 
-    GeodeticLongitude l3(FromDMS(3)), l10(FromDMS(10));
+    Longitude l3(FromDMS(3)), l10(FromDMS(10));
 
     std::println("{} : {}", 3, Angle::FromRad(CenterLongitude<ZoneInterval::D6>(l3)).ToString());
     std::println("{} : {}", 10, Angle::FromRad(CenterLongitude<ZoneInterval::D6>(l10)).ToString());

@@ -128,7 +128,7 @@ namespace SpaceResection
     template <CollinearityEquationCoeffOption __equation_opt>
     Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
     {
-        AGTB_UNKNOWN_TEMPLATE_PARAM();
+        AGTB_TEMPLATE_NOT_SPECIFIED();
     }
 
     template <>
