@@ -311,9 +311,33 @@ namespace Angles
             return seconds <=> rhs.seconds;
         }
 
-        constexpr bool operator==(const Angle &rhs) const
+        constexpr bool operator==(const Angle &rhs) const noexcept
         {
-            return std::abs(seconds - rhs.seconds) < std::numeric_limits<double>::epsilon();
+            return ApproxEq(seconds, rhs.seconds);
+        }
+
+        constexpr bool operator!=(const Angle &rhs) const noexcept
+        {
+            return !(*this == rhs);
+        }
+
+        constexpr bool operator>(const Angle &rhs) const noexcept
+        {
+            return seconds > rhs.seconds;
+        }
+
+        constexpr bool operator<(const Angle &rhs) const noexcept
+        {
+            return seconds < rhs.seconds;
+        }
+        constexpr bool operator>=(const Angle &rhs) const noexcept
+        {
+            return seconds >= rhs.seconds;
+        }
+
+        constexpr bool operator<=(const Angle &rhs) const noexcept
+        {
+            return seconds <= rhs.seconds;
         }
 
         /**
@@ -347,7 +371,7 @@ namespace Angles
             auto [d, m, s] = DMS();
             int d_i = Round(d);
             int m_i = Round(m);
-            s = TakePlace(s, place) * gcem::pow(10, place);
+            s = AGTB::TakePlace(s, place) * gcem::pow(10, place);
             return std::format("{}.{}{}", d_i, m_i, s);
         }
 
@@ -368,12 +392,6 @@ namespace Angles
                 std::string d_str = match[1].str(),
                             m_str = match[2].str(),
                             s_str = match[3].str();
-                // auto [_dptr, d_ec] =
-                //     std::from_chars(d_str.data(), d_str.data() + d_str.size(), d);
-                // auto [_mptr, m_ec] =
-                //     std::from_chars(m_str.data(), m_str.data() + m_str.size(), m);
-                // auto [_sptr, s_ec] =
-                //     std::from_chars(s_str.data(), s_str.data() + s_str.size(), s);
 
                 if (
                     !(Utils::FromString(d_str, d) &&
@@ -394,6 +412,18 @@ namespace Angles
             {
                 AGTB_THROW(std::invalid_argument, R"(^([0-9]{1,3}).([0-9]{2})([0-9]{2,})$ : match failed)");
             }
+        }
+
+        constexpr Angle TakePlace(int place)
+        {
+            return Angle(AGTB::TakePlace(seconds, place));
+        }
+
+        static constexpr Angle MinUnit(int place)
+        {
+            return Angle(
+                AGTB::TakePlace(
+                    AGTB::MinUnit(place), place));
         }
     };
 

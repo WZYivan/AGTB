@@ -9,11 +9,15 @@ int main()
 {
     aa::TraverseParam<aa::RouteType::Closed> p1{
         .distances = {105.22, 80.18, 129.34, 78.16},
-        .angles = {{107, 48, 30}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
+        .angles = {{107, 48, 32}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
         .azi_beg = {125, 30, 0},
         .x_beg = 506.32,
         .y_beg = 215.65};
-    auto r1 = aa::Adjust(p1, 2);
+    for (Angle &a : p1.angles)
+    {
+        a = a.TakePlace(0);
+    }
+    auto r1 = aa::Adjust(p1, 2, 0);
     std::println(">>> Closed:\n{}", aa::AdjustmentTable(p1, r1));
 
     aa::TraverseParam<aa::RouteType::Connecting> p2{
@@ -25,7 +29,11 @@ int main()
         .y_beg = 1215.64,
         .x_end = 2166.70,
         .y_end = 1757.28};
-    auto r2 = aa::Adjust(p2, 2);
+    for (Angle &a : p2.angles)
+    {
+        a = a.TakePlace(0);
+    }
+    auto r2 = aa::Adjust(p2, 2, 0);
 
     std::println(">>> Connecting:\n{}", aa::AdjustmentTable(p2, r2));
 }

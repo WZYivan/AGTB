@@ -206,7 +206,7 @@ namespace Traverse
     }
 
     template <RouteType __rt>
-    void CalculateAngleCorrections(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info)
+    void CalculateAngleCorrections(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
     {
         auto &angles = param.angles;
         auto &corrections = va.delta_a;
@@ -217,7 +217,7 @@ namespace Traverse
         double ang_seconds = TakePlace((-info.f_beta / angles.size()).Seconds(), 0);
         std::fill(corrections.begin(), corrections.end(), Angle(ang_seconds));
 
-        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle());
+        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle()).TakePlace(place);
 
         if (va.da_sum == -info.f_beta)
         {
@@ -225,12 +225,12 @@ namespace Traverse
         }
 
         Angle dif = info.f_beta + va.da_sum;
-        RefineCorrections(corrections, dif, dif.Sign());
-        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle());
+        RefineCorrections(corrections, dif, dif.Sign(), 0);
+        va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle()).TakePlace(place);
     }
 
     template <RouteType __rt>
-    void AdjustAngles(const TraverseParam<__rt> &param, TraverseVariable &va)
+    void AdjustAngles(const TraverseParam<__rt> &param, TraverseVariable &va, int place)
     {
         auto &angles = param.angles;
         auto &corrections = va.delta_a;
@@ -244,7 +244,7 @@ namespace Traverse
             azimuth.at(i + 1) = (corrected_angles.at(i) + azimuth.at(i) - Utils::Angles::A180d).NormStd();
         }
 
-        va.a_c_sum = std::accumulate(corrected_angles.begin(), corrected_angles.end(), Angle());
+        va.a_c_sum = std::accumulate(corrected_angles.begin(), corrected_angles.end(), Angle()).TakePlace(place);
     }
 
     template <RouteType __rt>
@@ -336,15 +336,13 @@ namespace Traverse
         if (!ApproxEq(va.ddx_sum, -info.f_x))
         {
             auto dif = va.ddx_sum + info.f_x;
-            auto idx = RefineCorrections(va.ddx, dif, std::signbit(dif));
-            ddx.at(idx) = TakePlace(ddx.at(idx), place);
+            RefineCorrections(va.ddx, dif, std::signbit(dif), place);
         }
 
         if (!ApproxEq(va.ddy_sum, -info.f_y))
         {
             auto dif = va.ddy_sum + info.f_y;
-            auto idx = RefineCorrections(va.ddy, dif, std::signbit(dif));
-            ddy.at(idx) = TakePlace(ddy.at(idx), place);
+            RefineCorrections(va.ddy, dif, std::signbit(dif), place);
         }
     }
 
@@ -367,8 +365,10 @@ namespace Traverse
             dx_c.at(i) = TakePlace(dx.at(i) + ddx.at(i), place);
             dy_c.at(i) = TakePlace(dy.at(i) + ddy.at(i), place);
         }
-        va.dx_c_sum = std::accumulate(dx_c.begin(), dx_c.end(), 0.0);
-        va.dy_c_sum = std::accumulate(dy_c.begin(), dy_c.end(), 0.0);
+        va.dx_c_sum = TakePlace(
+            std::accumulate(dx_c.begin(), dx_c.end(), 0.0), place);
+        va.dy_c_sum = TakePlace(
+            std::accumulate(dy_c.begin(), dy_c.end(), 0.0), place);
 
         for (auto i = 0uz; i != dx.size(); ++i)
         {
@@ -386,19 +386,19 @@ namespace Traverse
      * @return TraverseAdjustResult
      */
     template <RouteType __rt>
-    TraverseAdjustResult Adjust(const TraverseParam<__rt> &param, int place)
+    TraverseAdjustResult Adjust(const TraverseParam<__rt> &param, int distance_place, int angle_place)
     {
         TraverseVariable variable{};
         TraverseInfo info{};
 
         InitTraverseVariableSizeFromParam(param, variable);
 
-        CalculateAngleCorrections(param, variable, info);
-        AdjustAngles(param, variable);
+        CalculateAngleCorrections(param, variable, info, angle_place);
+        AdjustAngles(param, variable, angle_place);
 
-        CalculateDeltaCoordinates(param, variable, info, place);
-        CalculateDeltaCoordinateCorrections(param, variable, info, place);
-        AdjustCoordinates(param, variable, place);
+        CalculateDeltaCoordinates(param, variable, info, distance_place);
+        CalculateDeltaCoordinateCorrections(param, variable, info, distance_place);
+        AdjustCoordinates(param, variable, distance_place);
 
         return {variable, info};
     }

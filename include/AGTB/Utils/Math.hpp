@@ -70,6 +70,22 @@ constexpr double TakePlace(double x, int p)
     return Round(x * scale) / scale;
 }
 
+/**
+ * @brief Minimum unit under specified precision
+ *
+ * @param place
+ * @return constexpr double
+ */
+constexpr double MinUnit(int place)
+{
+    if (place == 0)
+    {
+        return 1;
+    }
+
+    return gcem::pow(0.1, place);
+}
+
 AGTB_END
 
 #endif

@@ -178,8 +178,7 @@ namespace Elevation
         }
 
         double dif = info.f_h + va.dh_sum;
-        auto idx = RefineCorrections(dh, dif, std::signbit(dif));
-        dh.at(idx) = TakePlace(dh.at(idx), place);
+        RefineCorrections(dh, dif, std::signbit(dif), place);
         va.dh_sum = TakePlace(
             std::accumulate(dh.begin(), dh.end(), 0.0), place);
     }
