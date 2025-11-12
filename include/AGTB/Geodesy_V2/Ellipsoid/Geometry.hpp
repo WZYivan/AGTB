@@ -245,6 +245,76 @@ CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude B)
     return Impl::Invoke(B);
 }
 
+template <PrincipleCurvatureRadiiCoeffConcept Coeff>
+struct QuarterArcCoeff
+{
+private:
+    constexpr static double
+        m0 = Coeff::m0,
+        m2 = Coeff::m2,
+        m4 = Coeff::m4,
+        m6 = Coeff::m6,
+        m8 = Coeff::m8;
+
+public:
+    constexpr static double
+        a0 = (m0 +
+              m2 / 2.0 +
+              m4 * 3.0 / 8.0 +
+              m6 * 5.0 / 16.0 +
+              m8 * 35.0 / 128.0) *
+             Utils::Angles::Deg2Rad,
+        a2 = (m2 / 2.0 +
+              m4 / 2.0 +
+              m6 * 15.0 / 32.0 +
+              m8 * 7.0 / 16.0) /
+             2.0,
+        a4 = (m4 / 8.0 +
+              m6 * 3.0 / 16.0 +
+              m8 * 7.0 / 32.0) /
+             4.0,
+        a6 = (m6 / 32.0 +
+              m8 / 16.0) /
+             6.0;
+};
+
+template <>
+struct QuarterArcCoeff<
+    PrincipleCurvatureRadiiCoeff<EllipsoidType::Krasovski>>
+{
+    constexpr static double
+        a0 = 111'134.861,
+        a2 = 16'036.480,
+        a4 = 16.828,
+        a6 = 0.022;
+};
+
+template <>
+struct QuarterArcCoeff<
+    PrincipleCurvatureRadiiCoeff<EllipsoidType::IE1975>>
+{
+    constexpr static double
+        a0 = 111'133.005,
+        a2 = 16'038.528,
+        a4 = 16.833,
+        a6 = 0.022;
+};
+
+template <typename T>
+concept QuarterArcCoeffConcept = requires {
+    { T::a0 } -> std::convertible_to<double>;
+    { T::a2 } -> std::convertible_to<double>;
+    { T::a4 } -> std::convertible_to<double>;
+    { T::a6 } -> std::convertible_to<double>;
+};
+
+template <QuarterArcCoeffConcept Coeff>
+std::string ToString()
+{
+    return std::format(" a0 = {}\n a2 = {}\n a4 = {}\n a6 = {}",
+                       Coeff::a0, Coeff::a2, Coeff::a4, Coeff::a6);
+}
+
 namespace QuarterArcImpl
 {
     template <typename T>
@@ -255,45 +325,65 @@ namespace QuarterArcImpl
         { T::Inverse(len, iter_threshold) } -> std::convertible_to<Latitude>;
     };
 
-    template <EllipsoidGeometryConcept ellipsoid, EllipsoidAlgoOption opt>
-    struct ImplBase
+    template <PrincipleCurvatureRadiiCoeffConcept PCR>
+    struct Impl
     {
-        // TODO: Inverse(2)
+        static Latitude Inverse(double len, double iter_threshold)
+        {
+            using coeff = QuarterArcCoeff<PCR>;
 
-        static Latitude Inverse(double len_m)
+            using Utils::Angles::FromDMS;
+            using Utils::Angles::ToSeconds;
+
+            double Bf_cur = FromDMS(len / coeff::a0), Bf_next = Bf_cur, FB = 0; // rad
+
+            if (ApproxEq(Bf_cur, 0.0))
+            {
+                return Bf_cur;
+            }
+
+            do
+            {
+                Bf_cur = Bf_next;
+                FB =
+                    -coeff::a2 * gcem::sin(2 * Bf_cur) +
+                    coeff::a4 * gcem::sin(4 * Bf_cur) -
+                    coeff::a6 * gcem::sin(6 * Bf_cur);
+                Bf_next = FromDMS((len - FB) / coeff::a0); // deg -> rad
+            } while (Bf_next - Bf_cur >= iter_threshold);
+            return Bf_cur; // return rad
+        }
+
+        static Latitude Inverse(double len)
         {
             AGTB_NOT_IMPLEMENT();
         }
 
         static double Forward(Latitude _B)
         {
-            AGTB_NOT_IMPLEMENT();
+            using coeff = QuarterArcCoeff<PCR>;
+
+            double a0 = coeff::a0,
+                   a2 = coeff::a2,
+                   a4 = coeff::a4,
+                   a6 = coeff::a6;
+            double B = _B.Rad(),
+                   sin2B = gcem::sin(2 * B),
+                   sin4B = gcem::sin(4 * B),
+                   sin6B = gcem::sin(6 * B);
+            double X = a0 * Utils::Angles::ToDegrees(B) -
+                       a2 * sin2B +
+                       a4 * sin4B -
+                       a6 * sin6B;
+            return X;
         }
     };
 
-    template <EllipsoidGeometryConcept ellipsoid, EllipsoidAlgoOption opt>
-    struct Impl
-    {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
-    };
-
-    template <EllipsoidGeometryConcept ellipsoid>
-    struct Impl<ellipsoid, EllipsoidAlgoOption::General> : public ImplBase<Impl<ellipsoid, EllipsoidAlgoOption::General>>
-    {
-        // TODO: Forward. Inverse(1)
-    };
-
-    template <EllipsoidGeometryConcept ellipsoid>
-    struct Impl<ellipsoid, EllipsoidAlgoOption::Specified> : public ImplBase<Impl<ellipsoid, EllipsoidAlgoOption::Specified>>
-    {
-        // TODO: Forward. Inverse(1)
-    };
-
-    template <EllipsoidType type, EllipsoidAlgoOption opt>
+    template <EllipsoidType type>
     struct CheckImpl
     {
-        using __Geo = EllipsoidGeometry<type>;
-        using __Impl = Impl<__Geo, opt>;
+        using __PCR = PrincipleCurvatureRadiiCoeff<type>;
+        using __Impl = Impl<__PCR>;
 
         template <ImplConcept __Impl_P>
         struct DoCheck
@@ -303,8 +393,21 @@ namespace QuarterArcImpl
         using __Check = DoCheck<__Impl>;
     };
 
-    template <EllipsoidType type, EllipsoidAlgoOption opt>
-    using CheckedImpl = CheckImpl<type, opt>::__Impl;
+    template <EllipsoidType type>
+    using CheckedImpl = CheckImpl<type>::__Impl;
+}
+
+template <EllipsoidType type>
+double MeridianArcLength(Latitude B)
+{
+    using Impl = QuarterArcImpl::CheckedImpl<type>;
+    return Impl::Forward(B);
+}
+template <EllipsoidType type>
+Latitude MeridianArcBottom(double len, double iter_threshold)
+{
+    using Impl = QuarterArcImpl::CheckedImpl<type>;
+    return Impl::Inverse(len, iter_threshold);
 }
 
 AGTB_GEODESY_END

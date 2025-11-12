@@ -37,6 +37,11 @@ public:
     {
         return gcem::tan(Rad());
     }
+
+    Utils::Angles::Angle ToAngle()
+    {
+        return Utils::Angles::Angle::FromRad(Rad());
+    }
 };
 
 class Latitude : public GeoLatLonBase<double>

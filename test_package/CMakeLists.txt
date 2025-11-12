@@ -21,7 +21,8 @@ endfunction()
 # # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 # # create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
 
-create_new_executable(Geodesy_V2_Geometry "src/Geodesy_V2/Ellipsoid/Geometry.cpp")
+# create_new_executable(Geodesy_V2_Geometry "src/Geodesy_V2/Ellipsoid/Geometry.cpp")
+create_new_executable(Geodesy_V2_Projection_GaussKruger "src/Geodesy_V2/Projection/GaussKruger.cpp")
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 

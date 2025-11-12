@@ -38,8 +38,8 @@ int main()
     using aua::Angle;
 
     auto rf = projector::Forward(
-        aua::FromDMS(114, 0),
-        aua::FromDMS(30, 0));
+        aua::FromDMS(115, 0),
+        aua::FromDMS(45, 0));
 
     std::println("x = {}\ny = {}\nZoneY = {}\n", rf.x, rf.y, rf.ZoneY());
 
