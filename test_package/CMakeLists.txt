@@ -10,16 +10,18 @@ function(create_new_executable target_name source_file)
     target_link_libraries(${target_name} agtb::agtb)
 endfunction()
 
-create_new_executable(Draft "src/Draft.cpp")
+# create_new_executable(Draft "src/Draft.cpp")
 
 # create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
 
-# create_new_executable(Geodesy_Base "src/Geodesy/Base.cpp")
-# create_new_executable(Geodesy_PrincipleCurvatureRadii "src/Geodesy/PrincipleCurvatureRadii.cpp")
-# create_new_executable(Geodesy_MeridianArc "src/Geodesy/MeridianArc.cpp")
-# create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
-# create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
+# # create_new_executable(Geodesy_Base "src/Geodesy/Base.cpp")
+# # create_new_executable(Geodesy_PrincipleCurvatureRadii "src/Geodesy/PrincipleCurvatureRadii.cpp")
+# # create_new_executable(Geodesy_MeridianArc "src/Geodesy/MeridianArc.cpp")
+# # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
+# # create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
+
+create_new_executable(Geodesy_V2_Geometry "src/Geodesy_V2/Ellipsoid/Geometry.cpp")
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 

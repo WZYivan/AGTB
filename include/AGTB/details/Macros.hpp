@@ -133,6 +133,9 @@ AGTB_END
 #define AGTB_TEMPLATE_NOT_SPECIFIED() \
     AGTB_STATIC_THROW("This template must be specified to implement")
 
+#define AGTB_FILE_NOT_IMPLEMENT() \
+    AGTB_STATIC_THROW("This header is not implemented, you should not include this")
+
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
 #define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>
