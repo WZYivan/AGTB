@@ -160,7 +160,7 @@ namespace Projection::GaussKruger
 
                 using Utils::Angles::Angle;
 
-                double B = Bf +
+                double B = Bf -
                            tf / (2.0 * Mf * Nf) * y2 +
                            tf / (24 * Mf * Nf3) * (5 + 3 * tf2 + nf2 - 9 * nf2 * tf2) * y4 -
                            tf / (720 * Mf * Nf5) * (61 + 90 * tf2 + 45 * tf4) * y6;
