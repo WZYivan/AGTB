@@ -1,7 +1,7 @@
 #ifndef __AGTB_GEODESY_SOLUTION_BESSEL_HPP__
 #define __AGTB_GEODESY_SOLUTION_BESSEL_HPP__
 
-#include "../Base/GeoLatLon.hpp"
+#include "../Ellipsoid/Geometry.hpp"
 
 AGTB_GEODESY_BEGIN
 

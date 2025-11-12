@@ -1,7 +1,7 @@
 #ifndef __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 #define __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 
-#include "../Base/GeoLatLon.hpp"
+#include "../Ellipsoid/Geometry.hpp"
 
 AGTB_GEODESY_BEGIN
 
