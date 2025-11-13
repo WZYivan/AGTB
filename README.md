@@ -1,6 +1,13 @@
 # Ano Geomatics ToolBox
 
-**AGTB** is a header-only library containing a series of algorithms for **Geomatics Science**. Currently focused on photogrammetry, geodesy and adjustment.
+**AGTB** is a header-only library containing a series of algorithms for **Geomatics Science**.
+
+## Features
+
+- Easy to use: `AGTB` defines a tons of concept and compile time constraint and provides a series of function interface. I wish these design will make it easy to use and provide clear error message.
+- Easy to extend: `AGTB` use template specification to replace if-else statements. To extend, you should add something to the `enum`, and specify template for it, others will automatically search for your specification by template parameters. 
+- Compile time: Most algorithms in `AGTB` are implemented in template strongly constrained by concept. If you make something wrong, the compiler will give you clear information.
+- Error message: `AGTB` defines some macros to throw exceptions with styled information. It tells you which function throw exception and where it happens (`std::source_location`).
 
 ## Installation
 
@@ -8,6 +15,12 @@ This is a conan package. Use the following command to install:
 
 ```bash
 conan create .
+```
+
+## Version
+
+```python
+version = "0.0.5-1113"
 ```
 
 ## Dependence
@@ -19,12 +32,15 @@ conan create .
 
 ## Interface
 
-### Adjustment
+In `AGTB`, you can execute a family of tasks by a simply named function, such as `Project`, `Solve` or `Adjust`. Such function are a family of override template to handle different tasks. To specify your task, you should do like `using Tp = *TParam< ... >` and `*Param p = { ... }`.
 
-#### Traverse
+## Adjustment
 
-AGTB provides adjustment solver for closed or connecting traversing.
+`AGTB` provide interface `Adjust` to execute adjustment task for traversing or elevation. `Adjust` is a function template, it accepts `*Param<RouteType>` and returns `*AdjustResult`. You can convert them to `std::string` using `T::ToString()` or `AdjustmentTable(*AdjustResult)`. `RouteType` is an enum to specify route type.
 
+### Examples
+
+- Traverse:
 ```cpp
 #include <AGTB/Adjustment/Traverse.hpp>
 #include <AGTB/Utils/Angles.hpp> // for class `Angle`
@@ -37,12 +53,16 @@ int main()
 {
     aa::TraverseParam<aa::RouteType::Closed> p1{
         .distances = {105.22, 80.18, 129.34, 78.16},
-        .angles = {{107, 48, 30}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
+        .angles = {{107, 48, 32}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
         .azi_beg = {125, 30, 0},
         .x_beg = 506.32,
         .y_beg = 215.65};
-    auto r1 = aa::Adjust(p1, 2);
-    std::println(">>> Closed:\n{}", aa::TraverseAdjustTable(p1, r1));
+    for (Angle &a : p1.angles)
+    {
+        a = a.TakePlace(0);
+    }
+    auto r1 = aa::Adjust(p1, 2, 0);
+    std::println(">>> Closed:\n{}", aa::AdjustmentTable(p1, r1));
 
     aa::TraverseParam<aa::RouteType::Connecting> p2{
         .distances = {225.85, 139.03, 172.57, 100.07, 102.48},
@@ -53,14 +73,17 @@ int main()
         .y_beg = 1215.64,
         .x_end = 2166.70,
         .y_end = 1757.28};
-    auto r2 = aa::Adjust(p2, 2);
+    for (Angle &a : p2.angles)
+    {
+        a = a.TakePlace(0);
+    }
+    auto r2 = aa::Adjust(p2, 2, 0);
 
-    std::println(">>> Connecting:\n{}", aa::TraverseAdjustTable(p2, r2));
+    std::println(">>> Connecting:\n{}", aa::AdjustmentTable(p2, r2));
 }
 ```
 
-To elevation, AGTB provides similar API.
-
+- Elevation:
 ```cpp
 #include <AGTB/Adjustment/Elevation.hpp>
 #include <print>
@@ -73,7 +96,7 @@ int main()
         .h = {0.230, 0.260, -0.550, -0.450, 0.490},
         .H_beg = 12.000};
     aa::ElevationAdjustResult r1 = aa::Adjust(p1, 3);
-    std::println(">>> Closed \n{}", aa::ElevationAdjustTable(p1, r1));
+    std::println(">>> Closed \n{}", aa::AdjustmentTable(p1, r1));
 
     aa::ElevationParam<aa::RouteType::Connecting> p2{
         .distances = {1.6, 2.1, 1.7, 2.0},
@@ -81,149 +104,72 @@ int main()
         .H_beg = 45.286,
         .H_end = 49.579};
     aa::ElevationAdjustResult r2 = aa::Adjust(p2, 3);
-    std::println(">>> Connecting \n{}", aa::ElevationAdjustTable(p2, r2));
+    std::println(">>> Connecting \n{}", aa::AdjustmentTable(p2, r2));
 }
 ```
 
-### Geodesy
+## Geodesy (Incomplete)
 
-AGTB provides a series of implements for geodesy. Including solution, transform and some basic ellipsoid parameters.
+Currently, `AGTB` only provides interface for `GaussKruger Project`. But there are stills a tons of pre-defined coefficients and functions for further developing.
 
-#### Base (Ellipsoid)
+### Examples
 
-AGTB provides a series of constants to describe ellipsoid. You can also use AGTB macros define your ellipsoid and work with AGTB.
-
+- Project:
 ```cpp
-#include <AGTB/Geodesy/Base.hpp>
-#include <AGTB/Utils/Angles.hpp>
+#include <AGTB/Geodesy/Project.hpp>
 #include <print>
-#include <iostream>
-
-namespace ag = AGTB::Geodesy;
-namespace au = AGTB::Utils;
-
-template <ag::EllipsoidConcept E>
-void PE()
-{
-    std::println(
-        "\na={}\nb={}\nc={}\nalpha={}\ne1_2={}\ne2_2={}",
-        E::a, E::b, E::c, E::alpha, E::e1_2, E::e2_2);
-}
-
-AGTB_DEFINE_QUICK_ELLIPSOID(my_ellipsoid, 6378245.0, 6356863.018773047);
-
-template <ag::GeodeticLatitudeConstantsConcept L>
-void PL(L l)
-{
-    std::println(
-        "\nB={}\nt={}\ntau_2={}\nW={}\nV={}",
-        l.B, l.t, l.nu_2, l.W, l.V);
-}
-
-int main()
-{
-    using ag::Ellipsoid::Krasovski;
-
-    std::cout << "Krasovski" << std::endl;
-    PE<Krasovski>();
-
-    std::cout << "my ellipsoid" << std::endl;
-    PE<my_ellipsoid>();
-
-    std::cout << "Constants at B(45.0)" << std::endl;
-    PL(
-        ag::GeodeticLatitudeConstants<Krasovski>(
-            au::Angles::FromDMS(45)));
-}
-
-```
-
-To define an ellipsoid, you can do as below:
-```cpp
-AGTB_DEFINE_QUICK_ELLIPSOID(my_ellipsoid, a, b); // You only know basic parameters (a, b)
-AGTB_DEFINE_PRECISE_ELLIPSOID(my_ellipsoid, ...); // You know all parameters (a, b, c, alpha, e, e')
-```
-
-AGTB also provide basic lat lon.
-```cpp
-// in AGTB/Geodesy/Base.hpp
-
-class GeodeticLatitude;
-class GeodeticLongitude;
-```
-
-#### Meridian Arc Solution
-
-AGTB provide forward and inverse solution ofr meridian are length.
-```cpp
-#include <AGTB/Geodesy/MeridianArc.hpp>
-
-namespace ag = AGTB::Geodesy;
-namespace age = ag::Ellipsoid;
-using Solver = ag::MeridianArcSolver<age::Krasovski, ag::EllipsoidBasedOption::Specified>;
-
-double len = Solver::Forward(B);
-GeodeticLatitude  B = Solver::Inverse(len /* , threshold *for an iterative solution* */);
-```
-
-#### Principle Curvature Radii
-
-```cpp
-#include <AGTB/Geodesy/PrincipleCurvatureRadii.hpp>
-
-namespace ag = AGTB::Geodesy;
-namespace age = ag::Ellipsoid;
-auto [M, N] = ag::PrincipleCurvatureRadii<age::Krasovski, ag::EllipsoidBasedOption::Specified>(B);
-```
-
-#### Solution
-
-```TODO```
-
-#### Projection
-
-AGTB provides a series of projector for inverse and forward solution in specific projection. Now Gauss is available.
-
-```cpp
-#include "AGTB/Geodesy/Projection/GaussKruger.hpp"
-#include "AGTB/Utils/Angles.hpp"
 
 int main()
 {
     namespace ag = AGTB::Geodesy;
-    namespace agpg = ag::Projection::GaussKruger;
     namespace au = AGTB::Utils;
-    namespace aua = au::Angles;
+    using au::Angles::Angle;
 
-    using projector = agpg::Projector<ag::Ellipsoid::CGCS2000, ag::EllipsoidBasedOption::General>;
-    using aua::Angle;
+    using Tp = ag::GaussProjectTParam<ag::EllipsoidType::CGCS2000, ag::GaussZoneInterval::D6>;
 
-    auto rf = projector::Forward(
-        aua::FromDMS(114, 0),
-        aua::FromDMS(30, 0));
+    for (int i = 1; i != 6; ++i)
+    {
+        ag::Longitude
+            L_from(115, 0, 0);
+        ag::Latitude
+            B_from(15 * i, 0, 0);
 
-    std::println("x = {}\ny = {}\nZoneY = {}\n", rf.x, rf.y, rf.ZoneY());
+        Tp::GeoCoord geo_coord_from{
+            L_from,
+            B_from};
 
-    auto ri = projector::Inverse(rf.x, rf.y, rf.zone);
+        Tp::GaussCoord gauss_proj_coord =
+            ag::Project<Tp>(geo_coord_from);
 
-    std::println("\nB = {}\nL= {}", Angle::FromRad(ri.B).ToString(), Angle::FromRad(ri.L).ToString());
+        Tp::GeoCoord geo_coord_to =
+            ag::Project<Tp>(gauss_proj_coord);
+
+        std::println("B_from = {} L_from = {}",
+                     B_from.ToAngle().ToString(),
+                     L_from.ToAngle().ToString());
+        std::println("x = {} y = {} ZoneY = {}", gauss_proj_coord.x, gauss_proj_coord.y, gauss_proj_coord.ZoneY());
+        std::println("B_to = {} L_to = {}",
+                     geo_coord_to.B.ToAngle().ToString(),
+                     geo_coord_to.L.ToAngle().ToString());
+        std::println("B_dif = {} L_dif = {}\n",
+                     Angle::FromRad(geo_coord_to.B.Rad() - B_from.Rad()).ToString(),
+                     Angle::FromRad(geo_coord_to.L.Rad() - L_from.Rad()).ToString());
+    }
 }
 ```
 
-### Photogrammetry
+## Photogrammetry (Incomplete)
 
-To solution problems in photogrammetry, AGTB provides an uniform and linalg-option-based ```solve``` interface.
+Currently, `AGTB` only provides evaluated interface for `Space Resection`. Other tasks are implemented but not evaluated.
 
-#### Space Resection
-
-AGTB provides an Ordinary Least Squares (OLS) iterative optimization method for space resection with a pure functional interface.
-
+### Examples
+- Space Resection:
 ```cpp
 #include <AGTB/Photogrammetry/SpaceResection.hpp>
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
 
-namespace aei = AGTB::EigenIO;
+namespace ai = AGTB::IO;
 namespace ap = AGTB::Photogrammetry;
 namespace al = AGTB::Linalg;
 
@@ -237,12 +183,12 @@ int main()
         "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
 
     ap::Matrix photo(4, 2), obj(4, 3), all(4, 5);
-    aei::ReadEigen(iss, all);
+    ai::ReadEigen(iss, all);
     photo = all.leftCols(2),
     obj = all.rightCols(3);
 
-    aei::PrintEigen(photo, "photo"); // mm
-    aei::PrintEigen(obj, "obj");
+    ai::PrintEigen(photo, "photo"); // mm
+    ai::PrintEigen(obj, "obj");
     photo /= 1000; // mm -> m
 
     ap::InteriorOrientationElements internal{
@@ -255,7 +201,10 @@ int main()
         .interior = internal,
         .photo = std::move(photo),
         .object = std::move(obj)};
-    auto result = ap::Solve(p);
+
+    using spTp = ap::SpaceResectionTParam<al::LinalgOption::Cholesky, ap::CollinearityEquationCoeffOption::FullAngles>;
+    auto result = ap::Solve<spTp>(p);
+
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
         std::println(std::cout, "{}", result.ToString());
@@ -266,180 +215,3 @@ int main()
     }
 }
 ```
-
-#### Space Intersection
-
-**Implemented but not evaluated**
-
-```cpp
-#include <AGTB/Photogrammetry/SpaceIntersection.hpp>
-
-namespace ap = AGTB::Photogrammetry;
-
-int main()
-{
-    ap::SpaceIntersectionParam p{};
-    ap::SpaceIntersectionSolveResult r = ap::Solve(p);
-}
-```
-
-#### Continuous Relative Orientate
-
-**Implemented but not evaluated**
-
-```cpp
-#include <AGTB/Photogrammetry/ContinuousRelativeOrientate.hpp>
-
-namespace ap = AGTB::Photogrammetry;
-
-int main()
-{
-    ap::ContinuousRelativeOrienteParam p{};
-    ap::ContinuousRelativeOrienteSolveResult r = ap::Solve(p);
-}
-```
-
-### IO
-
-AGTB provides some IO interface to adapt 3rd party lib like Eigen3.
-
-#### Eigen
-
-AGTB provides a Eigen reader and quick printer. You can read from ```std::istream``` and print to ```std::ostream```. The ```AGTB::EigenIO::ReadEigen``` read like the given ```MatrixXd``` and ```AGTB::EigenIO::ReadEigenCustom<>``` read like the given template parameter.
-
-```cpp
-#include <AGTB/IO/Eigen.hpp>
-#include <iostream>
-#include <Eigen/Dense>
-#include <cassert>
-
-int main()
-{
-    using AGTB::EigenIO::ContainerOf;
-    using AGTB::EigenIO::IsValidContainer;
-    using AGTB::EigenIO::MMDOf;
-
-    using ContainerXd = ContainerOf<Eigen::MatrixXd>;
-    using MMDXd = MMDOf<Eigen::MatrixXd>;
-    static_assert(std::is_same_v<ContainerXd, std::vector<std::vector<double>>>);
-
-    ContainerXd cxd{
-        {1, 2},
-        {3, 4}};
-
-    using Container3cd = ContainerOf<Eigen::Matrix3cd>;
-    using MMD3cd = MMDOf<Eigen::Matrix3cd>;
-    static_assert(std::is_same_v<Container3cd, std::array<std::array<std::complex<double>, 3>, 3>>);
-
-    Container3cd c3cd{
-        {{1, 2}, {3, 4}}};
-
-    auto validation_xd = IsValidContainer<MMDXd, ContainerXd>(cxd);
-    auto validation_3cd = IsValidContainer<MMD3cd, Container3cd>(c3cd);
-    assert(validation_xd);
-    assert(validation_3cd);
-
-    std::string data{
-        "-86.15, -68.99,  36589.41, 25273.32, 2195.17\n"
-        "-53.40, 82.21 ,  37631.08, 31324.51, 728.69 \n"
-        "-14.78, -76.63,  39100.97, 24934.98, 2386.50\n"
-        "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
-    auto iss = std::istringstream(data);
-
-    Eigen::MatrixXd mat(4, 5);
-    AGTB::EigenIO::ReadEigen(iss, mat); // default shape
-    AGTB::EigenIO::PrintEigen(mat, "Read mat");
-
-    iss = std::istringstream(data);
-    using MMD_4_2_d = AGTB::EigenIO::MatrixMetaData<double, 4, 2>; // custom shape
-    Eigen::MatrixXd mat_cus(4, 2);
-    AGTB::EigenIO::ReadEigenCustom<
-        MMD_4_2_d,
-        AGTB::EigenIO::ContainerOf<decltype(mat_cus)>>(iss, mat_cus);
-    AGTB::EigenIO::PrintEigen(mat_cus, "Custom read(4, 2)");
-
-    iss = std::istringstream(data);
-    using MMD_2_4_d = AGTB::EigenIO::MatrixMetaData<double, 2, 4>;
-    Eigen::MatrixXd mat_2_4(2, 4);
-    AGTB::EigenIO::ReadEigenCustom<
-        MMD_2_4_d,
-        AGTB::EigenIO::ContainerOf<decltype(mat_2_4)>>(iss, mat_2_4);
-    AGTB::EigenIO::PrintEigen(mat_2_4, "Custom read(2, 4)");
-
-    return 0;
-}
-```
-
-### Utils
-
-AGTB also provides some utilities as helpers.
-
-#### String
-
-Here provide functions to manipulate ```std::string``` like below.
-
-```cpp
-#include <AGTB/Utils/String.hpp>
-#include <print>
-#include <iostream>
-
-void P(auto &str)
-{
-    std::println(std::cout, "[{}]", str);
-}
-
-int main()
-{
-    using namespace AGTB::Utils;
-
-    std::string ori = "  a test str   ";
-
-    P(ori);
-
-    auto ls = LStrip(ori),
-         rs = RStrip(ori),
-         lrs = LRStrip(ori),
-         sws = SkipWhiteSpace(ori);
-
-    P(ls);
-    P(rs);
-    P(lrs);
-    P(sws);
-
-    std::string arr = " 2,  5  , 3, 6";
-    auto vec = SplitThenConv<int>(arr, ",");
-    for (auto &i : vec)
-    {
-        std::print("{}, ", i);
-    }
-    std::cout << std::endl;
-}
-```
-
-#### Angles
-
-Here provides basic angle algorithms and a ```Angle``` class. It's a user-friendly interface, you can use as below:
-```cpp
-#include <AGTB/Utils/Angles.hpp>
-
-namespace aua = AGTB::Utils::Angles;
-using aua::Angle;
-
-int main(){
-    aua::FromDMS(d, m, s); // dms -> rad
-    aua::ToDMS(rad); // rad -> dms (signed at the highest non-zero position)
-
-    Angle a1 (d, m, s), a2 (d, m, s); // Angle(d, m, s) object
-    a1 + a2; // angle operators
-    a1 - a2;
-    a1 / a2;
-    a1 % a2;
-    a1 * double(scale); // operator with double 
-    a1.DMS(); // like aua::ToDMS()
-    a1.Rad(); // -> rad
-    a1.Sin(); // Internal trigonometric functions, execute by 'rad'
-    a1.NormStd(); // {0, 360deg}
-    a1.ToString(); // -> "{}d{}m{}s"
-}
-```
-
