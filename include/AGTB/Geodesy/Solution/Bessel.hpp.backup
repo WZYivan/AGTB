@@ -4,7 +4,7 @@
 #pragma once
 
 #include "../../details/Macros.hpp"
-#include "../Base.hpp"
+#include "../Ellipsoid/Geometry.hpp"
 
 #include <gcem.hpp>
 

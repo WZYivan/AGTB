@@ -8,7 +8,7 @@
 
 AGTB_GEODESY_BEGIN
 
-template <std::floating_point T>
+template <std::floating_point T, typename Derived>
 class GeoLatLonBase
 {
 private:
@@ -42,9 +42,14 @@ public:
     {
         return Utils::Angles::Angle::FromRad(Rad());
     }
+
+    static Derived FromAngle(const Utils::Angles::Angle &a)
+    {
+        return Derived(a.Rad());
+    }
 };
 
-class Latitude : public GeoLatLonBase<double>
+class Latitude : public GeoLatLonBase<double, Latitude>
 {
 public:
     virtual constexpr bool IsValid() const noexcept override
@@ -52,7 +57,7 @@ public:
         return gcem::abs(Rad()) <= max;
     }
 
-    Latitude(double rad) : GeoLatLonBase<double>(rad)
+    Latitude(double rad) : GeoLatLonBase<double, Latitude>(rad)
     {
         if (!IsValid())
         {
@@ -61,11 +66,15 @@ public:
         }
     }
 
+    Latitude(double d, double m, double s) : Latitude(Utils::Angles::FromDMS(d, m, s))
+    {
+    }
+
 private:
     constexpr static double max = Utils::Angles::FromDMS(90);
 };
 
-class Longitude : public GeoLatLonBase<double>
+class Longitude : public GeoLatLonBase<double, Longitude>
 {
 public:
     virtual constexpr bool IsValid() const noexcept override
@@ -73,13 +82,17 @@ public:
         return gcem::abs(Rad()) <= max;
     }
 
-    Longitude(double rad) : GeoLatLonBase<double>(rad)
+    Longitude(double rad) : GeoLatLonBase<double, Longitude>(rad)
     {
         if (!IsValid())
         {
             AGTB_THROW(std::invalid_argument, std::format("Invalid Longitude: \'{}\' => \'{}\'",
                                                           Rad(), Utils::Angles::Angle::FromRad(Rad()).ToString()));
         }
+    }
+
+    Longitude(double d, double m, double s) : Longitude(Utils::Angles::FromDMS(d, m, s))
+    {
     }
 
 private:

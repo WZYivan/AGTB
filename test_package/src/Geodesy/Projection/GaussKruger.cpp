@@ -1,42 +1,40 @@
-#include <AGTB/Geodesy/Projection/GaussKruger.hpp>
-
+#include <AGTB/Geodesy/Project.hpp>
 #include <print>
-
-namespace ag = AGTB::Geodesy;
 
 int main()
 {
-    using namespace ag::Projection::GaussKruger;
+    namespace ag = AGTB::Geodesy;
     namespace au = AGTB::Utils;
     using au::Angles::Angle;
-    using au::Angles::FromDMS;
 
-    std::println("center lon = {}", CenterLongitude<GaussZoneInterval::D6>(
-                                        ag::Longitude(
-                                            AGTB::Utils::Angles::FromDMS(2.0)))
-                                        .ToAngle()
-                                        .ToString());
+    using Tp = ag::GaussProjectTParam<ag::EllipsoidType::CGCS2000, ag::GaussZoneInterval::D6>;
 
-    using CGCS_G_Proj = Projector<ag::EllipsoidType::CGCS2000>;
-    ag::Longitude
-        L_from(FromDMS(115, 0));
-    ag::Latitude
-        B_from(FromDMS(45, 0));
+    for (int i = 1; i != 6; ++i)
+    {
+        ag::Longitude
+            L_from(115, 0, 0);
+        ag::Latitude
+            B_from(15 * i, 0, 0);
 
-    auto rf =
-        CGCS_G_Proj::Forward<GaussZoneInterval::D6>(L_from, B_from);
+        Tp::GeoCoord geo_coord_from{
+            L_from,
+            B_from};
 
-    auto ri =
-        CGCS_G_Proj::Inverse<GaussZoneInterval::D6>(rf.x, rf.y, rf.zone);
+        Tp::GaussCoord gauss_proj_coord =
+            ag::Project<Tp>(geo_coord_from);
 
-    std::println("B_from = {} L_from = {}\n",
-                 B_from.ToAngle().ToString(),
-                 L_from.ToAngle().ToString());
-    std::println("x = {} y = {} ZoneY = {}\n", rf.x, rf.y, rf.ZoneY());
-    std::println("B_to = {} L_to = {}\n",
-                 ri.B.ToAngle().ToString(),
-                 ri.L.ToAngle().ToString());
-    std::println("B_dif = {} L_dif = {}\n",
-                 Angle::FromRad(ri.B.Rad() - B_from.Rad()).ToString(),
-                 Angle::FromRad(ri.L.Rad() - L_from.Rad()).ToString());
+        Tp::GeoCoord geo_coord_to =
+            ag::Project<Tp>(gauss_proj_coord);
+
+        std::println("B_from = {} L_from = {}",
+                     B_from.ToAngle().ToString(),
+                     L_from.ToAngle().ToString());
+        std::println("x = {} y = {} ZoneY = {}", gauss_proj_coord.x, gauss_proj_coord.y, gauss_proj_coord.ZoneY());
+        std::println("B_to = {} L_to = {}",
+                     geo_coord_to.B.ToAngle().ToString(),
+                     geo_coord_to.L.ToAngle().ToString());
+        std::println("B_dif = {} L_dif = {}\n",
+                     Angle::FromRad(geo_coord_to.B.Rad() - B_from.Rad()).ToString(),
+                     Angle::FromRad(geo_coord_to.L.Rad() - L_from.Rad()).ToString());
+    }
 }

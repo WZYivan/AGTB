@@ -2,6 +2,7 @@
 #define __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 
 #include "../Base/Constants.hpp"
+#include "../Base/CoordinatsSystem.hpp"
 #include "../Ellipsoid/Geometry.hpp"
 #include "../../Utils/Angles.hpp"
 
@@ -9,91 +10,27 @@ AGTB_GEODESY_BEGIN
 
 namespace Projection::GaussKruger
 {
-    using Utils::Angles::FromDMS;
-
-    enum class GaussZoneInterval : size_t
-    {
-        D3,
-        D6
-    };
-
-    template <GaussZoneInterval interval>
-    Longitude CenterLongitude(int zone)
-    {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
-    }
-
-    template <>
-    Longitude CenterLongitude<GaussZoneInterval::D6>(int zone)
-    {
-        return FromDMS(6 * zone - 3);
-    }
-
-    template <>
-    Longitude CenterLongitude<GaussZoneInterval::D3>(int zone)
-    {
-        return FromDMS(3 * zone);
-    }
-
-    template <GaussZoneInterval interval>
-    int Zone(Longitude L)
-    {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
-    }
-
-    template <>
-    int Zone<GaussZoneInterval::D6>(Longitude L)
-    {
-        return int(L.Rad() / FromDMS(6.0)) + 1;
-    }
-
-    template <>
-    int Zone<GaussZoneInterval::D3>(Longitude L)
-    {
-        double rad_d3 = FromDMS(3.0);
-        return int(L.Rad() / rad_d3) + gcem::fmod(L.Rad(), rad_d3) > FromDMS(1.5) ? 1 : 0;
-    }
-
-    template <GaussZoneInterval Z>
-    Longitude CenterLongitude(Longitude l)
-    {
-        return CenterLongitude<Z>(Zone<Z>(l));
-    }
-
-    struct ForwardResult
-    {
-        double x, y;
-        int zone;
-
-        double ZoneY()
-        {
-            return y + 500'000.0 + zone * 100'000'0;
-        }
-    };
-
-    struct InverseResult
-    {
-        Latitude B;
-        Longitude L;
-    };
-
     namespace ProjectorImpl
     {
-        template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt>
+        template <EllipsoidType __ellipsoid_type, GaussZoneInterval __zone_interval, EllipsoidAlgoOption __algo_option>
         struct Impl
         {
             AGTB_TEMPLATE_NOT_SPECIFIED();
         };
 
-        template <EllipsoidType __ellipsoid_type>
-        struct Impl<__ellipsoid_type, EllipsoidAlgoOption::General>
+        template <EllipsoidType __ellipsoid_type, GaussZoneInterval __zone_interval>
+        struct Impl<__ellipsoid_type, __zone_interval, EllipsoidAlgoOption::General>
         {
-            constexpr static EllipsoidAlgoOption Option = EllipsoidAlgoOption::General;
+            constexpr static EllipsoidAlgoOption algo_option = EllipsoidAlgoOption::General;
+            constexpr static EllipsoidType ellipsoid_type = __ellipsoid_type;
+            constexpr static GaussZoneInterval zone_interval = __zone_interval;
 
-            template <GaussZoneInterval Z = GaussZoneInterval::D6>
-            static ForwardResult Forward(Longitude L, Latitude B)
+            static GaussProjCoordinate<__zone_interval> Forward(const GeodeticCoordinate<__ellipsoid_type> &gc)
             {
                 using Utils::Angles::ToSeconds;
+
+                Longitude L = gc.L;
+                Latitude B = gc.B;
 
                 LatitudeConstants<EllipsoidGeometry<__ellipsoid_type>> glc(B);
                 double t = glc.t,
@@ -111,8 +48,8 @@ namespace Projection::GaussKruger
                        cosB = B.Cos(),
                        cosBp3 = gcem::pow(cosB, 3),
                        cosBp5 = gcem::pow(cosB, 5);
-                int zone = Zone<Z>(L);
-                double l_c = CenterLongitude<Z>(zone).Rad() /*rad*/,
+                int zone = GaussProjZone<__zone_interval>(L);
+                double l_c = GaussProjCenterLongitude<__zone_interval>(zone).Rad() /*rad*/,
                        l_c_s = ToSeconds(l_c) /*seconds below*/,
                        l_s = ToSeconds(L.Rad()),
                        dl_s = l_s - l_c_s,
@@ -122,7 +59,7 @@ namespace Projection::GaussKruger
                        l4 = gcem::pow(dl_s, 4),
                        l5 = gcem::pow(dl_s, 5),
                        l6 = gcem::pow(dl_s, 6);
-                auto [_, N] = PrincipleCurvatureRadii<__ellipsoid_type, Option>(B);
+                auto [_, N] = PrincipleCurvatureRadii<__ellipsoid_type, algo_option>(B);
                 double X = MeridianArcLength<__ellipsoid_type>(B);
 
                 double x = X +
@@ -135,12 +72,14 @@ namespace Projection::GaussKruger
                 return {.x = x, .y = y, .zone = zone};
             }
 
-            template <GaussZoneInterval Z = GaussZoneInterval::D6>
-            static InverseResult Inverse(double x, double y, int zone)
+            static GeodeticCoordinate<__ellipsoid_type> Inverse(const GaussProjCoordinate<__zone_interval> &gpc)
             {
+                double x = gpc.x, y = gpc.y;
+                double zone = gpc.zone;
+
                 Latitude Bf = MeridianArcBottom<__ellipsoid_type>(x, 1e-15);
 
-                auto [Mf, Nf] = PrincipleCurvatureRadii<__ellipsoid_type, Option>(Bf);
+                auto [Mf, Nf] = PrincipleCurvatureRadii<__ellipsoid_type, algo_option>(Bf);
                 LatitudeConstants<EllipsoidGeometry<__ellipsoid_type>> glc(Bf);
                 double tf = glc.t, nf2 = glc.nu_2;
                 double tf2 = gcem::pow(tf, 2),
@@ -162,17 +101,47 @@ namespace Projection::GaussKruger
                 double dl = 1.0 / (Nf * cosBf) * y -
                             1.0 / (6.0 * Nf3 * cosBf) * (1 + 2 * tf2 + nf2) * y3 +
                             1.0 / (120 * Nf5 * cosBf) * (5 + 28 * tf2 + 24 * tf4 + 6 * nf2 + 8 * nf2 * tf2) * y5;
-                Longitude Lc = CenterLongitude<Z>(zone);
+                Longitude Lc = GaussProjCenterLongitude<__zone_interval>(zone);
 
                 return {
-                    .B = B,
-                    .L = Lc.Rad() + dl};
+                    .L = Longitude(Lc.Rad() + dl),
+                    .B = Latitude(B)};
             }
         };
+
+        template <typename T>
+        concept ProjectorConcept = requires {
+            { T::ellipsoid_type } -> std::convertible_to<EllipsoidType>;
+            { T::algo_option } -> std::convertible_to<EllipsoidAlgoOption>;
+            { T::zone_interval } -> std::convertible_to<GaussZoneInterval>;
+        } && requires(GeodeticCoordinate<T::ellipsoid_type> gc) {
+            { T::Forward(gc) } -> std::convertible_to<GaussProjCoordinate<T::zone_interval>>;
+        } && requires(GaussProjCoordinate<T::zone_interval> gpc) {
+            { T::Inverse(gpc) } -> std::convertible_to<GeodeticCoordinate<T::ellipsoid_type>>;
+        };
+
+        template <EllipsoidType __ellipsoid_type, GaussZoneInterval __zone_interval, EllipsoidAlgoOption __algo_opt>
+        struct CheckImpl
+        {
+            using __Impl = Impl<__ellipsoid_type, __zone_interval, __algo_opt>;
+
+            template <ProjectorConcept __Impl_P>
+            struct DoCheck
+            {
+            };
+
+            using __Check = DoCheck<__Impl>;
+        };
+
+        template <EllipsoidType __ellipsoid_type, GaussZoneInterval __zone_interval, EllipsoidAlgoOption __algo_opt>
+        using CheckedImpl = CheckImpl<__ellipsoid_type, __zone_interval, __algo_opt>::__Impl;
     }
 
-    template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt = EllipsoidAlgoOption::General>
-    using Projector = ProjectorImpl::Impl<__ellipsoid_type, __algo_opt>;
+    template <
+        EllipsoidType __ellipsoid_type,
+        GaussZoneInterval __zone_interval,
+        EllipsoidAlgoOption __algo_opt>
+    using Projector = ProjectorImpl::CheckedImpl<__ellipsoid_type, __zone_interval, __algo_opt>;
 };
 
 AGTB_GEODESY_END
