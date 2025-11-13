@@ -5,6 +5,15 @@
 
 AGTB_GEODESY_BEGIN
 
+/**
+ * @brief Forward project from geodetic to gauss
+ *
+ * @tparam __ellipsoid_type
+ * @tparam __zone_interval
+ * @tparam __algo_opt
+ * @param geo_coord
+ * @return `GaussProjCoordinate<__zone_interval>`
+ */
 template <
     EllipsoidType __ellipsoid_type,
     GaussZoneInterval __zone_interval,
@@ -15,6 +24,15 @@ GaussProjCoordinate<__zone_interval> Project(const GeodeticCoordinate<__ellipsoi
     return projector::Forward(geo_coord);
 }
 
+/**
+ * @brief Inverse project gauss to geodetic
+ *
+ * @tparam __ellipsoid_type
+ * @tparam __zone_interval
+ * @tparam __algo_opt
+ * @param gauss_coord
+ * @return `GeodeticCoordinate<__ellipsoid_type>`
+ */
 template <
     EllipsoidType __ellipsoid_type,
     GaussZoneInterval __zone_interval,
@@ -25,6 +43,13 @@ GeodeticCoordinate<__ellipsoid_type> Project(const GaussProjCoordinate<__zone_in
     return projector::Inverse(gauss_coord);
 }
 
+/**
+ * @brief Template parameter pack for `Project`
+ *
+ * @tparam __ellipsoid_type
+ * @tparam __zone_interval
+ * @tparam __algo_opt
+ */
 template <
     EllipsoidType __ellipsoid_type,
     GaussZoneInterval __zone_interval,
@@ -47,12 +72,26 @@ concept GaussProjectTParamConcept = requires {
     typename T::GaussCoord;
 };
 
+/**
+ * @brief Tp version of forward project from geodetic to gauss
+ *
+ * @tparam Tp
+ * @param geo_coord
+ * @return Tp::GaussCoord
+ */
 template <GaussProjectTParamConcept Tp>
 Tp::GaussCoord Project(const typename Tp::GeoCoord &geo_coord)
 {
     return Project<Tp::ellipsoid_type, Tp::zone_interval, Tp::algo_opt>(geo_coord);
 }
 
+/**
+ * @brief Tp version of inverse project from gauss to geodetic
+ *
+ * @tparam Tp
+ * @param gauss_coord
+ * @return Tp::GeoCoord
+ */
 template <GaussProjectTParamConcept Tp>
 Tp::GeoCoord Project(const typename Tp::GaussCoord &gauss_coord)
 {

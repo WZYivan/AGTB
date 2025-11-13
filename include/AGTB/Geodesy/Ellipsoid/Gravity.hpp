@@ -5,7 +5,7 @@
 
 AGTB_GEODESY_BEGIN
 
-AGTB_STATIC_THROW("File Not Implemented, you should not include this");
+AGTB_FILE_NOT_IMPLEMENT();
 
 AGTB_GEODESY_END
 

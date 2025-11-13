@@ -25,6 +25,12 @@ namespace Projection::GaussKruger
             constexpr static EllipsoidType ellipsoid_type = __ellipsoid_type;
             constexpr static GaussZoneInterval zone_interval = __zone_interval;
 
+            /**
+             * @brief geodetic -> gauss
+             *
+             * @param gc
+             * @return GaussProjCoordinate<__zone_interval>
+             */
             static GaussProjCoordinate<__zone_interval> Forward(const GeodeticCoordinate<__ellipsoid_type> &gc)
             {
                 using Utils::Angles::ToSeconds;
@@ -72,6 +78,12 @@ namespace Projection::GaussKruger
                 return {.x = x, .y = y, .zone = zone};
             }
 
+            /**
+             * @brief gauss -> geodetic
+             *
+             * @param gpc
+             * @return GeodeticCoordinate<__ellipsoid_type>
+             */
             static GeodeticCoordinate<__ellipsoid_type> Inverse(const GaussProjCoordinate<__zone_interval> &gpc)
             {
                 double x = gpc.x, y = gpc.y;
@@ -137,6 +149,13 @@ namespace Projection::GaussKruger
         using CheckedImpl = CheckImpl<__ellipsoid_type, __zone_interval, __algo_opt>::__Impl;
     }
 
+    /**
+     * @brief Checked GaussKruger projector impl
+     *
+     * @tparam __ellipsoid_type
+     * @tparam __zone_interval
+     * @tparam __algo_opt
+     */
     template <
         EllipsoidType __ellipsoid_type,
         GaussZoneInterval __zone_interval,

@@ -23,6 +23,11 @@ struct EllipsoidGeometryBase
     constexpr static EllipsoidType ellipsoid_type = __ellipsoid_type;
 };
 
+/**
+ * @brief Basic geometry parameters of an ellipsoid
+ *
+ * @tparam __ellipsoid_type
+ */
 template <EllipsoidType __ellipsoid_type>
 struct EllipsoidGeometry : public EllipsoidGeometryBase<__ellipsoid_type>
 {
@@ -77,6 +82,11 @@ struct EllipsoidGeometry<EllipsoidType::CGCS2000> : public EllipsoidGeometryBase
         e2_2 = 0.006'739'496'775'48;
 };
 
+/**
+ * @brief More constants associated to latitude
+ *
+ * @tparam __ellipsoid_geometry
+ */
 template <EllipsoidGeometryConcept __ellipsoid_geometry>
 struct LatitudeConstants
 {
@@ -116,6 +126,10 @@ std::string ToString()
                        __ellipsoid_geometry::a, __ellipsoid_geometry::b, __ellipsoid_geometry::c, __ellipsoid_geometry::alpha, __ellipsoid_geometry::e1_2, __ellipsoid_geometry::e1_2);
 }
 
+/**
+ * @brief Curvature radius of meridian(M) and prime vertical(N), also calculate average curvature radius(R) from M, N
+ *
+ */
 struct CurvatureRadiusCollection
 {
     double M, N;
@@ -125,6 +139,11 @@ struct CurvatureRadiusCollection
     }
 };
 
+/**
+ * @brief Coefficients to calculate principe curvature
+ *
+ * @tparam __ellipsoid_type
+ */
 template <EllipsoidType __ellipsoid_type>
 struct PrincipleCurvatureRadiiCoeff
 {
@@ -281,6 +300,14 @@ namespace PrincipleCurvatureRadiiImpl
     using CheckedImpl = CheckImpl<__ellipsoid_type, __algo_opt>::__Impl;
 }
 
+/**
+ * @brief Calculate principle curvature radii in latitude
+ *
+ * @tparam __ellipsoid_type
+ * @tparam __algo_opt
+ * @param B latitude
+ * @return `CurvatureRadiusCollection`
+ */
 template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt = EllipsoidAlgoOption::General>
 CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude B)
 {
@@ -288,6 +315,11 @@ CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude B)
     return Impl::Invoke(B);
 }
 
+/**
+ * @brief Coefficients to calculate a quarter of meridian length in latitude
+ *
+ * @tparam `Coeff` `PrincipleCurvatureRadiiCoeff`
+ */
 template <PrincipleCurvatureRadiiCoeffConcept Coeff>
 struct QuarterArcCoeff
 {
@@ -440,12 +472,28 @@ namespace QuarterArcImpl
     using CheckedImpl = CheckImpl<__ellipsoid_type>::__Impl;
 }
 
+/**
+ * @brief Forward solve a quarter of meridian length from bottom point latitude
+ *
+ * @tparam __ellipsoid_type
+ * @param B
+ * @return double
+ */
 template <EllipsoidType __ellipsoid_type>
 double MeridianArcLength(Latitude B)
 {
     using Impl = QuarterArcImpl::CheckedImpl<__ellipsoid_type>;
     return Impl::Forward(B);
 }
+
+/**
+ * @brief Inverse solve bottom point latitude from a quarter of meridian length
+ *
+ * @tparam __ellipsoid_type
+ * @param len
+ * @param iter_threshold
+ * @return `Latitude` of bottom point
+ */
 template <EllipsoidType __ellipsoid_type>
 Latitude MeridianArcBottom(double len, double iter_threshold)
 {

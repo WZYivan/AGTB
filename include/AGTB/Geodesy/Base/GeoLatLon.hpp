@@ -8,6 +8,12 @@
 
 AGTB_GEODESY_BEGIN
 
+/**
+ * @brief Provide basic function for implement of latitude and longitude. Internal value is `rad`.
+ *
+ * @tparam T
+ * @tparam Derived to constrain latitude or longitude
+ */
 template <std::floating_point T, typename Derived>
 class GeoLatLonBase
 {
@@ -49,6 +55,10 @@ public:
     }
 };
 
+/**
+ * @brief Geodetic latitude in (-90, 90)(deg), store in `rad`
+ *
+ */
 class Latitude : public GeoLatLonBase<double, Latitude>
 {
 public:
@@ -74,6 +84,10 @@ private:
     constexpr static double max = Utils::Angles::FromDMS(90);
 };
 
+/**
+ * @brief Geodetic longitude in (-180, 180)(deg), store in `rad`
+ *
+ */
 class Longitude : public GeoLatLonBase<double, Longitude>
 {
 public:
