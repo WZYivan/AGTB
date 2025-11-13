@@ -3,7 +3,7 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 class agtbRecipe(ConanFile):
     name = "agtb"
-    version = "0.0.3"
+    version = "0.0.5"
     package_type = "header-library"
 
     # Optional metadata
@@ -11,7 +11,7 @@ class agtbRecipe(ConanFile):
     author = "lucas wang 2270060975@qq.com"
     url = "<Package recipe repository url here, for issues about the package>"
     description = "A toolbox for geomatics"
-    topics = ("Geomatics Science", "Photographic", "Geodesy")
+    topics = ("Geomatics Science", "Photogrammetry", "Geodesy", "Adjustment", "Algorithm")
 
     # Binary configuration
     settings = "os", "compiler", "build_type", "arch"
