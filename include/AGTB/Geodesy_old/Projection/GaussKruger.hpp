@@ -1,63 +1,62 @@
 #ifndef __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 #define __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 
-#include "../Base/Constants.hpp"
-#include "../Ellipsoid/Geometry.hpp"
+#include "../Base.hpp"
+#include "../PrincipleCurvatureRadii.hpp"
+#include "../MeridianArc.hpp"
 #include "../../Utils/Angles.hpp"
+#include "../../Utils/Concept.hpp"
 
 AGTB_GEODESY_BEGIN
 
 namespace Projection::GaussKruger
 {
-    using Utils::Angles::FromDMS;
-
-    enum class GaussZoneInterval : size_t
+    enum class ZoneInterval : size_t
     {
         D3,
         D6
     };
 
-    template <GaussZoneInterval interval>
+    template <ZoneInterval zi>
     Longitude CenterLongitude(int zone)
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        using Utils::Angles::FromDMS;
+        if constexpr (zi == ZoneInterval::D6)
+        {
+            return FromDMS(6 * zone - 3);
+        }
+        else if constexpr (zi == ZoneInterval::D3)
+        {
+            return FromDMS(3 * zone);
+        }
+        else
+        {
+            AGTB_NOT_IMPLEMENT();
+        }
     }
 
-    template <>
-    Longitude CenterLongitude<GaussZoneInterval::D6>(int zone)
+    template <ZoneInterval zi>
+    int Zone(Longitude l)
     {
-        return FromDMS(6 * zone - 3);
+        using Utils::Angles::FromDMS;
+        if constexpr (zi == ZoneInterval::D6)
+        {
+            return int(l / FromDMS(6.0)) + 1;
+        }
+        else if constexpr (zi == ZoneInterval::D3)
+        {
+            return int(l / FromDMS(3.0)) + gcem::fmod(l.Value(), FromDMS(3)) > FromDMS(1.5) ? 1 : 0;
+        }
+        else
+        {
+            AGTB_NOT_IMPLEMENT();
+        }
     }
 
-    template <>
-    Longitude CenterLongitude<GaussZoneInterval::D3>(int zone)
-    {
-        return FromDMS(3 * zone);
-    }
-
-    template <GaussZoneInterval interval>
-    int Zone(Longitude L)
-    {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
-    }
-
-    template <>
-    int Zone<GaussZoneInterval::D6>(Longitude L)
-    {
-        return int(L.Rad() / FromDMS(6.0)) + 1;
-    }
-
-    template <>
-    int Zone<GaussZoneInterval::D3>(Longitude L)
-    {
-        double rad_d3 = FromDMS(3.0);
-        return int(L.Rad() / rad_d3) + gcem::fmod(L.Rad(), rad_d3) > FromDMS(1.5) ? 1 : 0;
-    }
-
-    template <GaussZoneInterval Z>
+    template <ZoneInterval zi>
     Longitude CenterLongitude(Longitude l)
     {
-        return CenterLongitude<Z>(Zone<Z>(l));
+        return CenterLongitude<zi>(Zone<zi>(l));
     }
 
     struct ForwardResult
@@ -79,29 +78,33 @@ namespace Projection::GaussKruger
 
     namespace ProjectorImpl
     {
-        template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt>
+        template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
         struct Impl
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            template <ZoneInterval zi = ZoneInterval::D6>
+            static ForwardResult Forward(Longitude L, Latitude B)
+            {
+                AGTB_NOT_IMPLEMENT();
+            }
         };
 
-        template <EllipsoidType __ellipsoid_type>
-        struct Impl<__ellipsoid_type, EllipsoidAlgoOption::General>
+        template <EllipsoidConcept ellipsoid>
+        struct Impl<ellipsoid, EllipsoidBasedOption::General>
         {
-            constexpr static EllipsoidAlgoOption Option = EllipsoidAlgoOption::General;
+            static constexpr EllipsoidBasedOption Option = EllipsoidBasedOption::General;
 
-            template <GaussZoneInterval Z = GaussZoneInterval::D6>
+            template <ZoneInterval zi = ZoneInterval::D6>
             static ForwardResult Forward(Longitude L, Latitude B)
             {
                 using Utils::Angles::ToSeconds;
 
-                LatitudeConstants<EllipsoidGeometry<__ellipsoid_type>> glc(B);
+                GeodeticLatitudeConstants<ellipsoid> glc(B);
                 double t = glc.t,
                        t2 = gcem::pow(t, 2),
                        t4 = gcem::pow(t, 4),
                        n2 = glc.nu_2,
                        n4 = gcem::pow(n2, 2);
-                double p = Constants::rho_second,
+                double p = GeodeticConstants::rho_second,
                        p2 = gcem::pow(p, 2),
                        p3 = gcem::pow(p, 3),
                        p4 = gcem::pow(p, 4),
@@ -111,10 +114,10 @@ namespace Projection::GaussKruger
                        cosB = B.Cos(),
                        cosBp3 = gcem::pow(cosB, 3),
                        cosBp5 = gcem::pow(cosB, 5);
-                int zone = Zone<Z>(L);
-                double l_c = CenterLongitude<Z>(zone).Rad() /*rad*/,
+                int zone = Zone<zi>(L);
+                double l_c = CenterLongitude<zi>(zone).Value() /*rad*/,
                        l_c_s = ToSeconds(l_c) /*seconds below*/,
-                       l_s = ToSeconds(L.Rad()),
+                       l_s = ToSeconds(L),
                        dl_s = l_s - l_c_s,
                        l = dl_s,
                        l2 = gcem::pow(dl_s, 2),
@@ -122,8 +125,8 @@ namespace Projection::GaussKruger
                        l4 = gcem::pow(dl_s, 4),
                        l5 = gcem::pow(dl_s, 5),
                        l6 = gcem::pow(dl_s, 6);
-                auto [_, N] = PrincipleCurvatureRadii<__ellipsoid_type, Option>(B);
-                double X = MeridianArcLength<__ellipsoid_type>(B);
+                auto [_, N] = PrincipleCurvatureRadii<ellipsoid, Option>(B);
+                double X = MeridianArcSolver<ellipsoid, Option>::Forward(B);
 
                 double x = X +
                            N / (2 * p2) * sinB * cosB * l2 +
@@ -135,13 +138,13 @@ namespace Projection::GaussKruger
                 return {.x = x, .y = y, .zone = zone};
             }
 
-            template <GaussZoneInterval Z = GaussZoneInterval::D6>
+            template <ZoneInterval zi = ZoneInterval::D6>
             static InverseResult Inverse(double x, double y, int zone)
             {
-                Latitude Bf = MeridianArcBottom<__ellipsoid_type>(x, 1e-15);
+                Latitude Bf = MeridianArcSolver<ellipsoid, Option>::Inverse(x, 1e-15);
 
-                auto [Mf, Nf] = PrincipleCurvatureRadii<__ellipsoid_type, Option>(Bf);
-                LatitudeConstants<EllipsoidGeometry<__ellipsoid_type>> glc(Bf);
+                auto [Mf, Nf] = PrincipleCurvatureRadii<ellipsoid, Option>(Bf);
+                GeodeticLatitudeConstants<ellipsoid> glc(Bf);
                 double tf = glc.t, nf2 = glc.nu_2;
                 double tf2 = gcem::pow(tf, 2),
                        tf4 = gcem::pow(tf, 4),
@@ -155,25 +158,26 @@ namespace Projection::GaussKruger
                        y5 = gcem::pow(y, 5),
                        y6 = gcem::pow(y, 6);
 
-                double B = Bf.Rad() -
+                using Utils::Angles::Angle;
+
+                double B = Bf -
                            tf / (2.0 * Mf * Nf) * y2 +
                            tf / (24 * Mf * Nf3) * (5 + 3 * tf2 + nf2 - 9 * nf2 * tf2) * y4 -
                            tf / (720 * Mf * Nf5) * (61 + 90 * tf2 + 45 * tf4) * y6;
                 double dl = 1.0 / (Nf * cosBf) * y -
                             1.0 / (6.0 * Nf3 * cosBf) * (1 + 2 * tf2 + nf2) * y3 +
                             1.0 / (120 * Nf5 * cosBf) * (5 + 28 * tf2 + 24 * tf4 + 6 * nf2 + 8 * nf2 * tf2) * y5;
-                Longitude Lc = CenterLongitude<Z>(zone);
-
+                Longitude Lc = CenterLongitude<zi>(zone);
                 return {
                     .B = B,
-                    .L = Lc.Rad() + dl};
+                    .L = Lc.Value() + dl};
             }
         };
     }
 
-    template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt = EllipsoidAlgoOption::General>
-    using Projector = ProjectorImpl::Impl<__ellipsoid_type, __algo_opt>;
-};
+    template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
+    using Projector = ProjectorImpl::Impl<ellipsoid, opt>;
+}
 
 AGTB_GEODESY_END
 

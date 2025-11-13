@@ -22,15 +22,6 @@ enum class EllipsoidAlgoOption : size_t
     Specified
 };
 
-template <typename T>
-concept LatitudeConstantsConcept = requires(T t) {
-    { t.B } -> std::convertible_to<double>;
-    { t.t } -> std::convertible_to<double>;
-    { t.nu_2 } -> std::convertible_to<double>;
-    { t.W } -> std::convertible_to<double>;
-    { t.V } -> std::convertible_to<double>;
-};
-
 AGTB_GEODESY_END
 
 #endif

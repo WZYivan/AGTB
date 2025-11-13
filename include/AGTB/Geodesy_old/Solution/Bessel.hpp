@@ -1,0 +1,142 @@
+#ifndef __AGTB_GEODESY_SOLUTION_BESSEL_HPP__
+#define __AGTB_GEODESY_SOLUTION_BESSEL_HPP__
+
+#pragma once
+
+#include "../../details/Macros.hpp"
+#include "../Base.hpp"
+
+#include <gcem.hpp>
+
+#include <tuple>
+#include <numbers>
+#include <concepts>
+
+AGTB_GEODESY_BEGIN
+
+namespace Solution::Bessel
+{
+    namespace Coefficients
+    {
+        struct ABC
+        {
+            double A, B, C;
+        };
+        struct AlphaBeta
+        {
+            double Alpha, Beta;
+        };
+
+        template <typename T>
+        concept ImplConcept = requires {
+            { T::A_B_C(double(0.0)) } -> std::convertible_to<ABC>;
+            { T::alpha_beta(double(0.0)) } -> std::convertible_to<AlphaBeta>;
+        };
+
+        template <EllipsoidConcept ellipsoid, EllipsoidBasedOption opt>
+        struct Impl
+        {
+            static auto A_B_C(double pow_cosA0_2)
+            {
+                AGTB_NOT_IMPLEMENT();
+            }
+
+            auto alpha_beta(double pow_cosA0_2)
+            {
+                AGTB_NOT_IMPLEMENT();
+            }
+        };
+
+        template <EllipsoidConcept ellipsoid>
+        struct Impl<ellipsoid, EllipsoidBasedOption::General>
+        {
+            static ABC A_B_C(double pow_cosA0_2)
+            {
+                double
+                    k2 = ellipsoid::e2_2 * pow_cosA0_2,
+                    k4 = gcem::pow(k2, 2),
+                    k6 = gcem::pow(k2, 3),
+                    b = ellipsoid::b,
+                    A = b * (1 +
+                             k2 / 4 -
+                             k4 * 3 / 64 +
+                             k6 * 5 / 256),
+                    B = b * (k2 / 8 -
+                             k4 / 32 +
+                             k6 * 15 / 1024),
+                    C = b * (k4 / 128 -
+                             k6 * 3 / 512);
+                return {.A = A, .B = B, .C = C};
+            }
+
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
+            {
+                double
+                    e2 = ellipsoid::e1_2,
+                    e4 = gcem::pow(e2, 2),
+                    e6 = gcem::pow(e2, 3),
+                    k2 = pow_cosA0_2,
+                    k4 = gcem::pow(k2, 2),
+                    alpha = (e2 / 2 + e4 / 8 + e6 / 16) -
+                            (e4 / 16 + e6 / 16) * k2 +
+                            (e6 * 3 / 128) * k4,
+                    beta = (e4 / 32 + e6 / 32) * k2 -
+                           (e6 / 64) * k4;
+                return {.Alpha = alpha, .Beta = beta};
+            }
+        };
+
+        template <>
+        struct Impl<Ellipsoid::Krasovski, EllipsoidBasedOption::Specified>
+        {
+            static ABC A_B_C(double pow_cosA0_2)
+            {
+                double
+                    A = 6'356'863.020 + (10'708.949 - 13.474 * pow_cosA0_2) * pow_cosA0_2,
+                    B = (5'354.469 - 8.978 * pow_cosA0_2) * pow_cosA0_2,
+                    C = (2.238 * pow_cosA0_2) * pow_cosA0_2 + 0.006;
+                return {.A = A, .B = B, .C = C};
+            }
+
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
+            {
+                double
+                    alpha = (33'523'299.0 - (28'189.0 - 70.0 * pow_cosA0_2) * pow_cosA0_2) * gcem::pow(10.0, -10),
+                    beta = (0.2907 - 0.001'0 * pow_cosA0_2) * pow_cosA0_2;
+                return {.Alpha = alpha, .Beta = beta};
+            }
+        };
+
+        template <>
+        struct Impl<Ellipsoid::IE1975, EllipsoidBasedOption::Specified>
+        {
+            static ABC A_B_C(double pow_cosA0_2)
+            {
+                double
+                    A = 6'356'755.288 + (10'710.341 - 13.534 * pow_cosA0_2) * pow_cosA0_2,
+                    B = (5'355.171 - 9.023 * pow_cosA0_2) * pow_cosA0_2,
+                    C = (2.256 * pow_cosA0_2) * pow_cosA0_2 + 0.006;
+                return {.A = A, .B = B, .C = C};
+            }
+
+            static AlphaBeta alpha_beta(double pow_cosA0_2)
+            {
+                double
+                    alpha = (33'528'130.0 - (28'190.0 - 70.0 * pow_cosA0_2) * pow_cosA0_2) * gcem::pow(10.0, -10),
+                    beta = (14'095.0 - 46.7 * pow_cosA0_2) * pow_cosA0_2 * gcem::pow(10.0, -10);
+                return {.Alpha = alpha, .Beta = beta};
+            }
+        };
+    }
+
+    template <EllipsoidConcept _e, EllipsoidBasedOption opt>
+    struct BesselParams
+    {
+        static constexpr EllipsoidBasedOption Option = opt;
+        using Ellipsoid = _e;
+    };
+}
+
+AGTB_GEODESY_END
+
+#endif

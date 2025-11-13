@@ -17,14 +17,14 @@ concept EllipsoidGeometryConcept = requires {
     { ellipsoid_geometry::ellipsoid_type } -> std::convertible_to<EllipsoidType>;
 };
 
-template <EllipsoidType __type>
+template <EllipsoidType __ellipsoid_type>
 struct EllipsoidGeometryBase
 {
-    constexpr static EllipsoidType ellipsoid_type = __type;
+    constexpr static EllipsoidType ellipsoid_type = __ellipsoid_type;
 };
 
-template <EllipsoidType type>
-struct EllipsoidGeometry : public EllipsoidGeometryBase<type>
+template <EllipsoidType __ellipsoid_type>
+struct EllipsoidGeometry : public EllipsoidGeometryBase<__ellipsoid_type>
 {
     AGTB_TEMPLATE_NOT_SPECIFIED();
 };
@@ -77,7 +77,34 @@ struct EllipsoidGeometry<EllipsoidType::CGCS2000> : public EllipsoidGeometryBase
         e2_2 = 0.006'739'496'775'48;
 };
 
-template <EllipsoidGeometryConcept __ep>
+template <EllipsoidGeometryConcept __ellipsoid_geometry>
+struct LatitudeConstants
+{
+    double
+        B,
+        t,
+        nu_2,
+        W,
+        V;
+    constexpr LatitudeConstants(Latitude _B) : B(_B.Rad())
+    {
+        t = gcem::tan(B);
+        nu_2 = __ellipsoid_geometry::e2_2 * gcem::pow(gcem::cos(B), 2);
+        W = gcem::sqrt(1 - __ellipsoid_geometry::e1_2 * gcem::pow(gcem::sin(B), 2));
+        V = gcem::sqrt(1 + nu_2);
+    }
+};
+
+template <typename T>
+concept LatitudeConstantsConcept = requires(T t) {
+    { t.B } -> std::convertible_to<double>;
+    { t.t } -> std::convertible_to<double>;
+    { t.nu_2 } -> std::convertible_to<double>;
+    { t.W } -> std::convertible_to<double>;
+    { t.V } -> std::convertible_to<double>;
+};
+
+template <EllipsoidGeometryConcept __ellipsoid_geometry>
 std::string ToString()
 {
     return std::format("a = {}\n"
@@ -86,7 +113,7 @@ std::string ToString()
                        "alpha = {}\n"
                        "e1_2 = {}\n"
                        "e2_2 = {}\n",
-                       __ep::a, __ep::b, __ep::c, __ep::alpha, __ep::e1_2, __ep::e1_2);
+                       __ellipsoid_geometry::a, __ellipsoid_geometry::b, __ellipsoid_geometry::c, __ellipsoid_geometry::alpha, __ellipsoid_geometry::e1_2, __ellipsoid_geometry::e1_2);
 }
 
 struct CurvatureRadiusCollection
@@ -98,10 +125,26 @@ struct CurvatureRadiusCollection
     }
 };
 
-template <EllipsoidType type>
+template <EllipsoidType __ellipsoid_type>
 struct PrincipleCurvatureRadiiCoeff
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    using __ellipsoid_geometry = EllipsoidGeometry<__ellipsoid_type>;
+
+    constexpr static double
+        a = __ellipsoid_geometry::a,
+        e2 = __ellipsoid_geometry::e1_2,
+
+        m0 = a * (1 - e2),
+        m2 = 3.0 / 2.0 * e2 * m0,
+        m4 = 5.0 / 4.0 * e2 * m2,
+        m6 = 7.0 / 6.0 * e2 * m4,
+        m8 = 9.0 / 8.0 * e2 * m6,
+
+        n0 = a,
+        n2 = 1.0 / 2.0 * e2 * n0,
+        n4 = 3.0 / 4.0 * e2 * n2,
+        n6 = 5.0 / 6.0 * e2 * n4,
+        n8 = 7.0 / 8.0 * e2 * n6;
 };
 
 template <>
@@ -161,20 +204,20 @@ std::string ToString()
 
 namespace PrincipleCurvatureRadiiImpl
 {
-    template <EllipsoidGeometryConcept ellipsoid, EllipsoidAlgoOption opt>
+    template <EllipsoidGeometryConcept __ellipsoid_geometry, EllipsoidAlgoOption __algo_opt>
     struct Impl
     {
         AGTB_TEMPLATE_NOT_SPECIFIED();
     };
 
-    template <EllipsoidGeometryConcept ellipsoid>
-    struct Impl<ellipsoid, EllipsoidAlgoOption::General>
+    template <EllipsoidGeometryConcept __ellipsoid_geometry>
+    struct Impl<__ellipsoid_geometry, EllipsoidAlgoOption::General>
     {
         static CurvatureRadiusCollection Invoke(Latitude B)
         {
             double sinBp2 = gcem::pow(B.Sin(), 2),
-                   a = ellipsoid::a,
-                   e1_2 = ellipsoid::e1_2,
+                   a = __ellipsoid_geometry::a,
+                   e1_2 = __ellipsoid_geometry::e1_2,
                    k = 1.0 - e1_2 * sinBp2;
             double M = a * (1.0 - e1_2) * gcem::pow(k, -1.5),
                    N = a * gcem::pow(k, -0.5);
@@ -184,12 +227,12 @@ namespace PrincipleCurvatureRadiiImpl
         }
     };
 
-    template <EllipsoidGeometryConcept ellipsoid>
-    struct Impl<ellipsoid, EllipsoidAlgoOption::Specified>
+    template <EllipsoidGeometryConcept __ellipsoid_geometry>
+    struct Impl<__ellipsoid_geometry, EllipsoidAlgoOption::Specified>
     {
         static CurvatureRadiusCollection Invoke(Latitude B)
         {
-            using coeff = PrincipleCurvatureRadiiCoeff<ellipsoid::ellipsoid_type>;
+            using coeff = PrincipleCurvatureRadiiCoeff<__ellipsoid_geometry::ellipsoid_type>;
             double
                 k = B.Sin(),
                 k2 = gcem::pow(k, 2),
@@ -220,11 +263,11 @@ namespace PrincipleCurvatureRadiiImpl
         { T::Invoke(B) } -> std::convertible_to<CurvatureRadiusCollection>;
     };
 
-    template <EllipsoidType type, EllipsoidAlgoOption opt>
+    template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt>
     struct CheckImpl
     {
-        using __Geometry = EllipsoidGeometry<type>;
-        using __Impl = Impl<__Geometry, opt>;
+        using __Geometry = EllipsoidGeometry<__ellipsoid_type>;
+        using __Impl = Impl<__Geometry, __algo_opt>;
 
         template <ImplConcept __Impl_P>
         struct DoCheck
@@ -234,14 +277,14 @@ namespace PrincipleCurvatureRadiiImpl
         using __Check = DoCheck<__Impl>;
     };
 
-    template <EllipsoidType type, EllipsoidAlgoOption opt>
-    using CheckedImpl = CheckImpl<type, opt>::__Impl;
+    template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt>
+    using CheckedImpl = CheckImpl<__ellipsoid_type, __algo_opt>::__Impl;
 }
 
-template <EllipsoidType type, EllipsoidAlgoOption opt = EllipsoidAlgoOption::General>
+template <EllipsoidType __ellipsoid_type, EllipsoidAlgoOption __algo_opt = EllipsoidAlgoOption::General>
 CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude B)
 {
-    using Impl = PrincipleCurvatureRadiiImpl::CheckedImpl<type, opt>;
+    using Impl = PrincipleCurvatureRadiiImpl::CheckedImpl<__ellipsoid_type, __algo_opt>;
     return Impl::Invoke(B);
 }
 
@@ -379,10 +422,10 @@ namespace QuarterArcImpl
         }
     };
 
-    template <EllipsoidType type>
+    template <EllipsoidType __ellipsoid_type>
     struct CheckImpl
     {
-        using __PCR = PrincipleCurvatureRadiiCoeff<type>;
+        using __PCR = PrincipleCurvatureRadiiCoeff<__ellipsoid_type>;
         using __Impl = Impl<__PCR>;
 
         template <ImplConcept __Impl_P>
@@ -393,20 +436,20 @@ namespace QuarterArcImpl
         using __Check = DoCheck<__Impl>;
     };
 
-    template <EllipsoidType type>
-    using CheckedImpl = CheckImpl<type>::__Impl;
+    template <EllipsoidType __ellipsoid_type>
+    using CheckedImpl = CheckImpl<__ellipsoid_type>::__Impl;
 }
 
-template <EllipsoidType type>
+template <EllipsoidType __ellipsoid_type>
 double MeridianArcLength(Latitude B)
 {
-    using Impl = QuarterArcImpl::CheckedImpl<type>;
+    using Impl = QuarterArcImpl::CheckedImpl<__ellipsoid_type>;
     return Impl::Forward(B);
 }
-template <EllipsoidType type>
+template <EllipsoidType __ellipsoid_type>
 Latitude MeridianArcBottom(double len, double iter_threshold)
 {
-    using Impl = QuarterArcImpl::CheckedImpl<type>;
+    using Impl = QuarterArcImpl::CheckedImpl<__ellipsoid_type>;
     return Impl::Inverse(len, iter_threshold);
 }
 
