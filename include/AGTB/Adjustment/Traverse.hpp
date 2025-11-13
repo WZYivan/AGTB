@@ -159,8 +159,8 @@ namespace Traverse
 
             std::format_to(sbb, "\n{:-^50}\n", " Sum Of ");
             std::format_to(sbb,
-                           " Angle = {}\n Delta Angle = {}\n Corrected Angle = {}\n Distance = {} (m)\n Delta X = {} (m)\n Delta Y = {} (m)\n Delta X_c = {} (m)\n Delta Y_c = {} (m)\n",
-                           a_sum.ToString(), da_sum.ToString(), a_c_sum.ToString(), dis_sum, dx_sum, dy_sum, dx_c_sum, dy_c_sum);
+                           " Angle = {}\n Delta Angle = {}\n Corrected Angle = {}\n Distance = {} (m)\n Delta X = {} (m)\n Delta Y = {} (m)\n Delta X_c = {} (m)\n Delta Y_c = {} (m)\n Correction X = {} (m)\n Correction Y = {} (m)\n",
+                           a_sum.ToString(), da_sum.ToString(), a_c_sum.ToString(), dis_sum, dx_sum, dy_sum, dx_c_sum, dy_c_sum, ddx_sum, ddy_sum);
 
             return sb;
         };
@@ -312,7 +312,7 @@ namespace Traverse
         va.dy_sum = TakePlace(
             std::accumulate(dy.begin(), dy.end(), 0.0), place);
 
-        va.dis_sum = std::accumulate(distances.begin(), distances.end(), 0.0);
+        va.dis_sum = TakePlace(std::accumulate(distances.begin(), distances.end(), 0.0), place);
         __CalculateFxFyFK<__rt>(param, va, info, place);
     }
 
