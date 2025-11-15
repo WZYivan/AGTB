@@ -195,14 +195,19 @@ namespace Traverse
         AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
-    void __CalculateFBeta<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info)
+    void __CalculateFBeta<RouteType::ClosedLoop>(const TraverseParam<RouteType::ClosedLoop> &param, TraverseVariable &va, TraverseInfo &info)
     {
-        info.f_beta = va.a_sum - Angle((param.angles.size() - 2) * 180, 0, 0);
+        info.f_beta = (va.a_sum - Angle((param.angles.size() - 2) * 180, 0, 0)); // <---- ClosedLoop
     }
     template <>
     void __CalculateFBeta<RouteType::Connecting>(const TraverseParam<RouteType::Connecting> &param, TraverseVariable &va, TraverseInfo &info)
     {
-        info.f_beta = va.a_sum - (param.azi_end - param.azi_beg) - Angle((param.angles.size()) * 180, 0, 0);
+        info.f_beta = (va.a_sum - (param.azi_end - param.azi_beg) - Angle((param.angles.size()) * 180, 0, 0));
+    }
+    template <>
+    void __CalculateFBeta<RouteType::ClosedConnecting>(const TraverseParam<RouteType::ClosedConnecting> &param, TraverseVariable &va, TraverseInfo &info)
+    {
+        info.f_beta = (va.a_sum - (param.azi_end - param.azi_beg) - Angle((param.angles.size() - 2) * 180, 0, 0));
     }
 
     template <RouteType __rt>
@@ -214,9 +219,8 @@ namespace Traverse
         va.a_sum = std::accumulate(angles.begin(), angles.end(), Angle());
         __CalculateFBeta(param, va, info);
 
-        double ang_seconds = TakePlace((-info.f_beta / angles.size()).Seconds(), 0);
+        double ang_seconds = TakePlace((-info.f_beta / angles.size()).Seconds(), place);
         std::fill(corrections.begin(), corrections.end(), Angle(ang_seconds));
-
         va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle()).TakePlace(place);
 
         if (va.da_sum == -info.f_beta)
@@ -253,7 +257,7 @@ namespace Traverse
         AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
-    inline size_t __CorrespondingAzimuthIdx<RouteType::Closed>(size_t dis_i)
+    inline size_t __CorrespondingAzimuthIdx<RouteType::ClosedLoop>(size_t dis_i)
     {
         return dis_i;
     }
@@ -262,6 +266,11 @@ namespace Traverse
     {
         return dis_i + 1;
     }
+    template <>
+    inline size_t __CorrespondingAzimuthIdx<RouteType::ClosedConnecting>(size_t dis_i)
+    {
+        return __CorrespondingAzimuthIdx<RouteType::Connecting>(dis_i);
+    }
 
     template <RouteType __rt>
     void __CalculateFxFyFK(const TraverseParam<__rt> &param, TraverseVariable &va, TraverseInfo &info, int place)
@@ -269,7 +278,7 @@ namespace Traverse
         AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
-    void __CalculateFxFyFK<RouteType::Closed>(const TraverseParam<RouteType::Closed> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    void __CalculateFxFyFK<RouteType::ClosedLoop>(const TraverseParam<RouteType::ClosedLoop> &param, TraverseVariable &va, TraverseInfo &info, int place)
     {
         info.f_x = va.dx_sum;
         info.f_y = va.dy_sum;
@@ -281,6 +290,17 @@ namespace Traverse
     }
     template <>
     void __CalculateFxFyFK<RouteType::Connecting>(const TraverseParam<RouteType::Connecting> &param, TraverseVariable &va, TraverseInfo &info, int place)
+    {
+        info.f_x = TakePlace(va.dx_sum - (param.x_end - param.x_beg), place);
+        info.f_y = TakePlace(va.dy_sum - (param.y_end - param.y_beg), place);
+        info.f = TakePlace(gcem::sqrt(
+                               gcem::pow(info.f_x, 2) +
+                               gcem::pow(info.f_y, 2)),
+                           place);
+        info.K_inv = gcem::ceil(va.dis_sum / info.f);
+    }
+    template <>
+    void __CalculateFxFyFK<RouteType::ClosedConnecting>(const TraverseParam<RouteType::ClosedConnecting> &param, TraverseVariable &va, TraverseInfo &info, int place)
     {
         info.f_x = TakePlace(va.dx_sum - (param.x_end - param.x_beg), place);
         info.f_y = TakePlace(va.dy_sum - (param.y_end - param.y_beg), place);

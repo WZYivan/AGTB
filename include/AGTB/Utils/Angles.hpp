@@ -306,11 +306,6 @@ namespace Angles
             return gcem::abs(Rad());
         }
 
-        constexpr auto operator<=>(const Angle &rhs) const
-        {
-            return seconds <=> rhs.seconds;
-        }
-
         constexpr bool operator==(const Angle &rhs) const noexcept
         {
             return ApproxEq(seconds, rhs.seconds);

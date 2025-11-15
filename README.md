@@ -99,14 +99,14 @@ namespace aa = AGTB::Adjustment;
 
 int main() {
     // Closed elevation network
-    aa::ElevationParam<aa::RouteType::Closed> closed_params{
+    aa::ElevationParam<aa::RouteType::ClosedLoop> closed_params{
         .distances = {0.8, 0.5, 1.2, 0.5, 1.0},
         .h = {0.230, 0.260, -0.550, -0.450, 0.490},
         .H_beg = 12.000
     };
     
     auto closed_result = aa::Adjust(closed_params, 3);
-    std::println(">>> Closed Elevation:\n{}", 
+    std::println(">>> ClosedLoop Elevation:\n{}", 
                  aa::AdjustmentTable(closed_params, closed_result));
 
     // Connecting elevation network

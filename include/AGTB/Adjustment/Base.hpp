@@ -14,7 +14,22 @@ using Linalg::Matrix;
 
 enum class RouteType
 {
-    Closed,
+    /**
+     * @brief Known edge lies within route loop
+     *
+     */
+    ClosedLoop,
+
+    /**
+     * @brief Known edge lies out range of route loop
+     *
+     */
+    ClosedConnecting,
+
+    /**
+     * @brief Begin from known edge and end in another known edge
+     *
+     */
     Connecting
 };
 

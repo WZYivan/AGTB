@@ -131,7 +131,7 @@ namespace Elevation
         AGTB_TEMPLATE_NOT_SPECIFIED();
     }
     template <>
-    void __CalculateFh<RouteType::Closed>(const ElevationParam<RouteType::Closed> &param, ElevationVariable &va, ElevationInfo &info, int place)
+    void __CalculateFh<RouteType::ClosedLoop>(const ElevationParam<RouteType::ClosedLoop> &param, ElevationVariable &va, ElevationInfo &info, int place)
     {
         info.f_h = TakePlace(
             std::accumulate(param.h.begin(), param.h.end(), 0.0), place);
