@@ -16,6 +16,11 @@ namespace Traverse
 {
     using AGTB::Utils::Angles::Angle;
 
+    /**
+     * @brief parameter for traverse adjustment. x -> E, y -> N
+     *
+     * @tparam __rt
+     */
     template <RouteType __rt>
     struct TraverseParam
     {
