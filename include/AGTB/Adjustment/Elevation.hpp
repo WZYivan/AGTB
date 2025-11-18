@@ -97,6 +97,11 @@ namespace Elevation
     {
         ElevationVariable variable;
         ElevationInfo info;
+
+        int N() const
+        {
+            return variable.dh.size();
+        }
     };
 
     template <RouteType __rt>

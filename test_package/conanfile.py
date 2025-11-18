@@ -61,4 +61,6 @@ class agtbTestConan(ConanFile):
             targets = parse_cmake_for_executables(contents)
             for tar in targets:
                 cmd = cmd = os.path.join(self.cpp.build.bindir, tar)
+                # self.run(cmd)
+                
                 self.run(cmd, env="conanrun")

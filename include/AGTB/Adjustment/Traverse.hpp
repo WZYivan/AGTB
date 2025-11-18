@@ -175,6 +175,11 @@ namespace Traverse
     {
         TraverseVariable variable;
         TraverseInfo info;
+
+        int N() const
+        {
+            return variable.delta_a.size();
+        }
     };
 
     template <RouteType __rt>

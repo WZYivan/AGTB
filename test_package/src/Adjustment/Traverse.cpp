@@ -39,6 +39,7 @@
 // }
 
 #include <AGTB/Adjustment/Traverse.hpp>
+#include <AGTB/Adjustment/Tolerance.hpp>
 #include <print>
 
 namespace aa = AGTB::Adjustment;
@@ -81,4 +82,9 @@ int main()
         .y_end = 600};
     aa::TraverseAdjustResult r3 = aa::Adjust(p3, 3, 0);
     std::println(">>> 3\n{}", aa::AdjustmentTable(p3, r3));
+
+    using Tp = aa::EvaluateToleranceTParam<aa::EvaluateTarget::EDT, aa::ToleranceCatagory::Level, 1>;
+    Tp::Result er3 = aa::EvaluateTolerance<Tp>(r3);
+
+    std::println(">>> e3\n K = {}\n f = {}\n", er3.K ? "OK" : "Bad", er3.f_bate ? "OK" : "Bad");
 }
