@@ -4,6 +4,7 @@
 #include "../Base/Constants.hpp"
 #include "../Base/CoordinatsSystem.hpp"
 #include "../Ellipsoid/Geometry.hpp"
+#include "../ExMath/PreCorrection.hpp"
 #include "../../Utils/Angles.hpp"
 
 AGTB_GEODESY_BEGIN
@@ -89,7 +90,7 @@ namespace Projection::GaussKruger
                 double x = gpc.x, y = gpc.y;
                 double zone = gpc.zone;
 
-                Latitude Bf = MeridianArcBottom<__ellipsoid_type>(x, 1e-15);
+                Latitude Bf = MeridianArcBottom<__ellipsoid_type>(x, 1e-5, true);
 
                 auto [Mf, Nf] = PrincipleCurvatureRadii<__ellipsoid_type, algo_option>(Bf);
                 LatitudeConstants<EllipsoidGeometry<__ellipsoid_type>> glc(Bf);

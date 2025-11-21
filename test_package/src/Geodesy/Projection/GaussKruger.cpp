@@ -1,5 +1,6 @@
 #include <AGTB/Geodesy/Project.hpp>
 #include <print>
+#include <fstream>
 
 int main()
 {
@@ -9,12 +10,12 @@ int main()
 
     using Tp = ag::GaussProjectTParam<ag::EllipsoidType::CGCS2000, ag::GaussZoneInterval::D6>;
 
-    for (int i = 1; i != 6; ++i)
+    for (int i = 1; i != 90; ++i)
     {
         ag::Longitude
             L_from(115, 0, 0);
         ag::Latitude
-            B_from(15 * i, 0, 0);
+            B_from(i, 0, 0);
 
         Tp::GeoCoord geo_coord_from{
             L_from,

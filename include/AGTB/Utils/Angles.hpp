@@ -19,6 +19,8 @@ namespace Angles
 {
     constexpr double Deg2Rad = std::numbers::pi / 180;
     constexpr double Rad2Deg = 180 / std::numbers::pi;
+    constexpr double Sec2Rad = Deg2Rad / 3600.0;
+    constexpr double Rad2Sec = Rad2Deg * 3600.0;
     constexpr double Pi = std::numbers::pi;
 
     /**

@@ -3,6 +3,7 @@
 
 #include "Base.hpp"
 #include "../Base/GeoLatLon.hpp"
+#include "../ExMath/PreCorrection.hpp"
 
 AGTB_GEODESY_BEGIN
 
@@ -148,6 +149,7 @@ template <EllipsoidType __ellipsoid_type>
 struct PrincipleCurvatureRadiiCoeff
 {
     using __ellipsoid_geometry = EllipsoidGeometry<__ellipsoid_type>;
+    constexpr static EllipsoidType ellipsoid_type = __ellipsoid_type;
 
     constexpr static double
         a = __ellipsoid_geometry::a,
@@ -180,6 +182,7 @@ struct PrincipleCurvatureRadiiCoeff<EllipsoidType::Krasovski>
         n4 = 107.159'04,
         n6 = 0.597'72,
         n8 = 0.003'50;
+    constexpr static EllipsoidType ellipsoid_type = EllipsoidType::Krasovski;
 };
 
 template <>
@@ -196,6 +199,7 @@ struct PrincipleCurvatureRadiiCoeff<EllipsoidType::IE1975>
         n4 = 107.188'00,
         n6 = 0.598'00,
         n8 = 0.003'00;
+    constexpr static EllipsoidType ellipsoid_type = EllipsoidType::IE1975;
 };
 
 template <typename T>
@@ -210,6 +214,7 @@ concept PrincipleCurvatureRadiiCoeffConcept = requires {
     { T::n4 } -> std::convertible_to<double>;
     { T::n6 } -> std::convertible_to<double>;
     { T::n8 } -> std::convertible_to<double>;
+    { T::ellipsoid_type } -> std::convertible_to<EllipsoidType>;
 };
 
 template <PrincipleCurvatureRadiiCoeffConcept coeff>
@@ -395,22 +400,26 @@ namespace QuarterArcImpl
     template <typename T>
     concept ImplConcept = requires(Latitude B) {
         { T::Forward(B) } -> std::convertible_to<double>;
-    } && requires(double len, double iter_threshold) {
+    } && requires(double len, double iter_threshold, bool enable_precorrection) {
         { T::Inverse(len) } -> std::convertible_to<Latitude>;
-        { T::Inverse(len, iter_threshold) } -> std::convertible_to<Latitude>;
+        { T::Inverse(len, iter_threshold, enable_precorrection) } -> std::convertible_to<Latitude>;
     };
 
     template <PrincipleCurvatureRadiiCoeffConcept PCR>
     struct Impl
     {
-        static Latitude Inverse(double len, double iter_threshold)
+        static Latitude Inverse(double len, double iter_threshold, bool enable_precorrectoin)
         {
             using coeff = QuarterArcCoeff<PCR>;
 
             using Utils::Angles::FromDMS;
-            using Utils::Angles::ToSeconds;
 
             double Bf_cur = FromDMS(len / coeff::a0), Bf_next = Bf_cur, FB = 0; // rad
+            double dB = 0.0;
+            if (enable_precorrectoin)
+            {
+                dB = PreCorrection::MeridianArcBottom<PCR::ellipsoid_type>(len);
+            }
 
             if (ApproxEq(Bf_cur, 0.0))
             {
@@ -426,7 +435,7 @@ namespace QuarterArcImpl
                     coeff::a6 * gcem::sin(6 * Bf_cur);
                 Bf_next = FromDMS((len - FB) / coeff::a0); // deg -> rad
             } while (Bf_next - Bf_cur >= iter_threshold);
-            return Bf_cur; // return rad
+            return Bf_cur + dB; // return rad
         }
 
         static Latitude Inverse(double len)
@@ -490,15 +499,17 @@ double MeridianArcLength(Latitude B)
  * @brief Inverse solve bottom point latitude from a quarter of meridian length
  *
  * @tparam __ellipsoid_type
+ * @tparam __precorrection_level
  * @param len
  * @param iter_threshold
+ * @param enable_precorrectoin
  * @return `Latitude` of bottom point
  */
 template <EllipsoidType __ellipsoid_type>
-Latitude MeridianArcBottom(double len, double iter_threshold)
+Latitude MeridianArcBottom(double len, double iter_threshold, bool enable_precorrectoin = true)
 {
     using Impl = QuarterArcImpl::CheckedImpl<__ellipsoid_type>;
-    return Impl::Inverse(len, iter_threshold);
+    return Impl::Inverse(len, iter_threshold, enable_precorrectoin);
 }
 
 AGTB_GEODESY_END

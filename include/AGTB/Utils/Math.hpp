@@ -86,6 +86,55 @@ constexpr double MinUnit(int place)
     return gcem::pow(0.1, place);
 }
 
+template <typename __value_type, size_t __N>
+struct CubicSpline
+{
+    using value_type = __value_type;
+    std::array<value_type, __N + 1>
+        x_knots, y_knots;
+    std::array<value_type, __N>
+        a, b, c, d;
+    value_type threshold;
+    value_type x_max = 1, x_min = 0;
+    size_t n_intervals = __N;
+
+    constexpr value_type operator()(value_type x) const noexcept
+    {
+        if (x <= x_min)
+        {
+            double dx = x - x_knots[0];
+            return DirectInvoke(dx, 0);
+        }
+
+        if (x >= x_max)
+        {
+            int last_idx = n_intervals - 1;
+            double dx = x - x_knots[last_idx];
+            return DirectInvoke(dx, last_idx);
+        }
+
+        size_t idx = 0;
+        for (int i = 0; i != n_intervals; ++i)
+        {
+            if (x < x_knots[i + 1])
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        double dx = x - x_knots[idx];
+        return DirectInvoke(dx, idx);
+    }
+
+    constexpr value_type DirectInvoke(value_type dx, size_t idx) const noexcept
+    {
+        value_type v{a[idx] + b[idx] * dx +
+                     c[idx] * gcem::pow(dx, 2) + d[idx] * gcem::pow(dx, 3)};
+        return gcem::abs(v) < threshold ? v : threshold;
+    }
+};
+
 AGTB_END
 
 #endif
