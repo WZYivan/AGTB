@@ -210,41 +210,13 @@ namespace PreCorrection
                 .threshold{1.1257736487532196e-05}};
         }
 
-        constexpr CubicSpline<double, 88>
-            Spline_CGCS2000 = PreDefinedCubicSpline<EllipsoidType::CGCS2000>(),
-            Spline_IE1975 = PreDefinedCubicSpline<EllipsoidType::IE1975>(),
-            Spline_WGS84 = PreDefinedCubicSpline<EllipsoidType::WGS84>(),
-            Spline_Krasovski = PreDefinedCubicSpline<EllipsoidType::Krasovski>();
+        template <EllipsoidType __ellipsoid_type>
+        constexpr CubicSpline<double, 88> SplineCore = PreDefinedCubicSpline<__ellipsoid_type>();
 
         template <EllipsoidType __ellipsoid_type>
         constexpr double SplineFit(double len)
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
-            return 0.0;
-        }
-
-        template <>
-        constexpr double SplineFit<EllipsoidType::CGCS2000>(double len)
-        {
-            return Spline_CGCS2000(len / 1e7);
-        }
-
-        template <>
-        constexpr double SplineFit<EllipsoidType::IE1975>(double len)
-        {
-            return Spline_IE1975(len / 1e7);
-        }
-
-        template <>
-        constexpr double SplineFit<EllipsoidType::WGS84>(double len)
-        {
-            return Spline_WGS84(len / 1e7);
-        }
-
-        template <>
-        constexpr double SplineFit<EllipsoidType::Krasovski>(double len)
-        {
-            return Spline_Krasovski(len / 1e7);
+            return SplineCore<__ellipsoid_type>(len / 1e7);
         }
     }
 
