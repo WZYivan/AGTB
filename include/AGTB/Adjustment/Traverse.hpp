@@ -255,7 +255,7 @@ namespace Traverse
         for (auto i = 0uz; i != angles.size(); ++i)
         {
             corrected_angles.at(i) = (angles.at(i) + corrections.at(i)).NormStd();
-            azimuth.at(i + 1) = (corrected_angles.at(i) + azimuth.at(i) - Utils::Angles::A180d).NormStd();
+            azimuth.at(i + 1) = (corrected_angles.at(i) + azimuth.at(i) - Utils::Angles::ang_180d).NormStd();
         }
 
         va.a_c_sum = std::accumulate(corrected_angles.begin(), corrected_angles.end(), Angle()).TakePlace(place);

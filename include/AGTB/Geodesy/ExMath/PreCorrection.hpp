@@ -210,26 +210,38 @@ namespace PreCorrection
                 .threshold{1.1257736487532196e-05}};
         }
 
+        /**
+         * @brief Cubic spline to simulate results of waveltes
+         *
+         * @tparam __ellipsoid_type
+         */
         template <EllipsoidType __ellipsoid_type>
-        constexpr CubicSpline<double, 88> SplineCore = PreDefinedCubicSpline<__ellipsoid_type>();
+        constexpr CubicSpline<double, 88> spline_core = PreDefinedCubicSpline<__ellipsoid_type>();
 
         template <EllipsoidType __ellipsoid_type>
         constexpr double SplineFit(double len)
         {
-            return SplineCore<__ellipsoid_type>(len / 1e7);
+            return spline_core<__ellipsoid_type>(len / 1e7);
         }
     }
 
+    /**
+     * @brief Predefined corrections for algo `MeridianArcBottom` using Sin, DoubleGaussian and Wavelets(Spline)
+     *
+     * @tparam __ellipsoid_type
+     * @param len
+     * @return double
+     */
     template <EllipsoidType __ellipsoid_type>
     double MeridianArcBottom(double len)
     {
         using namespace MeridianArcBottomImpl;
-        using Utils::Angles::Sec2Rad;
+        using Utils::Angles::sec2rad;
 
         return (SinFit<SinCoeff<__ellipsoid_type>>(len) +
                 DoubleGaussianFit<DoubleGaussianCoeff<__ellipsoid_type>>(len) +
                 SplineFit<__ellipsoid_type>(len)) *
-               Sec2Rad;
+               sec2rad;
     }
 }
 

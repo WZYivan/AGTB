@@ -343,7 +343,7 @@ public:
               m4 * 3.0 / 8.0 +
               m6 * 5.0 / 16.0 +
               m8 * 35.0 / 128.0) *
-             Utils::Angles::Deg2Rad,
+             Utils::Angles::deg2rad,
         a2 = (m2 / 2.0 +
               m4 / 2.0 +
               m6 * 15.0 / 32.0 +

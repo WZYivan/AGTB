@@ -14,9 +14,9 @@ bool are_equal(double a, double b, double epsilon = 1e-10)
 void test_constants()
 {
     std::cout << "Testing Constants...\n";
-    assert(are_equal(AGTB::Utils::Angles::Deg2Rad, std::numbers::pi / 180.0));
-    assert(are_equal(AGTB::Utils::Angles::Rad2Deg, 180.0 / std::numbers::pi));
-    assert(are_equal(AGTB::Utils::Angles::Pi, std::numbers::pi));
+    assert(are_equal(AGTB::Utils::Angles::deg2rad, std::numbers::pi / 180.0));
+    assert(are_equal(AGTB::Utils::Angles::rad2deg, 180.0 / std::numbers::pi));
+    assert(are_equal(AGTB::Utils::Angles::pi, std::numbers::pi));
     std::cout << "  Constants OK\n\n";
 }
 
@@ -38,13 +38,13 @@ void test_FromDMS()
 
     // Test positive DMS
     double rad_pos = AGTB::Utils::Angles::FromDMS(45, 30, 15.5);
-    double expected_pos = (45.0 + 30.0 / 60.0 + 15.5 / 3600.0) * AGTB::Utils::Angles::Deg2Rad;
+    double expected_pos = (45.0 + 30.0 / 60.0 + 15.5 / 3600.0) * AGTB::Utils::Angles::deg2rad;
     assert(are_equal(rad_pos, expected_pos));
     std::cout << "  FromDMS(45, 30, 15.5) = " << rad_pos << " (expected ~" << expected_pos << ")\n";
 
     // Test negative DMS
     double rad_neg = AGTB::Utils::Angles::FromDMS(-45, 30, 15.5);
-    double expected_neg = -(45.0 + 30.0 / 60.0 + 15.5 / 3600.0) * AGTB::Utils::Angles::Deg2Rad; // Note the minus sign
+    double expected_neg = -(45.0 + 30.0 / 60.0 + 15.5 / 3600.0) * AGTB::Utils::Angles::deg2rad; // Note the minus sign
     assert(are_equal(rad_neg, expected_neg));
     std::cout << "  FromDMS(-45, 30, 15.5) = " << rad_neg << " (expected ~" << expected_neg << ")\n";
 
@@ -55,7 +55,7 @@ void test_FromDMS()
 
     // Test edge case: 59 minutes, 59.999... seconds
     double rad_edge = AGTB::Utils::Angles::FromDMS(10, 59, 59.99999999999);
-    double expected_edge = (10.0 + 59.0 / 60.0 + 59.999999999999999 / 3600.0) * AGTB::Utils::Angles::Deg2Rad;
+    double expected_edge = (10.0 + 59.0 / 60.0 + 59.999999999999999 / 3600.0) * AGTB::Utils::Angles::deg2rad;
     assert(are_equal(rad_edge, expected_edge));
     std::cout << "  FromDMS(10, 59, 59.999...) OK\n";
 

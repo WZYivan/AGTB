@@ -17,11 +17,11 @@ AGTB_UTILS_BEGIN
 
 namespace Angles
 {
-    constexpr double Deg2Rad = std::numbers::pi / 180;
-    constexpr double Rad2Deg = 180 / std::numbers::pi;
-    constexpr double Sec2Rad = Deg2Rad / 3600.0;
-    constexpr double Rad2Sec = Rad2Deg * 3600.0;
-    constexpr double Pi = std::numbers::pi;
+    constexpr double deg2rad = std::numbers::pi / 180;
+    constexpr double rad2deg = 180 / std::numbers::pi;
+    constexpr double sec2rad = deg2rad / 3600.0;
+    constexpr double rad2sec = rad2deg * 3600.0;
+    constexpr double pi = std::numbers::pi;
 
     /**
      * @brief min in [0,59], seconds in [0, 60)
@@ -54,7 +54,7 @@ namespace Angles
         bool neg = gcem::signbit(degrees);
         degrees = gcem::abs(degrees);
         double all_degrees = (degrees * 3600 + minutes * 60 + seconds) / 3600.0;
-        double rad = all_degrees * Deg2Rad;
+        double rad = all_degrees * deg2rad;
         return (!neg) ? rad : -rad;
     }
 
@@ -71,7 +71,7 @@ namespace Angles
      */
     constexpr inline double ToDegrees(double rad)
     {
-        return rad * Rad2Deg;
+        return rad * rad2deg;
     }
 
     /**
@@ -139,12 +139,12 @@ namespace Angles
      */
     constexpr inline double NormalizedSym(double rad)
     {
-        double result = gcem::fmod(rad + Pi, 2.0 * Pi);
+        double result = gcem::fmod(rad + pi, 2.0 * pi);
         if (result < 0)
         {
-            result += 2.0 * Pi;
+            result += 2.0 * pi;
         }
-        return result - Pi;
+        return result - pi;
     }
 
     /**
@@ -155,10 +155,10 @@ namespace Angles
      */
     constexpr inline double NormalizedStd(double rad)
     {
-        double result = gcem::fmod(rad, 2.0 * Pi);
+        double result = gcem::fmod(rad, 2.0 * pi);
         if (result < 0)
         {
-            result += 2.0 * Pi;
+            result += 2.0 * pi;
         }
         return result;
     }
@@ -465,9 +465,9 @@ namespace Angles
     }
 
     constexpr Angle
-        A180d = Angle(180, 0, 0),
-        A90d = Angle(90, 0, 0),
-        A45d = Angle(45, 0, 0);
+        ang_180d = Angle(180, 0, 0),
+        ang_90d = Angle(90, 0, 0),
+        ang_45d = Angle(45, 0, 0);
 
 }
 

@@ -54,7 +54,7 @@ void generate_gauss_project_latitude_residual()
         typename Tp::GaussCoord gauss_proj_coord = ag::Project<Tp>(geo_coord_from);
         typename Tp::GeoCoord geo_coord_to = ag::Project<Tp>(gauss_proj_coord);
 
-        double lat_residual_sec = (lat.Rad() - geo_coord_to.B.Rad()) * aua::Rad2Sec;
+        double lat_residual_sec = (lat.Rad() - geo_coord_to.B.Rad()) * aua::rad2sec;
 
         ofs << std::format("{} {}\n", gauss_proj_coord.x / 1e7, lat_residual_sec);
     }
