@@ -225,6 +225,49 @@ int main() {
 }
 ```
 
+### Utils
+
+Provide universal utilities for development.
+
+#### Angles
+
+Here provides an `Angle` class representing `dd.mmss` and a serires of functions to convert between radiuse, dms and string-foramt of dms.
+
+#### DataFrame
+
+A simple implment to simulate `pandas.DataFrame` using `boost::multi_array` and `Eigen::Matrix`. It provides access interface similar to `iloc` and `loc`  and data managment interface using `Eigen::Matrix`. A internal object `inner_frame` is provided to adapt `boost::indices`.
+
+```cpp
+#include <AGTB/Utils/DataFrame.hpp>
+#include <AGTB/IO/Eigen.hpp>
+#include <AGTB/IO/CSV.hpp>
+#include <print>
+
+int main()
+{
+    using AGTB::IO::PrintEigen;
+    using AGTB::IO::ReadCSV;
+    using AGTB::Utils::DataFrame;
+
+    DataFrame<double> df(3, 4);
+    auto nf = df.NumericFrame<double>(); // it's a ref, not a copy
+    nf.col(0).fill(1.0);
+    nf.col(1).fill(2.0);
+    nf.col(2) = nf.col(0) + nf.col(1);
+    PrintEigen(nf, "numeric frame:");
+
+    std::println("{}", df.ToString());
+    auto str_df = // another DataFrame
+        df.Cast<std::string>([](const double &v)
+                             { return std::format("val: {}", v); });
+    std::println("{}", str_df.ToString());
+
+    auto csv = ReadCSV<double>("../dat/csv/Draft.csv", ",", true);
+    csv.ColKeys(1) = "123";
+    std::println("{}", csv.ToString());
+}
+```
+
 ## Documentation
 
 For detailed API documentation and advanced usage examples, please refer to the source code headers and test cases.
