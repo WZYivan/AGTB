@@ -53,4 +53,5 @@ class agtbRecipe(ConanFile):
     def requirements(self):
         self.requires("eigen/[*]")
         self.requires("gcem/[*]")
+        self.requires("boost/[*]")
 

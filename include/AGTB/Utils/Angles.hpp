@@ -3,7 +3,7 @@
 
 #include "../details/Macros.hpp"
 #include "../Utils/Error.hpp"
-#include "../Utils/Std/CharConv.hpp"
+#include "../Utils/CharConv.hpp"
 #include "Math.hpp"
 
 #include <gcem.hpp>
@@ -472,5 +472,16 @@ namespace Angles
 }
 
 AGTB_UTILS_END
+
+AGTB_BEGIN
+
+using Utils::Angles::Angle;
+using Utils::Angles::deg2rad;
+using Utils::Angles::FromDMS;
+using Utils::Angles::rad2deg;
+using Utils::Angles::rad2sec;
+using Utils::Angles::sec2rad;
+
+AGTB_END
 
 #endif

@@ -23,6 +23,6 @@ int main()
     std::println("{}", str_df.ToString());
 
     auto csv = ReadCSV<double>("../dat/csv/Draft.csv", ",", true);
-    csv.ColKeys(100) = "123";
+    csv.ColKeys(1) = "123";
     std::println("{}", csv.ToString());
 }

@@ -188,7 +188,8 @@ namespace EigenIO
     namespace Fmt
     {
         const Eigen::IOFormat
-            python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
+            python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]"),
+            csv_style(Eigen::FullPrecision, 0, ", ", "\n", "", "", "", "");
     }
 
     /**

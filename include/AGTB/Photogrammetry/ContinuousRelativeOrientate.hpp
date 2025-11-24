@@ -132,7 +132,7 @@ namespace ContinuousRelativeOrientate
         auto &xy1 = param.xy1, xy2 = param.xy2;
         auto &in1 = param.in1, in2 = param.in2;
 
-        k if (!(xy1.rows() != 0 && xy2.rows() != 0 && xy1.cols() == xy2.cols() && xy1.cols() > 5))
+        if (!(xy1.rows() != 0 && xy2.rows() != 0 && xy1.cols() == xy2.cols() && xy1.cols() > 5))
         {
             AGTB_THROW(std::invalid_argument, "Input coordinate must have same count and larger than 5.");
         }

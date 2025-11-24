@@ -1,7 +1,7 @@
 #ifndef __AGTB_UTILS_STD_CHAR_CONV_HPP__
 #define __AGTB_UTILS_STD_CHAR_CONV_HPP__
 
-#include "../../details/Macros.hpp"
+#include "../details/Macros.hpp"
 #include <concepts>
 
 AGTB_UTILS_BEGIN
@@ -25,5 +25,11 @@ bool FromString(const std::string &str, value_type &value)
 }
 
 AGTB_UTILS_END
+
+AGTB_BEGIN
+
+using Utils::FromString;
+
+AGTB_END
 
 #endif
