@@ -25,7 +25,6 @@ public:
     using index = boost::detail::multi_array::index;
     using size_type = boost::detail::multi_array::size_type;
     using index_range = boost::detail::multi_array::index_range<index, size_type>;
-    using index_gen = boost::detail::multi_array::index_gen<2, 2>;
 
 private:
     size_t beg;
@@ -84,7 +83,6 @@ public:
     using index = boost::detail::multi_array::index;
     using size_type = boost::detail::multi_array::size_type;
     using index_range = boost::detail::multi_array::index_range<index, size_type>;
-    using index_gen = boost::multi_array_types::index_gen<2, 2>;
 
 private:
     frame_type frame;
@@ -143,9 +141,6 @@ public:
         std::copy(other_row_keys.origin(), other_row_keys.origin() + other_row_keys.num_elements(), row_keys.origin());
         std::copy(other_col_keys.origin(), other_col_keys.origin() + other_col_keys.num_elements(), col_keys.origin());
 
-        // row_keys_map = other_row_keys_map;
-        // col_keys_map = other_col_keys_map;
-
         std::transform(
             other_frame.data(),
             other_frame.data() + other_frame.num_elements(),
@@ -155,6 +150,19 @@ public:
             std::move(frame),
             std::move(row_keys),
             std::move(col_keys));
+    }
+
+    static DataFrame BuildFrom(frame_type &&data)
+    {
+        using target = DataFrame;
+
+        size_t rows = data.shape()[0];
+        size_t cols = data.shape()[1];
+
+        target result(rows, cols);
+        result.frame = std::move(data);
+
+        return result;
     }
 
     std::string ToString() const
@@ -187,14 +195,11 @@ public:
     template <typename __self>
     decltype(auto) ILoc(this __self &&self, size_t col_idx)
     {
-        if (col_idx >= self.frame.shape()[1])
+        if (col_idx >= self.Cols())
         {
             AGTB_THROW(std::out_of_range, "Column index out of bounds");
         }
-        return self.frame[boost::indices[boost::multi_array_types::index_range(
-            0,
-            self.frame.shape()[0])]
-                                        [static_cast<frame_type::index>(col_idx)]];
+        return self.frame[self.__GetColSeriesIndicies(col_idx)];
     }
 
     /**
@@ -209,17 +214,37 @@ public:
     template <typename __self>
     decltype(auto) ILoc(this __self &&self, size_t row_idx, size_t col_idx)
     {
-        if (col_idx >= self.frame.shape()[1] || row_idx >= self.frame.shape()[0])
+        if (col_idx >= self.Cols() || row_idx >= self.Rows())
         {
             AGTB_THROW(std::out_of_range, "Column index out of bounds");
         }
-        return self.frame[row_idx];
+        return self.frame[row_idx][col_idx];
     }
 
     template <typename __self>
     decltype(auto) ILoc(this __self &&self, const index_range &row_indices, size_t col_idx)
     {
+        if (col_idx >= self.Cols())
+        {
+            AGTB_THROW(std::out_of_range, "Column index out of bounds");
+        }
         return self.frame[boost::indices[row_indices][col_idx]];
+    }
+
+    template <typename __self>
+    decltype(auto) ILoc(this __self &&self, size_t row_idx, const index_range &col_indices)
+    {
+        if (row_idx >= self.Rows())
+        {
+            AGTB_THROW(std::out_of_range, "Column index out of bounds");
+        }
+        return self.frame[boost::indices[row_idx][col_indices]];
+    }
+
+    template <typename __self>
+    decltype(auto) ILoc(this __self &&self, const index_range &row_indices, const index_range &col_indices)
+    {
+        return self.frame[boost::indices[row_indices][col_indices]];
     }
 
     /**
