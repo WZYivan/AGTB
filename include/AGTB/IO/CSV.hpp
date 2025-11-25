@@ -65,7 +65,12 @@ DataFrame<__value_type, __row_key_type, __col_key_type> ReadCSV(
             continue;
         }
 
-        if (fields.size() > 0)
+        if constexpr (std::same_as<__value_type, std::string>)
+        {
+            data_rows.push_back(std::move(fields));
+            row_names.emplace_back(std::to_string(data_rows.size() - 1));
+        }
+        else if (fields.size() > 0)
         {
             std::vector<__value_type> row_data;
             row_data.reserve(fields.size());
