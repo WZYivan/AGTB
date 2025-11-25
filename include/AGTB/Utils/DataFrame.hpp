@@ -19,6 +19,32 @@ concept __DataFrameCastConverterConcept = requires(__converter convert, __value_
     { convert(this_value) } -> std::convertible_to<__new_value_type>;
 };
 
+class DataFrameIndicesBuilder
+{
+public:
+    using index = boost::detail::multi_array::index;
+    using size_type = boost::detail::multi_array::size_type;
+    using index_range = boost::detail::multi_array::index_range<index, size_type>;
+    using index_gen = boost::detail::multi_array::index_gen<2, 2>;
+
+private:
+    size_t beg;
+
+public:
+    ~DataFrameIndicesBuilder() = default;
+    DataFrameIndicesBuilder(size_t __beg) : beg(__beg) {}
+
+    index_range operator>>(size_t __end)
+    {
+        return index_range(beg, __end);
+    }
+};
+
+DataFrameIndicesBuilder Idx(size_t __beg)
+{
+    return DataFrameIndicesBuilder(__beg);
+}
+
 /**
  * @brief A simple implement of `pandas.DataFrame`, but only store same type
  *
@@ -54,6 +80,11 @@ public:
     using numeric_frame_of = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
     template <typename T>
     using numeric_series_of = Eigen::Vector<T, Eigen::Dynamic>;
+
+    using index = boost::detail::multi_array::index;
+    using size_type = boost::detail::multi_array::size_type;
+    using index_range = boost::detail::multi_array::index_range<index, size_type>;
+    using index_gen = boost::multi_array_types::index_gen<2, 2>;
 
 private:
     frame_type frame;
@@ -154,7 +185,7 @@ public:
      * @return decltype(auto)
      */
     template <typename __self>
-    decltype(auto) IdxLocate(this __self &&self, size_t col_idx)
+    decltype(auto) ILoc(this __self &&self, size_t col_idx)
     {
         if (col_idx >= self.frame.shape()[1])
         {
@@ -176,13 +207,19 @@ public:
      * @return decltype(auto)
      */
     template <typename __self>
-    decltype(auto) IdxLocate(this __self &&self, size_t row_idx, size_t col_idx)
+    decltype(auto) ILoc(this __self &&self, size_t row_idx, size_t col_idx)
     {
         if (col_idx >= self.frame.shape()[1] || row_idx >= self.frame.shape()[0])
         {
             AGTB_THROW(std::out_of_range, "Column index out of bounds");
         }
-        return self.frame[row_idx][col_idx];
+        return self.frame[row_idx];
+    }
+
+    template <typename __self>
+    decltype(auto) ILoc(this __self &&self, const index_range &row_indices, size_t col_idx)
+    {
+        return self.frame[boost::indices[row_indices][col_idx]];
     }
 
     /**
@@ -196,10 +233,10 @@ public:
      */
     template <typename __self, typename __col_like>
         requires std::convertible_to<__col_like, col_key_type>
-    decltype(auto) Locate(this __self &&self, __col_like &&ck)
+    decltype(auto) Loc(this __self &&self, __col_like &&ck)
     {
         size_t col_idx = __FindIdxOf(self.col_keys, ck);
-        return self.IdxLocate(col_idx);
+        return self.ILoc(col_idx);
     }
 
     /**
@@ -215,12 +252,12 @@ public:
      */
     template <typename __self, typename __row_like, typename __col_like>
         requires std::convertible_to<__row_like, row_key_type> && std::convertible_to<__col_like, col_key_type>
-    decltype(auto) Locate(this __self &&self, __row_like &&rk, __col_like &&ck)
+    decltype(auto) Loc(this __self &&self, __row_like &&rk, __col_like &&ck)
     {
         size_t col_idx = __FindIdxOf(self.col_keys, ck);
         size_t row_idx = __FindIdxOf(self.row_keys, rk);
 
-        return self.IdxLocate(row_idx, col_idx);
+        return self.ILoc(row_idx, col_idx);
     }
 
     /**
@@ -315,9 +352,9 @@ public:
             {
                 for (size_t c = 0; c < cols; ++c)
                 {
-                    if (!FromString<pure_cast>(this->IdxLocate(r, c), result_matrix(r, c)))
+                    if (!FromString<pure_cast>(this->ILoc(r, c), result_matrix(r, c)))
                     {
-                        AGTB_THROW(std::invalid_argument, std::format("Convert value {} fail", this->IdxLocate(r, c)));
+                        AGTB_THROW(std::invalid_argument, std::format("Convert value {} fail", this->ILoc(r, c)));
                     }
                 }
             }
@@ -393,6 +430,7 @@ AGTB_UTILS_END
 AGTB_BEGIN
 
 using Utils::DataFrame;
+using Utils::Idx;
 
 AGTB_END
 

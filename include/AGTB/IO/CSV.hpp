@@ -129,11 +129,11 @@ DataFrame<__value_type, __row_key_type, __col_key_type> ReadCSV(
         {
             if (c < cols_in_row)
             {
-                df.IdxLocate(r, c) = data_row[c];
+                df.ILoc(r, c) = data_row[c];
             }
             else
             {
-                df.IdxLocate(r, c) = __value_type{};
+                df.ILoc(r, c) = __value_type{};
             }
         }
     }
