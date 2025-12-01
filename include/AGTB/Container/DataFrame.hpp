@@ -1,5 +1,5 @@
-#ifndef __AGTB_UTILS_DATAFRAME_HPP__
-#define __AGTB_UTILS_DATAFRAME_HPP__
+#ifndef __AGTB_CONTAINER_DATAFRAME_HPP__
+#define __AGTB_CONTAINER_DATAFRAME_HPP__
 
 #include "../details/Macros.hpp"
 
@@ -11,7 +11,7 @@
 #include <boost/multi_array.hpp>
 #include <boost/algorithm/string.hpp>
 
-AGTB_UTILS_BEGIN
+AGTB_CONTAINER_BEGIN
 
 template <typename __new_value_type, typename __value_type, typename __converter>
 concept __DataFrameCastConverterConcept = requires(__converter convert, __value_type this_value) {
@@ -834,13 +834,13 @@ private:
     }
 };
 
-AGTB_UTILS_END
+AGTB_CONTAINER_END
 
 AGTB_BEGIN
 
-using Utils::DataFrame;
-using Utils::Idx;
-using Utils::Key;
+using Container::DataFrame;
+using Container::Idx;
+using Container::Key;
 
 AGTB_END
 

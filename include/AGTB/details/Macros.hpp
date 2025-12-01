@@ -83,6 +83,15 @@
     }               \
     AGTB_END
 
+#define AGTB_CONTAINER_BEGIN \
+    AGTB_BEGIN               \
+    namespace Container      \
+    {
+
+#define AGTB_CONTAINER_END \
+    }                      \
+    AGTB_END
+
 AGTB_BEGIN
 
 namespace macros
