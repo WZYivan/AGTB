@@ -43,6 +43,8 @@ public:
     using edge_index_type = GraphTraits::edge_descriptor;
     using vertex_map_type = std::map<name_type, vertex_index_type>;
     using edge_map_type = std::map<name_type, edge_index_type>;
+    using reverse_vertex_map_type = std::map<vertex_index_type, name_type>;
+    using reverse_edge_map_type = std::map<edge_index_type, name_type>;
 
 public:
     template <typename __map_ref_type>
@@ -83,6 +85,11 @@ public:
             }
         }
 
+        size_t Size() const
+        {
+            return ref.size();
+        }
+
         template <typename __self>
         decltype(auto) Begin(this __self &&self)
         {
@@ -119,7 +126,9 @@ private:
 private:
     Graph graph;
     vertex_map_type vertices;
+    reverse_vertex_map_type rvertices;
     edge_map_type edges;
+    reverse_edge_map_type redges;
 
 public:
     ~NamedGraph() = default;
@@ -132,7 +141,7 @@ public:
     }
 
     template <typename __return>
-    __return ApplyUnWrap(std::function<__return(Graph &, vertex_map_type &, edge_map_type &)> apply_to_all_wrapped)
+    __return ApplyUnWrap(std::function<__return(Graph &, vertex_map_type &, reverse_vertex_map_type &, edge_map_type &, reverse_edge_map_type &)> apply_to_all_wrapped)
     {
         return apply_to_all_wrapped(graph, vertices, edges);
     }
@@ -158,6 +167,7 @@ public:
 
         vertex_index_type idx = boost::add_vertex(graph);
         vertices.insert_or_assign(name, idx);
+        rvertices.insert_or_assign(idx, name);
         return idx;
     }
 
@@ -170,7 +180,16 @@ public:
 
         vertex_index_type idx = boost::add_vertex(property, graph);
         vertices.insert_or_assign(name, idx);
+        rvertices.insert_or_assign(idx, name);
         return idx;
+    }
+
+    inline void RemoveVertex(const name_type &name)
+    {
+        vertex_index_type tar = vertices.at(name);
+        boost::remove_vertex(tar, graph);
+        vertices.erase(name);
+        rvertices.erase(tar);
     }
 
     edge_index_type AddEdge(const name_type &beg, const name_type &end, const name_type &name, bool *add_status_ptr = nullptr)
@@ -194,6 +213,7 @@ public:
         }
 
         edges.insert_or_assign(name, pair.first);
+        redges.insert_or_assign(pair.first, name);
         return pair.first;
     }
 
@@ -218,7 +238,16 @@ public:
         }
 
         edges.insert_or_assign(name, pair.first);
+        redges.insert_or_assign(pair.first, name);
         return pair.first;
+    }
+
+    inline void RemoveEdge(const name_type &name)
+    {
+        edge_index_type tar = edges.at(name);
+        boost::remove_edge(tar, graph);
+        edges.erase(name);
+        redges.erase(tar);
     }
 
     template <typename __self>
@@ -273,25 +302,13 @@ public:
     name_type SourceName(const name_type &name) const
     {
         vertex_index_type tar = Source(name);
-        for (const auto &[k, v] : vertices)
-        {
-            if (v == tar)
-            {
-                return k;
-            }
-        }
+        return rvertices.at(tar);
     }
 
     name_type TargetName(const name_type &name) const
     {
         vertex_index_type tar = Target(name);
-        for (const auto &[k, v] : vertices)
-        {
-            if (v == tar)
-            {
-                return k;
-            }
-        }
+        return rvertices.at(tar);
     }
 
     template <typename __self>
