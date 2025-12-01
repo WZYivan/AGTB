@@ -10,6 +10,10 @@
 #include <exception>
 #include <source_location>
 #include <format>
+#include <sstream>
+#include <iostream>
+
+#include <boost/stacktrace.hpp>
 
 #define AGTB_BEGIN \
     namespace AGTB \
@@ -108,7 +112,9 @@ namespace macros
      * @param location source location where you throw
      */
     template <typename error_type>
-    [[noreturn]] void msg_throw(const std::string_view msg, const std::source_location location)
+    [[noreturn]] void msg_throw(
+        const std::string_view msg,
+        const std::source_location location)
     {
         throw error_type(error_msg(msg, location));
     }
@@ -123,7 +129,8 @@ AGTB_END
 
 #define AGTB_ERROR_MSG(__msg) __AGTB_MACROS error_msg(__msg)
 
-#define AGTB_THROW(__error_type, __msg) __AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
+#define AGTB_THROW(__error_type, __msg) \
+    __AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
 
 #define AGTB_STATIC_THROW(__msg) static_assert(false, __msg)
 

@@ -14,15 +14,17 @@ AGTB_LINALG_BEGIN
  * @return Matrix
  */
 template <LinalgOption opt>
-Matrix NormalEquationMatrixInverse(const Matrix &A)
+Matrix NormalEquationMatrixInverse(const Matrix &A, const Matrix &P = Matrix::Zero(1, 1))
 {
     AGTB_NOT_IMPLEMENT();
 }
 
 template <>
-Matrix NormalEquationMatrixInverse<LinalgOption::Cholesky>(const Matrix &A)
+Matrix NormalEquationMatrixInverse<LinalgOption::Cholesky>(const Matrix &A, const Matrix &P)
 {
-    Matrix AtA = A.transpose() * A;
+    Matrix AtA = A.transpose() *
+                 (P.isZero() ? Matrix::Identity(A.cols(), A.cols()) : P) *
+                 A;
     Eigen::LLT<Matrix> llt(AtA);
     if (llt.info() == Eigen::Success)
     {
@@ -38,9 +40,11 @@ Matrix NormalEquationMatrixInverse<LinalgOption::Cholesky>(const Matrix &A)
 }
 
 template <>
-Matrix NormalEquationMatrixInverse<LinalgOption::SVD>(const Matrix &A)
+Matrix NormalEquationMatrixInverse<LinalgOption::SVD>(const Matrix &A, const Matrix &P)
 {
-    Matrix AtA = A.transpose() * A;
+    Matrix AtA = A.transpose() *
+                 (P.isZero() ? Matrix::Identity(A.rows(), A.rows()) : P) *
+                 A;
     Eigen::JacobiSVD<Matrix> svd(AtA, Eigen::ComputeFullU | Eigen::ComputeFullV);
     const Eigen::VectorXd &singular_values = svd.singularValues();
 

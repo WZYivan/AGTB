@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(agtb CXX)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 find_package(Eigen3 REQUIRED)
 find_package(gcem REQUIRED)
@@ -14,7 +15,7 @@ target_include_directories(agtb INTERFACE include)
 target_link_libraries(agtb INTERFACE 
     Eigen3::Eigen
     gcem
-    boost::iostreams
+    Boost::iostreams
 )
 
 install(DIRECTORY include/AGTB DESTINATION include)

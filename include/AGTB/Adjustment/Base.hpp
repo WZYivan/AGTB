@@ -30,7 +30,9 @@ enum class RouteType
      * @brief Begin from known edge and end in another known edge
      *
      */
-    Connecting
+    Connecting,
+
+    Net
 };
 
 AGTB_ADJUSTMENT_END

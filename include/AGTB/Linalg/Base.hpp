@@ -37,4 +37,10 @@ enum class Axis : size_t
 
 AGTB_LINALG_END
 
+AGTB_BEGIN
+
+using Linalg::LinalgOption;
+
+AGTB_END
+
 #endif
