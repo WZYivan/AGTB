@@ -6,267 +6,235 @@
 #include "../Linalg/NormalEquationMatrixInverse.hpp"
 #include "../Linalg/CorrectionOlsSolve.hpp"
 #include "../IO/Eigen.hpp"
+#include "../Container/NamedGraph.hpp"
 
-#include <boost/graph/adjacency_list.hpp>
-#include <map>
+#include <queue>
+#include <vector>
 
 AGTB_ADJUSTMENT_BEGIN
 
-namespace Elevation
+namespace Elevation::Net
 {
-    namespace ElevationNetImpl
+    struct VertexProperty
     {
-        /**
-         * @brief dif -> M, len -> KM
-         *
-         */
-        struct RouteSection
+        double elev;
+        bool is_control;
+        bool with_init = is_control;
+    };
+
+    struct EdgeProperty
+    {
+        double dif;
+        double len;
+    };
+
+    using ElevationNet = NamedGraph<VertexProperty, EdgeProperty>;
+
+    void InitializeElevations(ElevationNet &net, std::vector<ElevationNet::name_type> &unknown)
+    {
+        auto edges_access = net.Edges();
+        auto verts_access = net.Vertices();
+
+        std::queue<ElevationNet::name_type> initializer_list{};
+
+        for (const auto &v : verts_access.Names())
         {
-            std::string name, beg, end;
-            double dif;
-            double len;
-            // private
-            bool beg_is_control = true, end_is_control = true;
-        };
-
-        struct ElevationNetEdgeProperty
-        {
-            std::string name;
-            double dif;
-            double len;
-        };
-
-        struct ElevationNetVertexProperty
-        {
-            std::string name;
-            double elev;
-            bool is_control;
-        };
-
-        using ElevationNet = boost::adjacency_list<
-            boost::vecS,
-            boost::vecS,
-            boost::directedS,
-            ElevationNetVertexProperty,
-            ElevationNetEdgeProperty>;
-
-        using ElevationNetTraits = boost::graph_traits<ElevationNet>;
-        using ElevationNetVertex = typename ElevationNetTraits::vertex_descriptor;
-        using ElevationNetEdge = typename ElevationNetTraits::edge_descriptor;
-
-        ElevationNetVertex AddVertexByNameFromElevAndNameMapOrOnlyReturnExistingVertexIndex(
-            std::string name,
-            std::map<std::string, ElevationNetVertex> &name_vertex_map,
-            const std::map<std::string, double> &name_elev_map,
-            const std::map<std::string, double> &name_approx_map,
-            ElevationNet &net)
-        {
-            if (name_vertex_map.contains(name))
+            if (!net.Vertex(v).is_control)
             {
-                return name_vertex_map.at(name);
-            }
-
-            ElevationNetVertex idx{};
-            double elev;
-            bool is_control;
-            if (name_elev_map.contains(name))
-            {
-                elev = name_elev_map.at(name);
-                is_control = true;
-            }
-            else if (name_approx_map.contains(name))
-            {
-                elev = name_approx_map.at(name);
-                is_control = false;
+                unknown.emplace_back(v);
             }
             else
             {
-                AGTB_THROW(std::invalid_argument, std::format("vertex `{}` is not a control or approx", name));
-            }
-
-            idx = boost::add_vertex(
-                ElevationNetVertexProperty{
-                    .name = name,
-                    .elev = elev,
-                    .is_control = is_control},
-                net);
-
-            name_vertex_map.insert_or_assign(name, idx);
-            return idx;
-        }
-    }
-
-    /**
-     * @brief control_points_elevation_map.value(double) -> m
-     *
-     * @tparam
-     */
-    template <>
-    struct ElevationParam<RouteType::Net>
-    {
-        std::vector<ElevationNetImpl::RouteSection> sections;
-        std::map<std::string, double> control_points_elevation_map;
-        double unit_p = 1.0;
-    };
-
-    struct ElevationNetParamParseResult
-    {
-        Matrix A;
-        Matrix l;
-        Matrix P;
-        std::map<std::string, double> unknown_porperty_map;
-    };
-
-    ElevationNetParamParseResult ParseElevationNetParam(ElevationParam<RouteType::Net> &param)
-    {
-        auto &control_map = param.control_points_elevation_map;
-        auto &sections = param.sections;
-
-        int n = sections.size();
-        int r = control_map.size();
-
-        std::map<std::string, double> unknown_aprox_map;
-
-        for (size_t r = 0; r != sections.size(); ++r)
-        {
-            auto &sec = sections.at(r);
-
-            const auto
-                &beg = sec.beg,
-                &end = sec.end;
-            sec.beg_is_control = control_map.contains(beg);
-            sec.end_is_control = control_map.contains(end);
-
-            if (sec.beg_is_control && !sec.end_is_control && !unknown_aprox_map.contains(end))
-            {
-                unknown_aprox_map.insert_or_assign(end, sec.dif + control_map.at(beg));
-            }
-
-            else if (!sec.beg_is_control && sec.end_is_control && !unknown_aprox_map.contains(beg))
-            {
-                unknown_aprox_map.insert_or_assign(beg, control_map.at(end) - sec.dif);
-            }
-
-            else
-            {
-                ;
+                initializer_list.emplace(v);
             }
         }
 
-        int t = unknown_aprox_map.size();
+        int r = initializer_list.size();
+        int n = edges_access.Size();
+        int t = unknown.size();
 
         if (n - t + r < 0)
         {
-            AGTB_THROW(std::runtime_error,
-                       std::format(
-                           "While parsing elevation net parameters, it's not enough for approxmiately calculatin of unkonwn points( n = {}, t = {}, r = {})\n", n, t, r));
+            AGTB_THROW(std::invalid_argument, std::format("Input data don't support adjustments: n = {}, t = {}, r = {}", n, t, r));
         }
 
-        Matrix A{Matrix::Zero(n, t)};
-        Matrix l{Matrix::Zero(n, 1)};
-        Matrix P{Matrix::Identity(n, n)};
-
-        for (size_t r = 0; r != sections.size(); ++r)
+        while (!initializer_list.empty())
         {
-            const auto &sec = sections.at(r);
-            auto subA = A.row(r), subL = l.row(r);
+            const auto &seed_name = initializer_list.front();
 
-            bool beg_is_control = sec.beg_is_control,
-                 end_is_control = sec.end_is_control;
-
-            subL(0) += sec.dif;
-
-            if (!beg_is_control)
+            for (auto [it, end] = net.OutEdges(seed_name); it != end; ++it)
             {
-                auto it = unknown_aprox_map.find(sec.beg);
-                size_t c = std::distance(unknown_aprox_map.begin(), it);
+                auto edge_idx = *it;
+                const auto &edge_name = net.NameOf(edge_idx);
+                auto &vert_prop = net.TargetVertex(edge_name);
+                const auto &edge_prop = net.Edge(edge_name);
+
+                if (!vert_prop.with_init)
+                {
+                    vert_prop.elev = net.Vertex(seed_name).elev + edge_prop.dif;
+                    vert_prop.with_init = true;
+                    initializer_list.emplace(net.TargetName(edge_name));
+                }
+            }
+
+            for (auto [it, end] = net.InEdges(seed_name); it != end; ++it)
+            {
+                auto edge_idx = *it;
+                const auto &edge_name = net.NameOf(edge_idx);
+                auto &vert_prop = net.SourceVertex(edge_name);
+                const auto &edge_prop = net.Edge(edge_name);
+
+                if (!vert_prop.with_init)
+                {
+                    vert_prop.elev = edge_prop.dif - net.Vertex(seed_name).elev;
+                    vert_prop.with_init = true;
+                    initializer_list.emplace(net.TargetName(edge_name));
+                }
+            }
+
+            initializer_list.pop();
+        }
+    }
+
+    void BuildMatrix(ElevationNet &net, Matrix &A, Matrix &l, Matrix &P, std::vector<ElevationNet::name_type> &unknown, double unit_p)
+    {
+        auto edges_access = net.Edges();
+        auto verts_access = net.Vertices();
+
+        int n = edges_access.Size();
+        int t = unknown.size();
+
+        A = Matrix::Zero(n, t);
+        l = Matrix::Zero(n, 1);
+        P = Matrix::Zero(n, n);
+
+        size_t r = 0;
+        for (const auto &e : edges_access.Names())
+        {
+            auto
+                subA = A.row(r),
+                subl = l.row(r);
+
+            auto &edge = net.Edge(e);
+            auto
+                &beg = net.SourceVertex(e),
+                &end = net.TargetVertex(e);
+            auto
+                beg_name = net.SourceName(e),
+                end_name = net.TargetName(e);
+
+            subl(0) += edge.dif;
+
+            if (!beg.is_control)
+            {
+                auto it = std::ranges::find(unknown, beg_name);
+                size_t c = std::distance(unknown.begin(), it);
                 subA(c) = -1;
-                subL(0) += it->second; // value(double)
+                subl(0) += beg.elev; // value(double)
             }
             else
             {
-                subL(0) += control_map.at(sec.beg);
+                subl(0) += beg.elev;
             }
 
-            if (!end_is_control)
+            if (!end.is_control)
             {
-                auto it = unknown_aprox_map.find(sec.end);
-                size_t c = std::distance(unknown_aprox_map.begin(), it);
+                auto it = std::ranges::find(unknown, end_name);
+                size_t c = std::distance(unknown.begin(), it);
                 subA(c) = 1;
-                subL(0) -= it->second; // val(double)
+                subl(0) -= end.elev; // val(double)
             }
             else
             {
-                subL(0) += -control_map.at(sec.end);
+                subl(0) -= end.elev;
             }
 
-            subL(0) *= 1000;
+            subl(0) *= 1000;
 
-            P(r, r) = param.unit_p / sec.len;
+            P(r, r) = unit_p / edge.len;
+
+            ++r;
         }
-
-        return {
-            A, l, P, unknown_aprox_map};
     }
 
-    Matrix SolveParsedParam(ElevationNetParamParseResult &parsed)
+    void ComputeCorrections(Matrix &A, Matrix &l, Matrix &P, Matrix &x, Matrix &V)
     {
-        const auto
-            &A = parsed.A,
-            &l = parsed.l,
-            &P = parsed.P;
-        Matrix inv{Linalg::NormalEquationMatrixInverse<LinalgOption::Cholesky>(A, P)};
+        Matrix inv{AGTB::Linalg::NormalEquationMatrixInverse<AGTB::LinalgOption::Cholesky>(A, P)};
         Matrix residual = A.transpose() * P * l;
-        Matrix x = inv * residual / 1000;
-        Matrix V = A * x - l / 1000;
-
-        auto &map = parsed.unknown_porperty_map;
-        size_t i = 0;
-        for (auto &[key, value] : map)
-        {
-            value += x(i++, 0);
-        }
-
-        return V;
+        x = inv * residual / 1000;
+        V = A * x - l / 1000;
     }
 
-    struct ElevationNetAdjustResult
+    void ApplyCorrections(ElevationNet &net, std::vector<ElevationNet::name_type> &unknown, Matrix &x, Matrix &V)
     {
-        std::map<std::string, double> section;
-        std::map<std::string, double> station;
+        size_t r = 0;
+        for (const auto &vert : unknown)
+        {
+            net.Vertex(vert).elev += x(r, 0);
+            ++r;
+        }
+
+        r = 0;
+        for (const auto &e : net.Edges().Names())
+        {
+            net.Edge(e).dif += V(r, 0);
+            ++r;
+        }
+    }
+
+    struct ElevationNetVariable
+    {
+        Matrix A, l, P, x, V;
+        std::vector<ElevationNet::name_type> unknown;
     };
+}
 
-    ElevationNetAdjustResult Adjust(ElevationParam<RouteType::Net> &param)
+namespace Elevation
+{
+    using Net::ElevationNet;
+    using Net::ElevationNetVariable;
+
+    void Adjust(ElevationNet &net, double unit_p, ElevationNetVariable *var_ptr = nullptr)
     {
-        auto parsed = ParseElevationNetParam(param);
-        Matrix V = SolveParsedParam(parsed);
+        ElevationNetVariable var{};
+        Net::InitializeElevations(net, var.unknown);
+        Net::BuildMatrix(net, var.A, var.l, var.P, var.unknown, unit_p);
+        Net::ComputeCorrections(var.A, var.l, var.P, var.x, var.V);
+        Net::ApplyCorrections(net, var.unknown, var.x, var.V);
 
-        ElevationNetAdjustResult result{};
-        result.station = std::move(parsed.unknown_porperty_map);
-
-        auto &section = result.section;
-        size_t i = 0;
-        for (auto &sec : param.sections)
+        if (var_ptr != nullptr)
         {
-            section.insert_or_assign(sec.name, sec.dif + V(i++, 0));
+            *var_ptr = std::move(var);
         }
-
-        return result;
     }
 
-    ElevationNetImpl::ElevationNet BuildNet(const ElevationNetAdjustResult &result, const ElevationParam<RouteType::Net> &param)
+    void PrintElevationNet(const ElevationNet &net)
     {
-        std::map<std::string, ElevationNetImpl::ElevationNetVertex> name_vertex_map;
-        std::map<std::string, double> name_elev_map;
-
-        const auto &sections = param.sections;
-        for (const auto &sec : sections)
+        for (const auto n : net.Edges().Names())
         {
+            std::println("{} : {}, {} => dif = {}, len = {}",
+                         n,
+                         net.SourceName(n),
+                         net.TargetName(n),
+                         net.Edge(n).dif,
+                         net.Edge(n).len);
         }
 
-        // TODO : I have no patience, fuck stupid boost
+        for (const auto n : net.Vertices().Names())
+        {
+            std::println("{} : elev = {}, {} control, {} init",
+                         n,
+                         net.Vertex(n).elev,
+                         net.Vertex(n).is_control ? "is" : "not",
+                         net.Vertex(n).with_init ? "with" : "without");
+        }
     }
 }
+
+using Elevation::Adjust;
+using Elevation::ElevationNet;
+using Elevation::ElevationNetVariable;
+using Elevation::PrintElevationNet;
 
 AGTB_ADJUSTMENT_END
 

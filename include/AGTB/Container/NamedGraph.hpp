@@ -14,11 +14,12 @@ AGTB_CONTAINER_BEGIN
 template <
     typename __VertexProperty = boost::no_property,
     typename __EdgeProperty = boost::no_property,
-    typename __DirectedS = boost::directedS,
+    typename __DirectedS = boost::bidirectionalS,
     typename __OutEdgeListS = boost::vecS,
     typename __VertexListS = boost::vecS,
     typename __GraphProperty = boost::no_property,
-    typename __EdgeListS = boost::listS>
+    typename __EdgeListS = boost::listS,
+    typename __name_type = std::string>
 class NamedGraph
 {
 public:
@@ -38,7 +39,7 @@ public:
         GraphProperty,
         EdgeListS>;
     using GraphTraits = boost::graph_traits<Graph>;
-    using name_type = std::string;
+    using name_type = __name_type; // std::string;
     using vertex_index_type = GraphTraits::vertex_descriptor;
     using edge_index_type = GraphTraits::edge_descriptor;
     using vertex_map_type = std::map<name_type, vertex_index_type>;
@@ -57,11 +58,14 @@ public:
         using index_type = value_type;
 
     private:
-        map_ref_type &ref;
+        map_ref_type ref;
 
     public:
         ~Access() = default;
-        Access(map_ref_type src) : ref(src) {}
+
+        Access(map_ref_type src) : ref(src)
+        {
+        }
 
         template <typename __self>
         map_ref_type UnWrap(this __self &&self)
@@ -114,7 +118,7 @@ private:
     struct AccessGen
     {
         using ref_type = std::conditional_t<
-            std::is_const_v<__self>,
+            std::is_const_v<std::remove_reference_t<__self>>,
             const map_type &,
             map_type &>;
         using access_type = Access<ref_type>;
@@ -268,6 +272,45 @@ public:
     }
 
     template <typename __self>
+    decltype(auto) InEdges(this __self &&self, const name_type &name)
+    {
+        auto vidx = self.vertices.at(name);
+        return boost::in_edges(vidx, self.graph);
+    }
+
+    template <typename __self>
+    decltype(auto) InEdges(this __self &&self, const vertex_index_type &vidx)
+    {
+        return boost::in_edges(vidx, self.graph);
+    }
+
+    template <typename __self>
+    decltype(auto) OutEdges(this __self &&self, const name_type &name)
+    {
+        auto vidx = self.vertices.at(name);
+        return boost::out_edges(vidx, self.graph);
+    }
+
+    template <typename __self>
+    decltype(auto) OutEdges(this __self &&self, const vertex_index_type &vidx)
+    {
+        return boost::out_edges(vidx, self.graph);
+    }
+
+    template <typename __self>
+    decltype(auto) AdjacentVertices(this __self &&self, const name_type &name)
+    {
+        auto vidx = self.vertices.at(name);
+        return boost::adjacent_vertices(vidx, self.graph);
+    }
+
+    template <typename __self>
+    decltype(auto) AdjacentVertices(this __self &&self, const vertex_index_type &vidx)
+    {
+        return boost::adjacent_vertices(vidx, self.graph);
+    }
+
+    template <typename __self>
     decltype(auto) Edge(this __self &&self, const name_type &name)
     {
         if (!self.edges.contains(name))
@@ -282,6 +325,16 @@ public:
     decltype(auto) Edge(this __self &&self, const edge_index_type &eidx)
     {
         return self.graph[eidx];
+    }
+
+    const name_type &NameOf(const vertex_index_type &vidx)
+    {
+        return rvertices.at(vidx);
+    }
+
+    const name_type &NameOf(const edge_index_type &eidx)
+    {
+        return redges.at(eidx);
     }
 
     decltype(auto) Source(const name_type &name) const
