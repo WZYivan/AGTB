@@ -480,9 +480,12 @@ AGTB_BEGIN
 using Utils::Angles::Angle;
 using Utils::Angles::deg2rad;
 using Utils::Angles::FromDMS;
+using Utils::Angles::min2rad;
 using Utils::Angles::rad2deg;
+using Utils::Angles::rad2min;
 using Utils::Angles::rad2sec;
 using Utils::Angles::sec2rad;
+using Utils::Angles::ToSeconds;
 
 AGTB_END
 

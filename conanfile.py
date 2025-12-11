@@ -3,7 +3,7 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 class agtbRecipe(ConanFile):
     name = "agtb"
-    version = "0.0.8"
+    version = "0.0.9"
     package_type = "header-library"
 
     # Optional metadata

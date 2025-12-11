@@ -123,6 +123,34 @@ int main() {
 }
 ```
 
+#### Elevation Net Adjustment
+
+To adjust an elevation net, **AGTB** uses a boost::graph lib to represent its structure and wrap is to a new class with simpler api for user.
+
+```cpp
+#include <AGTB/Adjustment/ElevationNet.hpp>
+
+namespace aa = AGTB::Adjustment;
+
+int main()
+{
+    aa::ElevationNet net{};
+
+    net.AddVertex()(
+        "A", {237.483, true});
+
+    net.AddEdge(true)(
+        "A", "B", "1", {5.835, 3.5})(
+        "B", "C", "2", {3.782, 2.7})(
+        "A", "C", "3", {9.640, 4.0})(
+        "D", "C", "4", {7.384, 3.0})(
+        "A", "D", "5", {2.270, 2.5});
+
+    aa::Adjust(net, 10.0);
+    aa::PrintElevationNet(net);
+}
+```
+
 ### Geodesy
 
 *Currently supports Gauss-Kruger projection with comprehensive coefficients for future development.*
@@ -133,34 +161,42 @@ int main() {
 #include <AGTB/Geodesy/Project.hpp>
 #include <print>
 
-int main() {
+int main()
+{
     namespace ag = AGTB::Geodesy;
     namespace au = AGTB::Utils;
     using au::Angles::Angle;
 
-    using ProjectionParams = ag::GaussProjectTParam<
-        ag::EllipsoidType::CGCS2000, 
-        ag::GaussZoneInterval::D6>;
+    using projector = ag::Projector<ag::GeoCS::Geodetic, ag::ProjCS::GaussKruger>;
+    using config = projector::Config<ag::Ellipsoids::CGCS2000, ag::GaussZoneInterval::D6, ag::Units::Radian>;
+    using GeoCoord = config::geo_coord;
+    using ProjCoord = config::proj_coord;
 
-    for (int i = 1; i != 6; ++i) {
-        ag::Longitude L_from(115, 0, 0);
-        ag::Latitude B_from(15 * i, 0, 0);
+    for (int i = 1; i != 90; ++i)
+    {
+        ag::Longitude<config::unit>
+            L_from(115, 0, 0);
+        ag::Latitude<config::unit>
+            B_from(i, 0, 0);
 
-        ProjectionParams::GeoCoord geo_coord_from{L_from, B_from};
-        ProjectionParams::GaussCoord gauss_coord = 
-            ag::Project<ProjectionParams>(geo_coord_from);
-        ProjectionParams::GeoCoord geo_coord_to = 
-            ag::Project<ProjectionParams>(gauss_coord);
+        GeoCoord geo_coord_from{
+            L_from,
+            B_from};
 
-        std::println("Input: B = {} L = {}",
+        ProjCoord gauss_proj_coord =
+            projector::Project<config>(geo_coord_from);
+
+        GeoCoord geo_coord_to =
+            projector::Project<config>(gauss_proj_coord);
+
+        std::println("B_from = {} L_from = {}",
                      B_from.ToAngle().ToString(),
                      L_from.ToAngle().ToString());
-        std::println("Projected: x = {} y = {} ZoneY = {}", 
-                     gauss_coord.x, gauss_coord.y, gauss_coord.ZoneY());
-        std::println("Back-projected: B = {} L = {}",
+        std::println("x = {} y = {} ZoneY = {}", gauss_proj_coord.x, gauss_proj_coord.y, gauss_proj_coord.ZoneY());
+        std::println("B_to = {} L_to = {}",
                      geo_coord_to.B.ToAngle().ToString(),
                      geo_coord_to.L.ToAngle().ToString());
-        std::println("Differences: ΔB = {} ΔL = {}\n",
+        std::println("B_dif = {} L_dif = {}\n",
                      Angle::FromRad(geo_coord_to.B.Rad() - B_from.Rad()).ToString(),
                      Angle::FromRad(geo_coord_to.L.Rad() - L_from.Rad()).ToString());
     }
