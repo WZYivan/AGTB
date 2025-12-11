@@ -54,6 +54,12 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
         return Projection::GaussKruger::GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(gc);
     }
 
+    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
+    static inline GaussProjCoordinate<__zone_interval> ReProjectTo(const GaussProjCoordinate<__zone_interval> &pc, int tar_zone)
+    {
+        return Projection::GaussKruger::TransformZone<__ellipsoid, __zone_interval, __unit>(pc, tar_zone);
+    }
+
     template <ProjectConfigConcept::GeodeticGaussKruger __config>
     static inline __config::geo_coord Project(const __config::proj_coord &pc)
     {
@@ -64,6 +70,12 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
     static inline __config::proj_coord Project(const __config::geo_coord &gc)
     {
         return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(gc);
+    }
+
+    template <ProjectConfigConcept::GeodeticGaussKruger __config>
+    static inline __config::proj_coord ReProjectTo(const __config::proj_coord &pc, int tar_zone)
+    {
+        return ReProjectTo<__config::ellipsoid, __config::zone_interval, __config::unit>(pc, tar_zone);
     }
 };
 

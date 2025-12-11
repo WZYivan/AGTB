@@ -157,6 +157,8 @@ int main()
 
 #### Gauss-Kruger Projection
 
+**AGTB** provides unified api for project and gauss zone tansforma operation as below.
+
 ```cpp
 #include <AGTB/Geodesy/Project.hpp>
 #include <print>
@@ -200,6 +202,21 @@ int main()
                      Angle::FromRad(geo_coord_to.B.Rad() - B_from.Rad()).ToString(),
                      Angle::FromRad(geo_coord_to.L.Rad() - L_from.Rad()).ToString());
     }
+
+    using K_config = projector::Config<ag::Ellipsoids::Krasovski, ag::GaussZoneInterval::D3, ag::Units::Radian>;
+
+    ag::Longitude<ag::Units::Radian> Lc(117, 0, 0);
+
+    K_config::proj_coord src{
+        .x = 1'944'359.609,
+        .y = 240'455.456'3,
+        .zone = ag::GaussProjZone<K_config::zone_interval>(Lc),
+    };
+
+    auto tar = projector::ReProjectTo<K_config>(src, src.zone + 1);
+
+    std::println("X = {}, Y = {}, Zone = {}", src.x, src.y, src.zone);
+    std::println("X = {}, Y = {}, Zone = {}", tar.x, tar.y, tar.zone);
 }
 ```
 

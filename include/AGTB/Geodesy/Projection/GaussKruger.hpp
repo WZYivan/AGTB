@@ -9,7 +9,7 @@ AGTB_GEODESY_BEGIN
 namespace Projection::GaussKruger
 {
        template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-       GaussProjCoordinate<__zone_interval> GeodeticToGaussProj(const GeodeticCoordinate<__ellipsoid, __unit> &gc)
+       GaussProjCoordinate<__zone_interval> GeodeticToGaussProj(const GeodeticCoordinate<__ellipsoid, __unit> &gc, int custom_zone = 0)
        {
               constexpr Ellipsoids ellipsoid = __ellipsoid;
               constexpr GaussZoneInterval zone_interval = __zone_interval;
@@ -35,7 +35,7 @@ namespace Projection::GaussKruger
                      cosB = B.Cos(),
                      cosBp3 = gcem::pow(cosB, 3),
                      cosBp5 = gcem::pow(cosB, 5);
-              int zone = GaussProjZone<zone_interval>(L);
+              int zone = custom_zone == 0 ? GaussProjZone<zone_interval>(L) : custom_zone;
               double l_c = GaussProjCenterLongitude<zone_interval>(zone).Rad() /*rad*/,
                      l_c_s = ToSeconds(l_c) /*seconds below*/,
                      l_s = ToSeconds(L.Rad()),
@@ -98,6 +98,16 @@ namespace Projection::GaussKruger
               return {
                   .L = Longitude<unit>(Lc.Rad() + dl),
                   .B = Latitude<unit>(B)};
+       }
+
+       template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
+       GaussProjCoordinate<__zone_interval> TransformZone(const GaussProjCoordinate<__zone_interval> &src, int tar_zone)
+       {
+              using GaussCoord = GaussProjCoordinate<__zone_interval>;
+              using GeoCoord = GeodeticCoordinate<__ellipsoid, __unit>;
+
+              GeoCoord geo_coord = GaussProjToGeodetic<__ellipsoid, __zone_interval, __unit>(src);
+              return GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(geo_coord, tar_zone);
        }
 }
 

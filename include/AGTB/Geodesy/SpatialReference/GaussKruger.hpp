@@ -75,22 +75,23 @@ Longitude<Units::Radian> GaussProjCenterLongitude<GaussZoneInterval::D3>(int zon
  * @return int
  */
 template <GaussZoneInterval interval>
-int GaussProjZone(Longitude<Units::Radian> L)
+constexpr int GaussProjZone(Longitude<Units::Radian> L)
 {
     AGTB_TEMPLATE_NOT_SPECIFIED();
+    return 0;
 }
 
 template <>
-int GaussProjZone<GaussZoneInterval::D6>(Longitude<Units::Radian> L)
+constexpr int GaussProjZone<GaussZoneInterval::D6>(Longitude<Units::Radian> L)
 {
     return int(L.Rad() / FromDMS(6.0)) + 1;
 }
 
 template <>
-int GaussProjZone<GaussZoneInterval::D3>(Longitude<Units::Radian> L)
+constexpr int GaussProjZone<GaussZoneInterval::D3>(Longitude<Units::Radian> L)
 {
     double rad_d3 = FromDMS(3.0);
-    return int(L.Rad() / rad_d3) + gcem::fmod(L.Rad(), rad_d3) > FromDMS(1.5) ? 1 : 0;
+    return int(L.Rad() / rad_d3) + (gcem::fmod(L.Rad(), rad_d3) > FromDMS(1.5) ? 1 : 0);
 }
 
 /**
