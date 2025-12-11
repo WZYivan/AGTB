@@ -188,6 +188,11 @@ public:
         return idx;
     }
 
+    inline bool ContainsVertex(const name_type &name)
+    {
+        return vertices.contains(name);
+    }
+
     inline void RemoveVertex(const name_type &name)
     {
         vertex_index_type tar = vertices.at(name);
@@ -252,6 +257,11 @@ public:
         boost::remove_edge(tar, graph);
         edges.erase(name);
         redges.erase(tar);
+    }
+
+    inline bool ContainsEdge(const name_type &name)
+    {
+        return edges.contains(name);
     }
 
     template <typename __self>
@@ -403,21 +413,43 @@ private:
     {
     private:
         NamedGraph &ref;
+        bool new_mode;
 
     public:
         ~EdgeAdder() = default;
-        EdgeAdder(NamedGraph &src) : ref(src) {}
+        EdgeAdder(NamedGraph &src, bool mode_flag) : ref(src), new_mode(mode_flag) {}
 
         EdgeAdder &operator()(const name_type &beg, const name_type &end, const name_type &name, bool *add_status_ptr = nullptr)
         {
+            HandleVertexInMode(beg, end);
             ref.AddEdge(beg, end, name, add_status_ptr);
             return *this;
         }
 
         EdgeAdder &operator()(const name_type &beg, const name_type &end, const name_type &name, const EdgeProperty &property, bool *add_status_ptr = nullptr)
         {
+            HandleVertexInMode(beg, end);
             ref.AddEdge(beg, end, name, property, add_status_ptr);
             return *this;
+        }
+
+    private:
+        void HandleVertexInMode(const name_type &beg, const name_type &end)
+        {
+            if (!new_mode)
+            {
+                return;
+            }
+
+            if (!ref.ContainsVertex(beg))
+            {
+                ref.AddVertex(beg);
+            }
+
+            if (!ref.ContainsVertex(end))
+            {
+                ref.AddVertex(end);
+            }
         }
     };
 
@@ -427,9 +459,9 @@ public:
         return VertexAdder(*this);
     }
 
-    EdgeAdder AddEdge()
+    EdgeAdder AddEdge(bool new_mode = false)
     {
-        return EdgeAdder(*this);
+        return EdgeAdder(*this, new_mode);
     }
 };
 

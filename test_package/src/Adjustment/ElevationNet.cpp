@@ -7,12 +7,9 @@ int main()
     aa::ElevationNet net{};
 
     net.AddVertex()(
-        "A", {237.483, true})(
-        "B", {{}, false})(
-        "C", {{}, false})(
-        "D", {{}, false});
+        "A", {237.483, true});
 
-    net.AddEdge()(
+    net.AddEdge(true)(
         "A", "B", "1", {5.835, 3.5})(
         "B", "C", "2", {3.782, 2.7})(
         "A", "C", "3", {9.640, 4.0})(
