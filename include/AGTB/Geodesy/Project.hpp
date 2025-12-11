@@ -21,8 +21,8 @@ namespace ProjectConfigConcept
         { T::zone_interval } -> std::convertible_to<GaussZoneInterval>;
         { T::unit } -> std::convertible_to<Units>;
 
-        typename T::geo_coord;
-        typename T::proj_coord;
+        typename T::GeoCoord;
+        typename T::ProjCoord;
     };
 }
 
@@ -38,8 +38,8 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
         constexpr static Ellipsoids ellipsoid = __ellipsoid;
         constexpr static GaussZoneInterval zone_interval = __zone_interval;
         constexpr static Units unit = __unit;
-        using geo_coord = GeodeticCoordinate<ellipsoid, unit>;
-        using proj_coord = GaussProjCoordinate<zone_interval>;
+        using GeoCoord = GeodeticCoordinate<ellipsoid, unit>;
+        using ProjCoord = GaussProjCoordinate<zone_interval>;
     };
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
@@ -49,33 +49,33 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
     }
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    static inline GaussProjCoordinate<__zone_interval> Project(const GeodeticCoordinate<__ellipsoid, __unit> &gc)
+    static inline GaussProjCoordinate<__zone_interval> Project(const GeodeticCoordinate<__ellipsoid, __unit> &gc, int custom_zone = 0)
     {
-        return Projection::GaussKruger::GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(gc);
+        return Projection::GaussKruger::GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(gc, custom_zone);
     }
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    static inline GaussProjCoordinate<__zone_interval> ReProjectTo(const GaussProjCoordinate<__zone_interval> &pc, int tar_zone)
+    static inline GaussProjCoordinate<__zone_interval> ReProject(const GaussProjCoordinate<__zone_interval> &pc, int tar_zone)
     {
         return Projection::GaussKruger::TransformZone<__ellipsoid, __zone_interval, __unit>(pc, tar_zone);
     }
 
     template <ProjectConfigConcept::GeodeticGaussKruger __config>
-    static inline __config::geo_coord Project(const __config::proj_coord &pc)
+    static inline __config::GeoCoord Project(const __config::ProjCoord &pc)
     {
         return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(pc);
     }
 
     template <ProjectConfigConcept::GeodeticGaussKruger __config>
-    static inline __config::proj_coord Project(const __config::geo_coord &gc)
+    static inline __config::ProjCoord Project(const __config::GeoCoord &gc, int custom_zone = 0)
     {
-        return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(gc);
+        return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(gc, custom_zone);
     }
 
     template <ProjectConfigConcept::GeodeticGaussKruger __config>
-    static inline __config::proj_coord ReProjectTo(const __config::proj_coord &pc, int tar_zone)
+    static inline __config::ProjCoord ReProject(const __config::ProjCoord &pc, int tar_zone)
     {
-        return ReProjectTo<__config::ellipsoid, __config::zone_interval, __config::unit>(pc, tar_zone);
+        return ReProject<__config::ellipsoid, __config::zone_interval, __config::unit>(pc, tar_zone);
     }
 };
 

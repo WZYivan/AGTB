@@ -10,8 +10,8 @@ int main()
 
     using projector = ag::Projector<ag::GeoCS::Geodetic, ag::ProjCS::GaussKruger>;
     using config = projector::Config<ag::Ellipsoids::CGCS2000, ag::GaussZoneInterval::D6, ag::Units::Radian>;
-    using GeoCoord = config::geo_coord;
-    using ProjCoord = config::proj_coord;
+    using GeoCoord = config::GeoCoord;
+    using ProjCoord = config::ProjCoord;
 
     for (int i = 1; i != 90; ++i)
     {
@@ -46,13 +46,13 @@ int main()
 
     ag::Longitude<ag::Units::Radian> Lc(117, 0, 0);
 
-    K_config::proj_coord src{
+    K_config::ProjCoord src{
         .x = 1'944'359.609,
         .y = 240'455.456'3,
         .zone = ag::GaussProjZone<K_config::zone_interval>(Lc),
     };
 
-    auto tar = projector::ReProjectTo<K_config>(src, src.zone + 1);
+    auto tar = projector::ReProject<K_config>(src, src.zone + 1);
 
     std::println("X = {}, Y = {}, Zone = {}", src.x, src.y, src.zone);
     std::println("X = {}, Y = {}, Zone = {}", tar.x, tar.y, tar.zone);
