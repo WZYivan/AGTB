@@ -101,13 +101,13 @@ namespace Solution::Gauss
         }
     }
 
-    template <Ellipsoids __ellipsoid>
-    InverseResult InverseSolve(Longitude<Units::Radian> L1, Latitude<Units::Radian> B1, Longitude<Units::Radian> L2, Latitude<Units::Radian> B2)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    InverseResult InverseSolve(Longitude<__unit> L1, Latitude<__unit> B1, Longitude<__unit> L2, Latitude<__unit> B2)
     {
         double
             dLs = ToSeconds(L2.Rad() - L1.Rad()),
             dBs = ToSeconds(B2.Rad() - B1.Rad());
-        Latitude<Units::Radian> Bm((B1.Rad() + B2.Rad()) / 2.0);
+        Latitude<__unit> Bm((B1.Rad() + B2.Rad()) / 2.0);
 
         InverseCoeffSolver<__ellipsoid> coeff_solver(Bm);
 
@@ -134,15 +134,16 @@ namespace Solution::Gauss
             .s{S}};
     }
 
+    template <Units __unit>
     struct ForwardResult
     {
-        Longitude<> L;
-        Latitude<> B;
+        Longitude<__unit> L;
+        Latitude<__unit> B;
         Angle a_backward;
     };
 
-    template <Ellipsoids __ellipsoid>
-    auto InitForwardSolveIteration(Longitude<> L, Latitude<> B, double S, Angle a_backward, double &b, double &l, double &a)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    auto InitForwardSolveIteration(Longitude<__unit> L, Latitude<__unit> B, double S, Angle a_backward, double &b, double &l, double &a)
     {
         using ellipsoid_geometry = EllipsoidGeometry<__ellipsoid>;
         double p = rho<Units::Second>;
@@ -154,8 +155,8 @@ namespace Solution::Gauss
         a = l * B.Sin();
     }
 
-    template <Ellipsoids __ellipsoid>
-    ForwardResult ForwardSolve(Longitude<> L, Latitude<> B, double S, Angle a_forward, double epsilon = 1e-5)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    ForwardResult<__unit> ForwardSolve(Longitude<__unit> L, Latitude<__unit> B, double S, Angle a_forward, double epsilon = 1e-5)
     {
         double dB0, dL0, dA0;
         InitForwardSolveIteration<__ellipsoid>(L, B, S, a_forward, dB0, dL0, dA0);

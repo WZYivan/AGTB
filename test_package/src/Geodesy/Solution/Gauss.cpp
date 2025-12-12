@@ -1,11 +1,14 @@
-#include <AGTB/Geodesy/Solution/Gauss.hpp>
+#include <AGTB/Geodesy/Solve.hpp>
 #include <print>
 
 namespace ag = AGTB::Geodesy;
-namespace sg = AGTB::Geodesy::Solution::Gauss;
 
 int main()
 {
+
+    using solver = ag::Solver<ag::Solutions::Gauss>;
+    using config = solver::Config<ag::Ellipsoids::CGCS2000, ag::Units::Radian>;
+
     ag::Latitude<>
         B1(47, 46, 52.647'0),
         B2(48, 4, 9.638'4);
@@ -14,14 +17,14 @@ int main()
         L2(36, 14, 45.050'5);
 
     std::println("L1 = {}, B1 = {}, L2 = {}, B2 = {}", L1.ToString(), B1.ToString(), L2.ToString(), B2.ToString());
-    sg::InverseResult ri = sg::InverseSolve<ag::Ellipsoids::Krasovski>(L1, B1, L2, B2);
+    config::InverseResult ri = solver::Inverse<config>(L1, B1, L2, B2);
 
     std::println("S = {}, A12 = {}, A21 = {}",
                  ri.s,
                  ri.a_forwards.ToString(),
                  ri.a_backwards.ToString());
 
-    sg::ForwardResult rf = sg::ForwardSolve<ag::Ellipsoids::Krasovski>(L1, B1, ri.s, ri.a_forwards);
+    config::ForwardResult rf = solver::Forward<config>(L1, B1, ri.s, ri.a_forwards);
 
     std::println("B2 = {}, L2 = {}, A21 = {}",
                  rf.B.ToString(),
