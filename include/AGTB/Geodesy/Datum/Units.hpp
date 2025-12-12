@@ -42,7 +42,7 @@ constexpr double Rho()
     }
 }
 
-template <Units __unit>
+template <Units __unit = Units::Radian>
 constexpr double rho = Rho<__unit>();
 
 AGTB_GEODESY_END

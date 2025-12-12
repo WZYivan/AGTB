@@ -86,9 +86,14 @@ public:
         return gcem::tan(Rad());
     }
 
-    Utils::Angles::Angle ToAngle()
+    Utils::Angles::Angle ToAngle() const noexcept
     {
         return Utils::Angles::Angle::FromRad(Rad());
+    }
+
+    std::string ToString() const noexcept
+    {
+        return ToAngle().ToString();
     }
 };
 
