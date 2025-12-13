@@ -97,14 +97,14 @@ constexpr int GaussProjZone<GaussZoneInterval::D3>(Longitude<Units::Radian> L)
 /**
  * @brief Convert longitude to longitude of its centerline of projection zone
  *
- * @tparam Z
+ * @tparam __zone_interval
  * @param l
  * @return Longitude
  */
-template <GaussZoneInterval Z>
+template <GaussZoneInterval __zone_interval>
 Longitude<Units::Radian> GaussProjCenterLongitude(Longitude<Units::Radian> l)
 {
-    return GaussProjCenterLongitude<Z>(GaussProjZone<Z>(l));
+    return GaussProjCenterLongitude<__zone_interval>(GaussProjZone<__zone_interval>(l));
 }
 
 /**

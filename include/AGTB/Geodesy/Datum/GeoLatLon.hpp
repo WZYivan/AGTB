@@ -47,6 +47,11 @@ public:
         }
     }
 
+    constexpr double Value() const noexcept
+    {
+        return _val;
+    }
+
     static Derived FromAngle(const Utils::Angles::Angle &a)
     {
         if constexpr (unit == Units::Radian)

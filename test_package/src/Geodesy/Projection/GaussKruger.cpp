@@ -43,13 +43,14 @@ int main()
     }
 
     using K_config = projector::Config<ag::Ellipsoids::Krasovski, ag::GaussZoneInterval::D3, ag::Units::Radian>;
+    using proj_utils = ag::ProjUtils<ag::ProjCS::GaussKruger, K_config::zone_interval, K_config::unit>;
 
     ag::Longitude<ag::Units::Radian> Lc(117, 0, 0);
 
     K_config::ProjCoord src{
         .x = 1'944'359.609,
         .y = 240'455.456'3,
-        .zone = ag::GaussProjZone<K_config::zone_interval>(Lc),
+        .zone = proj_utils::Zone(Lc),
     };
 
     auto tar = projector::ReProject<K_config>(src, src.zone + 1);

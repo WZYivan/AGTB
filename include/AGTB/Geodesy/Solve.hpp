@@ -98,7 +98,7 @@ struct Solver<Solutions::Bessel>
     }
 
     template <Solution::ConfigConcept __config>
-    inline static __config::ForwardResult Forward(__config::Lon L, __config::Lat B, double S, Angle a_forward)
+    inline static typename __config::ForwardResult Forward(__config::Lon L, __config::Lat B, double S, Angle a_forward)
     {
         return Forward<__config::ellipsoid, __config::unit>(L, B, S, a_forward);
     }

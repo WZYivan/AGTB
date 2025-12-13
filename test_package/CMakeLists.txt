@@ -17,9 +17,9 @@ endfunction()
 # create_new_executable(Adjustment_ElevationNet "src/Adjustment/ElevationNet.cpp")
 
 # create_new_executable(Geodesy_Geometry "src/Geodesy/Ellipsoid/Geometry.cpp")
-# create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
+create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
 # create_new_executable(Geodesy_Solution_Gauss "src/Geodesy/Solution/Gauss.cpp")
-create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
+# create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 
 # # # # Not a test_package, but part for testing implement in dev
 # # # create_new_executable(Geodesy_ExMath_PreCorrection_MeridianArcBottom "src/Geodesy/ExMath/PreCorrection_MeridianArcBottom.cpp")
