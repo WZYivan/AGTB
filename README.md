@@ -153,11 +153,11 @@ int main()
 
 ### Geodesy
 
-*Currently supports Gauss-Kruger projection with comprehensive coefficients for future development.*
+*Currently supports Gauss-Kruger projection and geodetic solutions (Gauss and Bessel methods).*
 
 #### Gauss-Kruger Projection
 
-**AGTB** provides unified api for project and gauss zone tansforma operation as below.
+**AGTB** provides unified API for coordinate projection and zone transformation:
 
 ```cpp
 #include <AGTB/Geodesy/Project.hpp>
@@ -166,57 +166,67 @@ int main()
 int main()
 {
     namespace ag = AGTB::Geodesy;
-    namespace au = AGTB::Utils;
-    using au::Angles::Angle;
-
     using projector = ag::Projector<ag::GeoCS::Geodetic, ag::ProjCS::GaussKruger>;
     using config = projector::Config<ag::Ellipsoids::CGCS2000, ag::GaussZoneInterval::D6, ag::Units::Radian>;
-    using GeoCoord = config::geo_coord;
-    using ProjCoord = config::proj_coord;
 
-    for (int i = 1; i != 90; ++i)
-    {
-        ag::Longitude<config::unit>
-            L_from(115, 0, 0);
-        ag::Latitude<config::unit>
-            B_from(i, 0, 0);
+    // Coordinate transformation
+    ag::Longitude<config::unit> L_from(115, 0, 0);
+    ag::Latitude<config::unit> B_from(39, 54, 0);
+    
+    config::geo_coord geo_coord{L_from, B_from};
+    config::proj_coord proj_coord = projector::Project<config>(geo_coord);
+    config::geo_coord result = projector::Project<config>(proj_coord);
 
-        GeoCoord geo_coord_from{
-            L_from,
-            B_from};
-
-        ProjCoord gauss_proj_coord =
-            projector::Project<config>(geo_coord_from);
-
-        GeoCoord geo_coord_to =
-            projector::Project<config>(gauss_proj_coord);
-
-        std::println("B_from = {} L_from = {}",
-                     B_from.ToAngle().ToString(),
-                     L_from.ToAngle().ToString());
-        std::println("x = {} y = {} ZoneY = {}", gauss_proj_coord.x, gauss_proj_coord.y, gauss_proj_coord.ZoneY());
-        std::println("B_to = {} L_to = {}",
-                     geo_coord_to.B.ToAngle().ToString(),
-                     geo_coord_to.L.ToAngle().ToString());
-        std::println("B_dif = {} L_dif = {}\n",
-                     Angle::FromRad(geo_coord_to.B.Rad() - B_from.Rad()).ToString(),
-                     Angle::FromRad(geo_coord_to.L.Rad() - L_from.Rad()).ToString());
-    }
-
+    // Zone transformation
     using K_config = projector::Config<ag::Ellipsoids::Krasovski, ag::GaussZoneInterval::D3, ag::Units::Radian>;
+    K_config::proj_coord src{.x = 1'944'359.609, .y = 240'455.456'3, .zone = 20};
+    auto target = projector::ReProject<K_config>(src, 21);  // Transform to adjacent zone
+}
+```
 
-    ag::Longitude<ag::Units::Radian> Lc(117, 0, 0);
+#### Geodetic Solutions
 
-    K_config::proj_coord src{
-        .x = 1'944'359.609,
-        .y = 240'455.456'3,
-        .zone = ag::GaussProjZone<K_config::zone_interval>(Lc),
-    };
+Supports both Gauss and Bessel methods for direct and inverse geodetic problems:
 
-    auto tar = projector::ReProjectTo<K_config>(src, src.zone + 1);
+**Gauss Method:**
+```cpp
+#include <AGTB/Geodesy/Solve.hpp>
 
-    std::println("X = {}, Y = {}, Zone = {}", src.x, src.y, src.zone);
-    std::println("X = {}, Y = {}, Zone = {}", tar.x, tar.y, tar.zone);
+int main()
+{
+    using solver = ag::Solver<ag::Solutions::Gauss>;
+    using config = solver::Config<ag::Ellipsoids::CGCS2000, ag::Units::Radian>;
+
+    ag::Latitude<> B1(47, 46, 52.647'0), B2(48, 4, 9.638'4);
+    ag::Longitude<> L1(35, 49, 36.330'0), L2(36, 14, 45.050'5);
+
+    // Inverse: distance and azimuth from coordinates
+    config::InverseResult inv_result = solver::Inverse<config>(L1, B1, L2, B2);
+    
+    // Forward: coordinates from distance and azimuth  
+    config::ForwardResult fwd_result = solver::Forward<config>(L1, B1, inv_result.s, inv_result.a_forwards);
+}
+```
+
+**Bessel Method:**
+```cpp
+#include <AGTB/Geodesy/Solve.hpp>
+
+int main()
+{
+    using solver = ag::Solver<ag::Solutions::Bessel>;
+    using config = solver::Config<ag::Ellipsoids::Krasovski, ag::Units::Radian>;
+
+    config::Lat B1(47, 46, 52.647'0);
+    config::Lon L1(35, 49, 36.330'0);
+    AGTB::Angle azimuth(44, 12, 13.664);
+    double distance = 44'797.282'6;
+
+    // Forward solution
+    config::ForwardResult result = solver::Forward<config>(L1, B1, distance, azimuth);
+    
+    // Inverse solution
+    config::InverseResult inv_result = solver::Inverse<config>(L1, B1, result.L, result.B);
 }
 ```
 

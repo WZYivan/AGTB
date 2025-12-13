@@ -1,18 +1,12 @@
 #ifndef __AGTB_GEODESY_SOLUTION_GAUSS_HPP__
 #define __AGTB_GEODESY_SOLUTION_GAUSS_HPP__
 
-#include "../Datum.hpp"
+#include "Base.hpp"
 
 AGTB_GEODESY_BEGIN
 
 namespace Solution::Gauss
 {
-    struct InverseResult
-    {
-        Angle a_forwards, a_backwards;
-        double s;
-    };
-
     template <Ellipsoids __ellipsoid>
     class InverseCoeffSolver
     {
@@ -102,6 +96,7 @@ namespace Solution::Gauss
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
+        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
     InverseResult InverseSolve(Longitude<__unit> L1, Latitude<__unit> B1, Longitude<__unit> L2, Latitude<__unit> B2)
     {
         double
@@ -134,14 +129,6 @@ namespace Solution::Gauss
             .s{S}};
     }
 
-    template <Units __unit>
-    struct ForwardResult
-    {
-        Longitude<__unit> L;
-        Latitude<__unit> B;
-        Angle a_backward;
-    };
-
     template <Ellipsoids __ellipsoid, Units __unit>
     auto InitForwardSolveIteration(Longitude<__unit> L, Latitude<__unit> B, double S, Angle a_backward, double &b, double &l, double &a)
     {
@@ -156,6 +143,7 @@ namespace Solution::Gauss
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
+        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
     ForwardResult<__unit> ForwardSolve(Longitude<__unit> L, Latitude<__unit> B, double S, Angle a_forward, double epsilon = 1e-5)
     {
         double dB0, dL0, dA0;
