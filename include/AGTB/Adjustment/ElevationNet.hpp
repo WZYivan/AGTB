@@ -17,15 +17,15 @@ namespace Elevation::Net
 {
     struct VertexProperty
     {
-        double elev;
-        bool is_control;
+        double elev = 0.0;
+        bool is_control = false;
         bool with_init = is_control;
     };
 
     struct EdgeProperty
     {
-        double dif;
-        double len;
+        double dif = 0.0;
+        double len = 0.0;
     };
 
     using ElevationNet = NamedGraph<VertexProperty, EdgeProperty>;

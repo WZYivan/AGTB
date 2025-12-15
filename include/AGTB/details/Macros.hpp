@@ -38,14 +38,23 @@
     }                    \
     AGTB_END
 
-#define AGTB_DSM_BEGIN \
-    AGTB_BEGIN         \
-    namespace DSM      \
+#define AGTB_APP_BEGIN    \
+    AGTB_BEGIN            \
+    namespace Application \
     {
 
-#define AGTB_DSM_END \
+#define AGTB_APP_END \
     }                \
     AGTB_END
+
+#define AGTB_APP_CONSOLE_BEGIN \
+    AGTB_APP_BEGIN             \
+    namespace Console          \
+    {
+
+#define AGTB_APP_CONSOLE_END \
+    }                        \
+    AGTB_APP_END
 
 #define AGTB_UTILS_BEGIN \
     AGTB_BEGIN           \
