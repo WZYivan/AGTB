@@ -19,16 +19,21 @@ namespace SpatialRef
     };
 
     template <ProjectCoordinateSystem __proj, auto... __args>
-    struct ProjCsUtils
+    struct ProjUtils
     {
         AGTB_TEMPLATE_NOT_SPECIFIED();
     };
 
-    // template <>
     template <GaussZoneInterval __zone_interval, Units __unit>
-    struct ProjCsUtils<ProjectCoordinateSystem::GaussKruger, __zone_interval, __unit>
+    struct ProjUtils<ProjectCoordinateSystem::GaussKruger, __zone_interval, __unit>
     {
-        using Impl = Proj::GaussKruger::GaussProjCoeffSolver<__zone_interval, __unit>;
+        using CoeffSolver = Proj::GaussKruger::GaussProjCoeffSolver<__zone_interval, __unit>;
+
+        struct Using : private CoeffSolver
+        {
+            using CoeffSolver::CenterLongitude;
+            using CoeffSolver::Zone;
+        };
     };
 }
 
@@ -36,7 +41,7 @@ using GeoCS = SpatialRef::GeographicCoordinateSystem;
 using ProjCS = SpatialRef::ProjectCoordinateSystem;
 
 template <ProjCS __proj, auto... __args>
-using ProjUtils = SpatialRef::ProjCsUtils<__proj, __args...>::Impl;
+using ProjUtils = SpatialRef::ProjUtils<__proj, __args...>::Using;
 
 AGTB_GEODESY_END
 

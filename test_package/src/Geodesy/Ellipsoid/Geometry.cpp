@@ -36,8 +36,8 @@ int main()
         ag::PrincipleCurvatureRadii<ag::Ellipsoids::Krasovski>(B);
     std::println("M = {}, N = {}, R = {}", rc.M, rc.N, rc.R());
 
-    double len = ag::MeridianArcLength<ag::Ellipsoids::Krasovski>(B);
-    auto B_inv = ag::MeridianArcBottom<ag::Ellipsoids::Krasovski>(len, 1e-5);
+    double len = ag::MeridianArcLength<ag::Ellipsoids::Krasovski, ag::Units::Radian>(B);
+    auto B_inv = ag::MeridianArcBottom<ag::Ellipsoids::Krasovski, ag::Units::Radian>(len, 1e-5);
 
     std::println("B_from = {}, len = {}, B_to = {}, B_delta = {}",
                  Angle::FromRad(B.Rad()).ToString(),

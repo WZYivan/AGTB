@@ -35,7 +35,7 @@ namespace SpatialRef::Proj::GaussKruger
     }
 
     template <GaussZoneInterval __zone_interval>
-    double gauss_zone_interval = ToDouble<__zone_interval>();
+    constexpr double gauss_zone_interval = ToDouble<__zone_interval>();
 
     template <GaussZoneInterval __zone_interval, Units _unit>
     struct GaussProjCoeffSolver

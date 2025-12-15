@@ -96,7 +96,7 @@ namespace Solution::Gauss
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
-        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
+        requires Concept::EllipsoidGeometry<EllipsoidGeometry<__ellipsoid>>
     InverseResult InverseSolve(Longitude<__unit> L1, Latitude<__unit> B1, Longitude<__unit> L2, Latitude<__unit> B2)
     {
         double
@@ -143,7 +143,7 @@ namespace Solution::Gauss
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
-        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
+        requires Concept::EllipsoidGeometry<EllipsoidGeometry<__ellipsoid>>
     ForwardResult<__unit> ForwardSolve(Longitude<__unit> L, Latitude<__unit> B, double S, Angle a_forward, double epsilon = 1e-5)
     {
         double dB0, dL0, dA0;
@@ -163,7 +163,7 @@ namespace Solution::Gauss
             dAp = dA;
 
             LatitudeConstants<ellipsoid_geometry> lc(Bm * sec2rad);
-            CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid>(Bm * sec2rad);
+            CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid, __unit>(Bm * sec2rad);
             double
                 N = crc.N,
                 N2 = gcem::pow(N, 2),

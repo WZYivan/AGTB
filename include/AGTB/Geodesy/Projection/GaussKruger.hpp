@@ -2,7 +2,8 @@
 #define __AGTB_GEODESY_PROJECTION_GAUSS_KRUGER_HPP__
 
 #include "../Datum.hpp"
-#include "../SpatialReference.hpp"
+#include "../SpatialReference/Geo/Geodetic.hpp"
+#include "../SpatialReference/Proj/GaussKruger.hpp"
 
 AGTB_GEODESY_BEGIN
 
@@ -49,8 +50,8 @@ namespace Projection::GaussKruger
                l4 = gcem::pow(dl_s, 4),
                l5 = gcem::pow(dl_s, 5),
                l6 = gcem::pow(dl_s, 6);
-        auto [_, N] = PrincipleCurvatureRadii<ellipsoid>(B);
-        double X = MeridianArcLength<ellipsoid>(B);
+        auto [_, N] = PrincipleCurvatureRadii<ellipsoid, unit>(B);
+        double X = MeridianArcLength<ellipsoid, unit>(B);
 
         double x = X +
                    N / (2 * p2) * sinB * cosB * l2 +
@@ -72,8 +73,8 @@ namespace Projection::GaussKruger
 
         double x = gpc.x, y = gpc.y;
         double zone = gpc.zone;
-        Latitude<unit> Bf = MeridianArcBottom<ellipsoid>(x, 1e-5, true);
-        auto [Mf, Nf] = PrincipleCurvatureRadii<ellipsoid>(Bf);
+        Latitude<unit> Bf = MeridianArcBottom<ellipsoid, unit>(x, 1e-5, true);
+        auto [Mf, Nf] = PrincipleCurvatureRadii<ellipsoid, unit>(Bf);
         LatitudeConstants<ellipsoid_geometry> glc(Bf);
 
         double tf = glc.t, nf2 = glc.nu_2;
@@ -114,7 +115,7 @@ namespace Projection::GaussKruger
     }
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    Angle MeridianConvergence(GeodeticCoordinate<__ellipsoid, __unit> gc)
+    Angle MeridianConvergence(const GeodeticCoordinate<__ellipsoid, __unit> &gc)
     {
         auto L = gc.L;
         auto B = gc.B;
@@ -143,10 +144,10 @@ namespace Projection::GaussKruger
     }
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    Angle MeridianConvergence(GaussProjCoordinate<__zone_interval> gpc)
+    Angle MeridianConvergence(const GaussProjCoordinate<__zone_interval> &gpc)
     {
         double x = gpc.x, y = gpc.y;
-        Latitude<__unit> Bf = MeridianArcBottom<__ellipsoid>(x);
+        Latitude<__unit> Bf = MeridianArcBottom<__ellipsoid, __unit>(x);
         using ellipsoid_geometry = EllipsoidGeometry<__ellipsoid>;
         LatitudeConstants<ellipsoid_geometry> lc(Bf);
         double
@@ -154,7 +155,7 @@ namespace Projection::GaussKruger
             t2 = gcem::pow(t, 2),
             t4 = gcem::pow(t, 4),
             n2 = lc.nu_2;
-        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid>(Bf);
+        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid, __unit>(Bf);
         double
             N = crc.N,
             N3 = gcem::pow(N, 3),
@@ -174,7 +175,7 @@ namespace Projection::GaussKruger
     };
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    DirctionCorrectionResult DirectionCorrection(GaussProjCoordinate<__zone_interval> gpc1, GaussProjCoordinate<__zone_interval> gpc2)
+    DirctionCorrectionResult DirectionCorrection(const GaussProjCoordinate<__zone_interval> &gpc1, const GaussProjCoordinate<__zone_interval> &gpc2)
     {
         GeodeticCoordinate<__ellipsoid, __unit>
             gc1 = GaussProjToGeodetic<__ellipsoid, __zone_interval, __unit>(gpc1),
@@ -192,7 +193,7 @@ namespace Projection::GaussKruger
             B1 = gc1.B,
             B2 = gc2.B,
             Bm((B1.Rad() + B2.Rad()) / 2.0);
-        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid>(Bm);
+        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid, __unit>(Bm);
         double
             Rm = crc.R(),
             Rm2 = gcem::pow(Rm, 2),
@@ -213,9 +214,9 @@ namespace Projection::GaussKruger
     }
 
     template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    double Strech(GeodeticCoordinate<__ellipsoid, __unit> gc)
+    double Strech(const GeodeticCoordinate<__ellipsoid, __unit> &gc)
     {
-        Longitude<__unit> lc = GaussProjCoeffSolver<__zone_interval, __unit>::CenterLongitude(gc.L.Rad()).Rad();
+        Longitude<__unit> lc = GaussProjCoeffSolver<__zone_interval, __unit>::CenterLongitude(gc.L);
         Longitude<__unit> dl(lc.Rad() - gc.L.Rad());
         double
             l = dl.Rad(),
@@ -234,6 +235,49 @@ namespace Projection::GaussKruger
             1.0 / 2.0 * l2 * cosBp2 * (1 + n2) +
             1.0 / 24.0 * l4 * cosBp4 * (5 - 4 * t2);
         return m;
+    }
+
+    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
+    double Strech(const GaussProjCoordinate<__zone_interval> &gpc)
+    {
+        GeodeticCoordinate<__ellipsoid, __unit> gc = GaussProjToGeodetic<__ellipsoid, __zone_interval, __unit>(gpc);
+        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid, __unit>(gc.B);
+        double
+            R = crc.R(),
+            R2 = gcem::pow(R, 2),
+            R4 = gcem::pow(R, 4),
+            y = gpc.y,
+            y2 = gcem::pow(y, 2),
+            y4 = gcem::pow(y, 4),
+            m = 1.0 +
+                y2 / (2 * R2) +
+                y4 / (24 * R4);
+        return m;
+    }
+
+    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
+    double DistanceCorrection(double S, const GeodeticCoordinate<__ellipsoid, __unit> &beg, const GeodeticCoordinate<__ellipsoid, __unit> &end)
+    {
+        GaussProjCoordinate<__zone_interval>
+            proj_beg = GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(beg),
+            proj_end = GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(end);
+        Latitude<__unit> Bm((beg.B.Rad() + end.B.Rad()) / 2.0);
+        CurvatureRadiusCollection crc = PrincipleCurvatureRadii<__ellipsoid, __unit>(Bm);
+        double
+            Rm = crc.R(),
+            Rm2 = gcem::pow(Rm, 2),
+            Rm4 = gcem::pow(Rm, 4),
+            ym = (proj_beg.y + proj_end.y) / 2.0,
+            ym2 = gcem::pow(ym, 2),
+            ym4 = gcem::pow(ym, 4),
+            dy = proj_end.y - proj_beg.y,
+            dy2 = gcem::pow(dy, 2),
+            scale = 1.0 +
+                    ym2 / (2 * Rm2) +
+                    ym4 / (24 * Rm4) +
+                    dy2 / (24 * Rm2),
+            D = scale * S;
+        return D;
     }
 }
 

@@ -8,106 +8,108 @@
 
 AGTB_GEODESY_BEGIN
 
-template <Units __unit, typename __derived>
-class GeoLatLonBase
+namespace detail
 {
-private:
-    double _val;
-
-public:
-    constexpr static Units unit = __unit;
-    using Derived = __derived;
-
-    constexpr GeoLatLonBase(double rad) : _val(rad)
+    template <Units __unit, typename __derived>
+    class GeoLatLonBase
     {
-    }
-    virtual ~GeoLatLonBase() = default;
+    private:
+        double _val;
 
-    constexpr double Rad() const noexcept
-    {
-        if constexpr (unit == Units::Radian)
+    public:
+        constexpr static Units unit = __unit;
+        using Derived = __derived;
+
+        constexpr GeoLatLonBase(double rad) : _val(rad)
+        {
+        }
+        virtual ~GeoLatLonBase() = default;
+
+        constexpr double Rad() const noexcept
+        {
+            if constexpr (unit == Units::Radian)
+            {
+                return _val;
+            }
+            else if constexpr (unit == Units::Degree)
+            {
+                return _val * deg2rad;
+            }
+            else if constexpr (unit == Units::Minute)
+            {
+                return _val * min2rad;
+            }
+            else if constexpr (unit == Units::Second)
+            {
+                return _val * sec2rad;
+            }
+            else
+            {
+                AGTB_STATIC_THROW("Unknown units");
+            }
+        }
+
+        constexpr double Value() const noexcept
         {
             return _val;
         }
-        else if constexpr (unit == Units::Degree)
-        {
-            return _val * deg2rad;
-        }
-        else if constexpr (unit == Units::Minute)
-        {
-            return _val * min2rad;
-        }
-        else if constexpr (unit == Units::Second)
-        {
-            return _val * sec2rad;
-        }
-        else
-        {
-            AGTB_STATIC_THROW("Unknown units");
-        }
-    }
 
-    constexpr double Value() const noexcept
-    {
-        return _val;
-    }
-
-    static Derived FromAngle(const Utils::Angles::Angle &a)
-    {
-        if constexpr (unit == Units::Radian)
+        static Derived FromAngle(const Utils::Angles::Angle &a)
         {
-            return Derived(a.Rad());
+            if constexpr (unit == Units::Radian)
+            {
+                return Derived(a.Rad());
+            }
+            else if constexpr (unit == Units::Degree)
+            {
+                return Derived(a.Degrees());
+            }
+            else if constexpr (unit == Units::Minute)
+            {
+                return Derived(a.Minutes());
+            }
+            else if constexpr (unit == Units::Second)
+            {
+                return Derived(a.Seconds());
+            }
+            else
+            {
+                AGTB_STATIC_THROW("Unknown units");
+            }
         }
-        else if constexpr (unit == Units::Degree)
+
+        virtual constexpr bool IsValid() const noexcept = 0;
+
+        constexpr double Sin() const noexcept
         {
-            return Derived(a.Degrees());
+            return gcem::sin(Rad());
         }
-        else if constexpr (unit == Units::Minute)
+        constexpr double Cos() const noexcept
         {
-            return Derived(a.Minutes());
+            return gcem::cos(Rad());
         }
-        else if constexpr (unit == Units::Second)
+        constexpr double Tan() const noexcept
         {
-            return Derived(a.Seconds());
+            return gcem::tan(Rad());
         }
-        else
+
+        Utils::Angles::Angle ToAngle() const noexcept
         {
-            AGTB_STATIC_THROW("Unknown units");
+            return Utils::Angles::Angle::FromRad(Rad());
         }
-    }
 
-    virtual constexpr bool IsValid() const noexcept = 0;
-
-    constexpr double Sin() const noexcept
-    {
-        return gcem::sin(Rad());
-    }
-    constexpr double Cos() const noexcept
-    {
-        return gcem::cos(Rad());
-    }
-    constexpr double Tan() const noexcept
-    {
-        return gcem::tan(Rad());
-    }
-
-    Utils::Angles::Angle ToAngle() const noexcept
-    {
-        return Utils::Angles::Angle::FromRad(Rad());
-    }
-
-    std::string ToString() const noexcept
-    {
-        return ToAngle().ToString();
-    }
-};
-
+        std::string ToString() const noexcept
+        {
+            return ToAngle().ToString();
+        }
+    };
+}
 /**
  * @brief Geodetic latitude in (-90, 90)(deg), store in `rad`
  *
  */
 template <Units __unit = Units::Radian>
-class Latitude : public GeoLatLonBase<__unit, Latitude<__unit>>
+class Latitude : public detail::GeoLatLonBase<__unit, Latitude<__unit>>
 {
 public:
     constexpr static Units unit = __unit;
@@ -117,7 +119,7 @@ public:
         return gcem::abs(this->Rad()) <= max;
     }
 
-    Latitude(double rad) : GeoLatLonBase<__unit, Latitude>(rad)
+    Latitude(double rad) : detail::GeoLatLonBase<__unit, Latitude>(rad)
     {
         if (!IsValid())
         {
@@ -139,7 +141,7 @@ private:
  *
  */
 template <Units __unit = Units::Radian>
-class Longitude : public GeoLatLonBase<__unit, Longitude<__unit>>
+class Longitude : public detail::GeoLatLonBase<__unit, Longitude<__unit>>
 {
 public:
     constexpr static Units unit = __unit;
@@ -149,7 +151,7 @@ public:
         return gcem::abs(this->Rad()) <= max;
     }
 
-    Longitude(double rad) : GeoLatLonBase<__unit, Longitude>(rad)
+    Longitude(double rad) : detail::GeoLatLonBase<__unit, Longitude>(rad)
     {
         if (!IsValid())
         {

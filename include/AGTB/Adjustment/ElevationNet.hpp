@@ -194,7 +194,7 @@ namespace Elevation
     using Net::ElevationNet;
     using Net::ElevationNetVariable;
 
-    void Adjust(ElevationNet &net, double unit_p, ElevationNetVariable *var_ptr = nullptr)
+    ElevationNetVariable Adjust(ElevationNet &net, double unit_p = 1.0)
     {
         ElevationNetVariable var{};
         Net::InitializeElevations(net, var.unknown);
@@ -202,10 +202,7 @@ namespace Elevation
         Net::ComputeCorrections(var.A, var.l, var.P, var.x, var.V);
         Net::ApplyCorrections(net, var.unknown, var.x, var.V);
 
-        if (var_ptr != nullptr)
-        {
-            *var_ptr = std::move(var);
-        }
+        return var;
     }
 
     void PrintElevationNet(const ElevationNet &net)

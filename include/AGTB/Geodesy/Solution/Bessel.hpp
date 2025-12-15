@@ -97,7 +97,7 @@ namespace Solution::Bessel
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
-        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
+        requires Concept::EllipsoidGeometry<EllipsoidGeometry<__ellipsoid>>
     ForwardResult<__unit> ForwardSolve(Longitude<__unit> L1, Latitude<__unit> B1, double S, Angle a_forward)
     {
         using ellipsoid_geometry = EllipsoidGeometry<__ellipsoid>;
@@ -207,7 +207,7 @@ namespace Solution::Bessel
     }
 
     template <Ellipsoids __ellipsoid, Units __unit>
-        requires EllipsoidGeometryConcept<EllipsoidGeometry<__ellipsoid>>
+        requires Concept::EllipsoidGeometry<EllipsoidGeometry<__ellipsoid>>
     InverseResult InverseSolve(Longitude<__unit> L1, Latitude<__unit> B1, Longitude<__unit> L2, Latitude<__unit> B2, double epsilon = 1e-5)
     {
         using ellipsoid_geometry = EllipsoidGeometry<__ellipsoid>;

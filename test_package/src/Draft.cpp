@@ -1,37 +1,27 @@
 #include <type_traits>
+#include <tuple>
 
-class C
+template <typename... __args>
+struct TypePack
 {
-public:
-    template <typename __ref>
-    class Inner
-    {
-    public:
-        __ref ref;
+    using Pack = std::tuple<__args...>;
 
-        Inner(__ref src) : ref(src) {}
-    };
-
-    template <typename __self>
-    struct InnerGen
-    {
-        using InnerRef = std::conditional_t<std::is_const_v<std::remove_reference_t<__self>>, const int &, int &>;
-        using InnerType = Inner<InnerRef>;
-    };
-
-    template <typename __self>
-    using InnerGenT = InnerGen<__self>::InnerType;
-
-    template <typename __self>
-    void GenInner(this __self &&self)
-    {
-        const int x = 1;
-        InnerGenT<__self> inner(x);
-    }
+    template <std::size_t __idx>
+    using At = std::tuple_element_t<__idx, Pack>;
 };
+
+template <typename __src, typename __tar>
+void Assert()
+{
+    static_assert(std::is_same_v<__src, __tar>);
+}
 
 int main()
 {
-    const C c{};
-    c.GenInner();
+    using pack = TypePack<int, double>;
+    using t0 = pack::At<0>;
+    using t1 = pack::At<1>;
+
+    Assert<int, t0>;
+    Assert<double, t1>;
 }

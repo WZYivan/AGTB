@@ -17,16 +17,19 @@ enum class Ellipsoids
     CGCS2000
 };
 
-template <typename ellipsoid_geometry>
-concept EllipsoidGeometryConcept = requires {
-    { ellipsoid_geometry::a } -> std::convertible_to<double>;
-    { ellipsoid_geometry::b } -> std::convertible_to<double>;
-    { ellipsoid_geometry::c } -> std::convertible_to<double>;
-    { ellipsoid_geometry::alpha } -> std::convertible_to<double>;
-    { ellipsoid_geometry::e1_2 } -> std::convertible_to<double>;
-    { ellipsoid_geometry::e2_2 } -> std::convertible_to<double>;
-    { ellipsoid_geometry::ellipsoid } -> std::convertible_to<Ellipsoids>;
-};
+namespace Concept
+{
+    template <typename ellipsoid_geometry>
+    concept EllipsoidGeometry = requires {
+        { ellipsoid_geometry::a } -> std::convertible_to<double>;
+        { ellipsoid_geometry::b } -> std::convertible_to<double>;
+        { ellipsoid_geometry::c } -> std::convertible_to<double>;
+        { ellipsoid_geometry::alpha } -> std::convertible_to<double>;
+        { ellipsoid_geometry::e1_2 } -> std::convertible_to<double>;
+        { ellipsoid_geometry::e2_2 } -> std::convertible_to<double>;
+        { ellipsoid_geometry::ellipsoid } -> std::convertible_to<Ellipsoids>;
+    };
+}
 
 template <Ellipsoids __ellipsoid>
 struct EllipsoidGeometry
@@ -91,7 +94,7 @@ struct EllipsoidGeometry<Ellipsoids::CGCS2000>
  *
  * @tparam __ellipsoid_geometry
  */
-template <EllipsoidGeometryConcept __ellipsoid_geometry>
+template <Concept::EllipsoidGeometry __ellipsoid_geometry>
 struct LatitudeConstants
 {
     double
@@ -110,14 +113,17 @@ struct LatitudeConstants
     }
 };
 
-template <typename T>
-concept LatitudeConstantsConcept = requires(T t) {
-    { t.B } -> std::convertible_to<double>;
-    { t.t } -> std::convertible_to<double>;
-    { t.nu_2 } -> std::convertible_to<double>;
-    { t.W } -> std::convertible_to<double>;
-    { t.V } -> std::convertible_to<double>;
-};
+namespace Concept
+{
+    template <typename T>
+    concept LatitudeConstants = requires(T t) {
+        { t.B } -> std::convertible_to<double>;
+        { t.t } -> std::convertible_to<double>;
+        { t.nu_2 } -> std::convertible_to<double>;
+        { t.W } -> std::convertible_to<double>;
+        { t.V } -> std::convertible_to<double>;
+    };
+}
 
 AGTB_GEODESY_END
 

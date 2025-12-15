@@ -98,8 +98,8 @@ namespace EllipsoidMath
         { T::ellipsoid } -> std::convertible_to<Ellipsoids>;
     };
 
-    template <EllipsoidGeometryConcept __ellipsoid_geometry>
-    CurvatureRadiusCollection PrincipleCurvatureRadiiImpl(Latitude<Units::Radian> B)
+    template <Concept::EllipsoidGeometry __ellipsoid_geometry, Units __unit>
+    CurvatureRadiusCollection PrincipleCurvatureRadiiImpl(Latitude<__unit> B)
     {
         using ellipsoid_geometry = __ellipsoid_geometry;
         double sinBp2 = gcem::pow(B.Sin(), 2),
@@ -113,8 +113,8 @@ namespace EllipsoidMath
             .N = N};
     }
 
-    template <Ellipsoids __ellipsoid>
-    CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude<Units::Radian> B)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    CurvatureRadiusCollection PrincipleCurvatureRadii(Latitude<__unit> B)
     {
         return PrincipleCurvatureRadiiImpl<EllipsoidGeometry<__ellipsoid>>(B);
     }
@@ -161,8 +161,8 @@ namespace EllipsoidMath
         { T::a6 } -> std::convertible_to<double>;
     };
 
-    template <QuarterArcCoeffConcept __coeff>
-    double MeridianArcLengthImpl(Latitude<Units::Radian> _B)
+    template <QuarterArcCoeffConcept __coeff, Units __unit>
+    double MeridianArcLengthImpl(Latitude<__unit> _B)
     {
         using coeff = __coeff;
 
@@ -181,16 +181,16 @@ namespace EllipsoidMath
         return X;
     }
 
-    template <Ellipsoids __ellipsoid>
-    double MeridianArcLength(Latitude<Units::Radian> B)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    double MeridianArcLength(Latitude<__unit> B)
     {
         using principle_curvature_radii_coeff = PrincipleCurvatureRadiiCoeff<__ellipsoid>;
         using quarter_arc_coeff = QuarterArcCoeff<principle_curvature_radii_coeff>;
-        return MeridianArcLengthImpl<quarter_arc_coeff>(B);
+        return MeridianArcLengthImpl<quarter_arc_coeff, __unit>(B);
     }
 
-    template <Ellipsoids __ellipsoid, QuarterArcCoeffConcept __coeff>
-    Latitude<Units::Radian> MeridianArcBottomIterImpl(double len, double iter_threshold, bool enable_precorrectoin)
+    template <Ellipsoids __ellipsoid, QuarterArcCoeffConcept __coeff, Units __unit>
+    Latitude<__unit> MeridianArcBottomIterImpl(double len, double iter_threshold, bool enable_precorrectoin)
     {
         using coeff = __coeff;
         constexpr Ellipsoids ellipsoid = __ellipsoid;
@@ -219,19 +219,31 @@ namespace EllipsoidMath
         return Bf_cur + dB; // return rad
     }
 
-    template <Ellipsoids __ellipsoid>
-    Latitude<Units::Radian> MeridianArcBottom(double len, double iter_threshold, bool enable_precorrectoin = true)
+    template <Ellipsoids __ellipsoid, Units __unit>
+    Latitude<__unit> MeridianArcBottom(double len, double iter_threshold = 1e-5, bool enable_precorrectoin = true)
     {
         constexpr Ellipsoids ellipsoid = __ellipsoid;
         using principle_curvature_radii_coeff = PrincipleCurvatureRadiiCoeff<ellipsoid>;
         using quarter_arc_coeff = QuarterArcCoeff<principle_curvature_radii_coeff>;
-        return MeridianArcBottomIterImpl<ellipsoid, quarter_arc_coeff>(len, iter_threshold, enable_precorrectoin);
+        return MeridianArcBottomIterImpl<ellipsoid, quarter_arc_coeff, __unit>(len, iter_threshold, enable_precorrectoin);
+    }
+
+    template <Ellipsoids __ellipsoid, Units __unit>
+    double ParallelCircleArcLength(Latitude<__unit> B, Longitude<__unit> L1, Longitude<__unit> L2)
+    {
+        double
+            cosB = B.Cos(),
+            l = L2.Rad() - L1.Rad(),
+            N = PrincipleCurvatureRadii<__ellipsoid, __unit>(B).N,
+            S = N * cosB * l;
+        return S;
     }
 };
 
 using EllipsoidMath::CurvatureRadiusCollection;
 using EllipsoidMath::MeridianArcBottom;
 using EllipsoidMath::MeridianArcLength;
+using EllipsoidMath::ParallelCircleArcLength;
 using EllipsoidMath::PrincipleCurvatureRadii;
 
 AGTB_GEODESY_END

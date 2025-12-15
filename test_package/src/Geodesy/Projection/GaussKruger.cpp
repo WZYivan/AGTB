@@ -57,4 +57,13 @@ int main()
 
     std::println("X = {}, Y = {}, Zone = {}", src.x, src.y, src.zone);
     std::println("X = {}, Y = {}, Zone = {}", tar.x, tar.y, tar.zone);
+
+    double m1 = projector::Strech<K_config>(src);
+    double m2 = projector::Strech<K_config>(tar);
+    std::println("m1 = {}, m2 = {}", m1, m2);
+
+    Angle gamma = projector::MeridianConvergence<K_config>(src);
+    std::println("gamma = {}", gamma.ToString());
+
+    projector::DirctionCorrectionResult dcr = projector::DirectionCorrection<K_config>(src, tar);
 }

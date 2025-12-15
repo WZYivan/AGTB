@@ -2,6 +2,7 @@
 #define __AGTB_GEODESY_PROJECT_HPP__
 
 #include "Projection/GaussKruger.hpp"
+#include "SpatialReference.hpp"
 
 #include <concepts>
 
@@ -13,7 +14,7 @@ struct Projector
     AGTB_TEMPLATE_NOT_SPECIFIED();
 };
 
-namespace ProjectConfigConcept
+namespace Projection::ConfigConcept
 {
     template <typename T>
     concept GeodeticGaussKruger = requires {
@@ -42,40 +43,52 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
         using ProjCoord = GaussProjCoordinate<zone_interval>;
     };
 
-    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    static inline GeodeticCoordinate<__ellipsoid, __unit> Project(const GaussProjCoordinate<__zone_interval> &gpc)
-    {
-        return Projection::GaussKruger::GaussProjToGeodetic<__ellipsoid, __zone_interval, __unit>(gpc);
-    }
-
-    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    static inline GaussProjCoordinate<__zone_interval> Project(const GeodeticCoordinate<__ellipsoid, __unit> &gc, int custom_zone = 0)
-    {
-        return Projection::GaussKruger::GeodeticToGaussProj<__ellipsoid, __zone_interval, __unit>(gc, custom_zone);
-    }
-
-    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
-    static inline GaussProjCoordinate<__zone_interval> ReProject(const GaussProjCoordinate<__zone_interval> &pc, int tar_zone)
-    {
-        return Projection::GaussKruger::TransformZone<__ellipsoid, __zone_interval, __unit>(pc, tar_zone);
-    }
-
-    template <ProjectConfigConcept::GeodeticGaussKruger __config>
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config>
     static inline __config::GeoCoord Project(const __config::ProjCoord &pc)
     {
-        return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(pc);
+        return Projection::GaussKruger::GaussProjToGeodetic<__config::ellipsoid, __config::zone_interval, __config::unit>(pc);
     }
 
-    template <ProjectConfigConcept::GeodeticGaussKruger __config>
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config>
     static inline __config::ProjCoord Project(const __config::GeoCoord &gc, int custom_zone = 0)
     {
-        return Project<__config::ellipsoid, __config::zone_interval, __config::unit>(gc, custom_zone);
+        return Projection::GaussKruger::GeodeticToGaussProj<__config::ellipsoid, __config::zone_interval, __config::unit>(gc, custom_zone);
     }
 
-    template <ProjectConfigConcept::GeodeticGaussKruger __config>
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config>
     static inline __config::ProjCoord ReProject(const __config::ProjCoord &pc, int tar_zone)
     {
-        return ReProject<__config::ellipsoid, __config::zone_interval, __config::unit>(pc, tar_zone);
+        return Projection::GaussKruger::TransformZone<__config::ellipsoid, __config::zone_interval, __config::unit>(pc, tar_zone);
+    }
+
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config, typename __coordinate>
+        requires std::convertible_to<__coordinate, typename __config::GeoCoord> ||
+                 std::convertible_to<__coordinate, typename __config::ProjCoord>
+    static inline Angle MeridianConvergence(const __coordinate &coord)
+    {
+        return Projection::GaussKruger::MeridianConvergence<__config::ellipsoid, __config::zone_interval, __config::unit>(coord);
+    }
+
+    using DirctionCorrectionResult = typename Projection::GaussKruger::DirctionCorrectionResult;
+
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config>
+    static inline DirctionCorrectionResult DirectionCorrection(const __config::ProjCoord &beg, const __config::ProjCoord &end)
+    {
+        return Projection::GaussKruger::DirectionCorrection<__config::ellipsoid, __config::zone_interval, __config::unit>(beg, end);
+    }
+
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config, typename __coordinate>
+        requires std::convertible_to<__coordinate, typename __config::GeoCoord> ||
+                 std::convertible_to<__coordinate, typename __config::ProjCoord>
+    static inline double Strech(const __coordinate &coord)
+    {
+        return Projection::GaussKruger::Strech<__config::ellipsoid, __config::zone_interval, __config::unit>(coord);
+    }
+
+    template <Projection::ConfigConcept::GeodeticGaussKruger __config>
+    static inline double DistanceCorrection(double S, const __config::GeoCoord &beg, const __config::GeoCoord &end)
+    {
+        return Projection::GaussKruger::DistanceCorrection<__config::ellipsoid, __config::zone_interval, __config::unit>(S, beg, end);
     }
 };
 
