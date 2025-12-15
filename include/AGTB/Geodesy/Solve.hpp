@@ -11,7 +11,7 @@ enum class Solutions
 {
     Gauss,
     Bessel,
-    OrinaryPlane
+    OrdinaryPlane
 };
 
 template <Solutions __solution>
@@ -119,9 +119,9 @@ struct Solver<Solutions::Bessel>
 };
 
 template <>
-struct Solver<Solutions::OrinaryPlane>
+struct Solver<Solutions::OrdinaryPlane>
 {
-    constexpr static Solutions solve_method = Solutions::OrinaryPlane;
+    constexpr static Solutions solve_method = Solutions::OrdinaryPlane;
 
     using ForwardResult = Solution::OrdinaryForwardResult;
     using InverseResult = Solution::OrdinaryInverseResult;
