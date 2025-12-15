@@ -3,13 +3,15 @@
 
 #include "Solution/Gauss.hpp"
 #include "Solution/Bessel.hpp"
+#include "Solution/OrdinaryPlane.hpp"
 
 AGTB_GEODESY_BEGIN
 
 enum class Solutions
 {
     Gauss,
-    Bessel
+    Bessel,
+    OrinaryPlane
 };
 
 template <Solutions __solution>
@@ -113,6 +115,25 @@ struct Solver<Solutions::Bessel>
     static inline typename __config::InverseResult Inverse(__config::Lon L1, __config::Lat B1, __config::Lon L2, __config::Lat B2, double epsilon = 1e-5)
     {
         return Inverse<__config::ellipsoid, __config::unit>(L1, B1, L2, B2, epsilon);
+    }
+};
+
+template <>
+struct Solver<Solutions::OrinaryPlane>
+{
+    constexpr static Solutions solve_method = Solutions::OrinaryPlane;
+
+    using ForwardResult = Solution::OrdinaryForwardResult;
+    using InverseResult = Solution::OrdinaryInverseResult;
+
+    static inline ForwardResult Forward(double x, double y, double s, Angle a)
+    {
+        return Solution::OrdinaryPlane::ForwardSolve(x, y, s, a);
+    }
+
+    static inline InverseResult Inverse(double x1, double y1, double x2, double y2)
+    {
+        return Solution::OrdinaryPlane::InverseSolve(x1, y1, x2, y2);
     }
 };
 

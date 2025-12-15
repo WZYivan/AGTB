@@ -20,6 +20,17 @@ namespace Solution
         Latitude<__unit> B;
         Angle a_backward;
     };
+
+    struct OrdinaryInverseResult
+    {
+        Angle a_forward;
+        double s;
+    };
+
+    struct OrdinaryForwardResult
+    {
+        double x, y;
+    };
 }
 
 AGTB_GEODESY_END

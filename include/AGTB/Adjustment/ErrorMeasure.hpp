@@ -15,9 +15,10 @@ AGTB_ADJUSTMENT_BEGIN
  * @param t number of unknown variable
  * @return double
  */
-double MeanRootSquareError(const Matrix &V, int n, int t)
+double MeanRootSquareError(const Matrix &V, int n, int t, const Matrix &P = Matrix::Zero(1, 1))
 {
-    return ((V.transpose() * V) / (n - t)).cwiseSqrt()(0);
+
+    return ((V.transpose() * (P.isZero() ? Matrix::Identity(V.rows(), V.cols()) : P) * V) / (n - t)).cwiseSqrt()(0);
 }
 
 /**
