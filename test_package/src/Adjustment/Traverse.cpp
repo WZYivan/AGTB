@@ -71,20 +71,29 @@ int main()
     // aa::TraverseAdjustResult r2 = aa::Adjust(p2, 3, 0);
     // std::println(">>> 2\n{}", aa::AdjustmentTable(p2, r2));
 
-    aa::TraverseParam<aa::RouteType::ClosedConnecting> p3{
-        .distances = {63.698, 52.303, 65.584, 56.819, 52.990, 55.375},
-        .angles = {{268, 29, 12}, {88, 5, 33}, {91, 53, 17}, {180, 40, 20}, {83, 52, 18}, {95, 36, 39}, {271, 22, 53}},
-        .azi_beg = {90, 0, 0},
-        .azi_end = {270, 0, 0},
-        .x_beg = 500,
-        .y_beg = 600,
-        .x_end = 500,
-        .y_end = 600};
-    aa::TraverseAdjustResult r3 = aa::Adjust(p3, 3, 0);
-    std::println(">>> 3\n{}", aa::AdjustmentTable(p3, r3));
+    // aa::TraverseParam<aa::RouteType::ClosedConnecting> p3{
+    //     .distances = {63.698, 52.303, 65.584, 56.819, 52.990, 55.375},
+    //     .angles = {{268, 29, 12}, {88, 5, 33}, {91, 53, 17}, {180, 40, 20}, {83, 52, 18}, {95, 36, 39}, {271, 22, 53}},
+    //     .azi_beg = {90, 0, 0},
+    //     .azi_end = {270, 0, 0},
+    //     .x_beg = 500,
+    //     .y_beg = 600,
+    //     .x_end = 500,
+    //     .y_end = 600};
+    // aa::TraverseAdjustResult r3 = aa::Adjust(p3, 3, 0);
+    // std::println(">>> 3\n{}", aa::AdjustmentTable(p3, r3));
 
-    using Tp = aa::EvaluateToleranceTParam<aa::EvaluateTarget::EDT, aa::ToleranceCatagory::Level, 1>;
-    Tp::Result er3 = aa::EvaluateTolerance<Tp>(r3);
+    // using Tp = aa::EvaluateToleranceTParam<aa::EvaluateTarget::EDT, aa::ToleranceCatagory::Level, 1>;
+    // Tp::Result er3 = aa::EvaluateTolerance<Tp>(r3);
 
-    std::println(">>> e3\n K = {}\n f = {}\n", er3.K ? "OK" : "Bad", er3.f_bate ? "OK" : "Bad");
+    // std::println(">>> e3\n K = {}\n f = {}\n", er3.K ? "OK" : "Bad", er3.f_bate ? "OK" : "Bad");
+
+    aa::TraverseParam<aa::RouteType::ClosedLoop> p1{
+        .distances = {105.22, 80.18, 129.34, 78.16},
+        .angles = {{107, 48, 32}, {73, 0, 24}, {89, 33, 48}, {89, 36, 30}},
+        .azi_beg = {125, 30, 0},
+        .x_beg = 506.32,
+        .y_beg = 215.65};
+    aa::TraverseAdjustResult r1 = aa::Adjust(p1, 3, 0);
+    std::println("{}", aa::AdjustmentTable(p1, r1));
 }

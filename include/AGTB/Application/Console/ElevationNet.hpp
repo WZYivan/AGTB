@@ -1,5 +1,5 @@
-#ifndef __AGTB_APP_CONSOLE_FRAMEWORK_HPP__
-#define __AGTB_APP_CONSOLE_FRAMEWORK_HPP__
+#ifndef __AGTB_APP_CONSOLE_ELEVATION_NET_HPP__
+#define __AGTB_APP_CONSOLE_ELEVATION_NET_HPP__
 
 #include "../../details/Macros.hpp"
 #include "../../Adjustment/ElevationNet.hpp"
