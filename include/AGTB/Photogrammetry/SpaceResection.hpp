@@ -21,7 +21,7 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-namespace SpaceResection
+namespace detail::SpaceResection
 {
     struct SpaceResectionParam
     {
@@ -380,10 +380,10 @@ namespace SpaceResection
     }
 }
 
-using SpaceResection::Solve;
-using SpaceResection::SpaceResectionParam;
-using SpaceResection::SpaceResectionResult;
-using SpaceResection::SpaceResectionTParam;
+using detail::SpaceResection::Solve;
+using detail::SpaceResection::SpaceResectionParam;
+using detail::SpaceResection::SpaceResectionResult;
+using detail::SpaceResection::SpaceResectionTParam;
 
 AGTB_PHOTOGRAMMETRY_END
 

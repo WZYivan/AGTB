@@ -7,7 +7,7 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-namespace CollinearityEquation
+namespace detail::CollinearityEquation
 {
     /**
      * @brief Represent simplification method
@@ -149,10 +149,10 @@ namespace CollinearityEquation
     }
 }
 
-using CollinearityEquation::CalculateCoeff;
-using CollinearityEquation::CollinearityEquationCoefficient;
-using CollinearityEquation::CollinearityEquationCoeffOption;
-using CollinearityEquation::CollinearityEquationCoeffParam;
+using detail::CollinearityEquation::CalculateCoeff;
+using detail::CollinearityEquation::CollinearityEquationCoefficient;
+using detail::CollinearityEquation::CollinearityEquationCoeffOption;
+using detail::CollinearityEquation::CollinearityEquationCoeffParam;
 
 AGTB_PHOTOGRAMMETRY_END
 

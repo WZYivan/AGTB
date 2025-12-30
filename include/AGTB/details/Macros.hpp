@@ -169,9 +169,6 @@ AGTB_END
 #else
 #define AGTB_DEBUG false
 #endif
-#ifndef AGTB_DEBUG
-#define AGTB_DEBUG false
-#endif
 
 #define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>
 #define AGTB_T_HAS_TYPED_MEMBER(__M, __RTp) AGTB_WEAK_REQUIRE_MEMBER_TYPE(T, __M, __RTp)

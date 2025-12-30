@@ -89,6 +89,32 @@ Matrix RotateByAxis(double angle)
     }
 }
 
+// Matrix RotationMatrix(double phi, double omega, double kappa)
+// {
+//     double
+//         cosp = std::cos(phi),
+//         sinp = std::sin(phi),
+//         cosw = std::cos(omega),
+//         sinw = std::sin(omega),
+//         cosk = std::cos(kappa),
+//         sink = std::sin(kappa);
+//     double
+//         a1 = cosp * cosk - cosp * sinw * sink,
+//         a2 = -cosp * sink - sinp * sinw * sink,
+//         a3 = -sinp * cosw,
+//         b1 = cosw * sink,
+//         b2 = cosw * cosk,
+//         b3 = -sinw,
+//         c1 = sinp * cosk + cosp * sinw * sink,
+//         c2 = -sinw * cosk + cosp * sinw * sink,
+//         c3 = cosp * cosw;
+//     Matrix rm(3, 3);
+//     rm << a1, a2, a3,
+//         b1, b2, b3,
+//         c1, c2, c3;
+//     return rm;
+// }
+
 AGTB_LINALG_END
 
 #endif
