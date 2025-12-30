@@ -17,8 +17,7 @@ AGTB_ADJUSTMENT_BEGIN
  */
 double MeanRootSquareError(const Matrix &V, int n, int t, const Matrix &P = Matrix::Zero(1, 1))
 {
-
-    return ((V.transpose() * (P.isZero() ? Matrix::Identity(V.rows(), V.cols()) : P) * V) / (n - t)).cwiseSqrt()(0);
+    return ((V.transpose() * (P.isZero() ? Matrix::Identity(V.rows(), V.rows()) : P) * V) / (n - t)).cwiseSqrt()(0);
 }
 
 /**

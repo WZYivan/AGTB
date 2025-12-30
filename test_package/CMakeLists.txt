@@ -10,11 +10,12 @@ function(create_new_executable target_name source_file)
     target_link_libraries(${target_name} agtb::agtb)
 endfunction()
 
-create_new_executable(Draft "src/Draft.cpp")
+# create_new_executable(Draft "src/Draft.cpp")
 
 # create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
 # create_new_executable(Adjustment_ElevationNet "src/Adjustment/ElevationNet.cpp")
+# create_new_executable(Adjustment_TraverseNet "src/Adjustment/TraverseNet.cpp")
 
 # create_new_executable(Geodesy_Geometry "src/Geodesy/Ellipsoid/Geometry.cpp")
 # create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
@@ -28,9 +29,9 @@ create_new_executable(Draft "src/Draft.cpp")
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 
-# create_new_executable(Photographic_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
-# # # create_new_executable(Photographic_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp") # Not Implement
-# # # create_new_executable(Photographic_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp") # Not Implement
+# create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
+create_new_executable(Photogrammetry_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")
+# # # create_new_executable(Photogrammetry_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp") # Not Implement
 
 # create_new_executable(Utils_Angle "src/Utils/Angles.cpp")
 # create_new_executable(Utils_DataFrame "src/Utils/DataFrame.cpp")

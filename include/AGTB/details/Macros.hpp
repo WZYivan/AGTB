@@ -163,6 +163,15 @@ AGTB_END
 
 #define AGTB_WARNING(__msg) [[deprecated(__msg)]]
 
+#ifdef AGTB_ENABLE_DEBUG
+#include <print>
+#include <iostream>
+#include <cassert>
+#define AGTB_IF_DEBUG if constexpr (true)
+#else
+#define AGTB_IF_DEBUG if constexpr (false)
+#endif
+
 #define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>
 #define AGTB_T_HAS_TYPED_MEMBER(__M, __RTp) AGTB_WEAK_REQUIRE_MEMBER_TYPE(T, __M, __RTp)
 #define AGTB_WEAK_REQUIRE_MEMBER_RETURN_TYPE(__Tp, __M, __MCp, __RTp) {__Tp::__M(__MCp)}->std::convertible_to<__RTp>

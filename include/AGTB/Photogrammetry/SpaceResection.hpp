@@ -208,7 +208,12 @@ namespace SpaceResection
         return coefficient;
     }
     template <>
-    Matrix SpaceResectionCoefficient<CollinearityEquationCoeffOption::NoAngles>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    Matrix SpaceResectionCoefficient<CollinearityEquationCoeffOption::NoAngles>(
+        const Matrix &rotate,
+        const Matrix &transformed_obj,
+        const Matrix &transformed_photo,
+        const ExteriorOrientationElements &external,
+        const InteriorOrientationElements &internal)
     {
         auto pc = transformed_photo.rows();
         Matrix coefficient(pc * 2, 6);
@@ -317,6 +322,15 @@ namespace SpaceResection
             Matrix residual = ResidualMatrix(photo, transformed_photo);
             Matrix coefficient = SpaceResectionCoefficient<__equation_opt>(rotate, transformed_obj, transformed_photo, external, internal);
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
+
+            AGTB_IF_DEBUG
+            {
+                IO::PrintEigen(transformed_obj, "transformed_obj");
+                IO::PrintEigen(transformed_photo, "transformed_photo");
+                IO::PrintEigen(residual, "residual");
+                IO::PrintEigen(coefficient, "coefficient");
+                IO::PrintEigen(correction, "correction");
+            }
 
             UpdateExternalElements(external, correction);
 

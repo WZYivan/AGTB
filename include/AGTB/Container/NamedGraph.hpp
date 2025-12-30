@@ -386,6 +386,93 @@ public:
         return self.Vertex(self.Target(name));
     }
 
+    bool ModiftyVertex(const name_type &edge_name, const name_type &old_name, const name_type &new_name, const VertexProperty &new_prop)
+    {
+        const auto &tar_name = this->TargetName(edge_name);
+        const auto &src_name = this->SourceName(edge_name);
+        EdgeProperty prop = this->Edge(edge_name);
+
+        this->RemoveEdge(edge_name);
+
+        if (tar_name == old_name)
+        {
+            this->RemoveVertex(tar_name);
+            this->AddVertex(new_name, new_prop);
+            this->AddEdge(src_name, new_name, edge_name, prop);
+            return true;
+        }
+
+        else if (src_name == old_name)
+        {
+            this->RemoveVertex(src_name);
+            this->AddVertex(new_name, new_prop);
+            this->AddEdge(new_name, tar_name, edge_name, prop);
+            return true;
+        }
+
+        return false;
+    }
+
+    bool ModiftyVertex(const name_type &edge_name, const name_type &old_name, const name_type &new_name)
+    {
+        // std::println("{}", "in modifing");
+
+        const auto &tar_name = this->TargetName(edge_name);
+        const auto &src_name = this->SourceName(edge_name);
+        EdgeProperty prop = this->Edge(edge_name);
+        this->RemoveEdge(edge_name);
+        // std::println("remove edge {}", edge_name);
+
+        if (tar_name == old_name)
+        {
+            this->RemoveVertex(tar_name);
+            // std::println("remove vert {}", tar_name);
+            this->AddEdge(src_name, new_name, edge_name, prop);
+            // std::println("add edge {}: {} -> {}", edge_name, SourceName(edge_name), TargetName(edge_name));
+            return true;
+        }
+
+        else if (src_name == old_name)
+        {
+            this->RemoveVertex(src_name);
+            // std::println("remove vert {}", src_name);
+            this->AddEdge(new_name, tar_name, edge_name, prop);
+            // std::println("add edge {}: {} -> {}", edge_name, SourceName(edge_name), TargetName(edge_name));
+            return true;
+        }
+
+        return false;
+    }
+
+    std::generator<name_type> EdgesOf(const name_type &vert_name)
+    {
+        for (auto [it, end] = this->InEdges(vert_name); it != end; ++it)
+        {
+            co_yield this->NameOf(*it);
+        }
+
+        for (auto [it, end] = this->OutEdges(vert_name); it != end; ++it)
+        {
+            co_yield this->NameOf(*it);
+        }
+    }
+
+    std::generator<name_type> InEdgesOf(const name_type &vert_name)
+    {
+        for (auto [it, end] = this->InEdges(vert_name); it != end; ++it)
+        {
+            co_yield this->NameOf(*it);
+        }
+    }
+
+    std::generator<name_type> OutEdgesOf(const name_type &vert_name)
+    {
+        for (auto [it, end] = this->OutEdges(vert_name); it != end; ++it)
+        {
+            co_yield this->NameOf(*it);
+        }
+    }
+
 private:
     class VertexAdder
     {

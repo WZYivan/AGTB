@@ -26,7 +26,7 @@ enum class IterativeSolutionInfo : size_t
 
 struct InteriorOrientationElements
 {
-    double x0, y0, f, m;
+    double x0{0.0}, y0{0.0}, f{0.0}, m{0};
 
     std::string ToString() const noexcept
     {
