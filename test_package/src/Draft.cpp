@@ -1,6 +1,22 @@
-#include <AGTB/Application/Console/TraverseAdjust.hpp>
+#define AGTB_ENABLE_DEBUG
 
-int main(int argc, char **argv)
+#include <AGTB/IO.hpp>
+#include <print>
+namespace aio = AGTB::IO;
+
+int main()
 {
-    return AGTB::Application::Console::TraverseAdjust::Main(argc, argv);
+    aio::Json json{aio::ReadJson("../dat/json/elevation_net.json")};
+
+    if (json.HasArray("edges"))
+    {
+        for (const auto &v : json.Array("edges"))
+        {
+            std::println("name: {}", v.Value<std::string>("name"));
+        }
+    }
+
+    std::println("unit_p: {}", json.Value<double>("unit_p", -1));
+
+    std::println("json: {}", json.ToString());
 }

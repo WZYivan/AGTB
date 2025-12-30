@@ -15,7 +15,7 @@
 
 AGTB_IO_BEGIN
 
-namespace EigenIO
+namespace detail::EigenIO
 {
 
     template <typename T>
@@ -214,9 +214,9 @@ namespace EigenIO
 
 }
 
-using EigenIO::PrintEigen;
-using EigenIO::ReadEigen;
-namespace EigenFmt = EigenIO::Fmt;
+using detail::EigenIO::PrintEigen;
+using detail::EigenIO::ReadEigen;
+namespace EigenFmt = detail::EigenIO::Fmt;
 
 AGTB_IO_END
 
