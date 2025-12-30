@@ -323,14 +323,13 @@ namespace SpaceResection
             Matrix coefficient = SpaceResectionCoefficient<__equation_opt>(rotate, transformed_obj, transformed_photo, external, internal);
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
 
-            AGTB_IF_DEBUG
-            {
-                IO::PrintEigen(transformed_obj, "transformed_obj");
-                IO::PrintEigen(transformed_photo, "transformed_photo");
-                IO::PrintEigen(residual, "residual");
-                IO::PrintEigen(coefficient, "coefficient");
-                IO::PrintEigen(correction, "correction");
-            }
+#if (AGTB_DEBUG)
+            IO::PrintEigen(transformed_obj, "transformed_obj");
+            IO::PrintEigen(transformed_photo, "transformed_photo");
+            IO::PrintEigen(residual, "residual");
+            IO::PrintEigen(coefficient, "coefficient");
+            IO::PrintEigen(correction, "correction");
+#endif
 
             UpdateExternalElements(external, correction);
 

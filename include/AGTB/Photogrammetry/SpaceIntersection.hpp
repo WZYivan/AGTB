@@ -54,10 +54,9 @@ namespace SpaceIntersection
                Y = Ys1 + (N1 * Y1 + N2 * Y2 + BY) / 2.0,
                Z = Zs1 + BZ + N2 * Z2;
 
-        AGTB_IF_DEBUG
-        {
-            std::println("N1 = {}, N2 = {}", N1, N2);
-        }
+#if (AGTB_DEBUG)
+        std::println("N1 = {}, N2 = {}", N1, N2);
+#endif
 
         return {
             .X = X,

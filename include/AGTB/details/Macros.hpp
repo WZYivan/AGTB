@@ -13,8 +13,6 @@
 #include <sstream>
 #include <iostream>
 
-#include <boost/stacktrace.hpp>
-
 #define AGTB_BEGIN \
     namespace AGTB \
     {
@@ -167,9 +165,12 @@ AGTB_END
 #include <print>
 #include <iostream>
 #include <cassert>
-#define AGTB_IF_DEBUG if constexpr (true)
+#define AGTB_DEBUG true
 #else
-#define AGTB_IF_DEBUG if constexpr (false)
+#define AGTB_DEBUG false
+#endif
+#ifndef AGTB_DEBUG
+#define AGTB_DEBUG false
 #endif
 
 #define AGTB_WEAK_REQUIRE_MEMBER_TYPE(__Tp, __M, __RTp) {__Tp::__M}->std::convertible_to<__RTp>
