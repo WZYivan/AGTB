@@ -21,7 +21,7 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-namespace detail::SpaceResection
+AGTB_PRIVATE SpaceResection
 {
     struct SpaceResectionParam
     {
@@ -242,7 +242,7 @@ namespace detail::SpaceResection
         return coefficient;
     }
 
-    void UpdateExternalElements(ExteriorOrientationElements &external, const Matrix &correction)
+    void UpdateExternalElements(ExteriorOrientationElements & external, const Matrix &correction)
     {
         external.Xs += correction(0);
         external.Ys += correction(1);
@@ -270,7 +270,7 @@ namespace detail::SpaceResection
                                    { return abs(a) < threshold; });
     }
 
-    void CompleteResult(SpaceResectionResult &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
+    void CompleteResult(SpaceResectionResult & result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
@@ -380,10 +380,10 @@ namespace detail::SpaceResection
     }
 }
 
-using detail::SpaceResection::Solve;
-using detail::SpaceResection::SpaceResectionParam;
-using detail::SpaceResection::SpaceResectionResult;
-using detail::SpaceResection::SpaceResectionTParam;
+AGTB_FROM_PRIVATE_IMPORT(SpaceResection, Solve);
+AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionParam);
+AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionResult);
+AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionTParam);
 
 AGTB_PHOTOGRAMMETRY_END
 

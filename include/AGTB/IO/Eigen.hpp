@@ -15,7 +15,8 @@
 
 AGTB_IO_BEGIN
 
-namespace detail::EigenIO
+// namespace detail::
+AGTB_PRIVATE EigenIO
 {
 
     template <typename T>
@@ -131,7 +132,7 @@ namespace detail::EigenIO
     }
 
     template <EigenMatrixMetaData mmd, typename container, EigenMatrix em>
-    void ReadEigenCustom(std::istream &is, em &mat, const std::string sep = ",")
+    void ReadEigenCustom(std::istream & is, em & mat, const std::string sep = ",")
     {
         container c{};
 
@@ -176,7 +177,7 @@ namespace detail::EigenIO
      * @param sep
      */
     template <EigenMatrix em>
-    void ReadEigen(std::istream &is, em &mat, const std::string sep = ",")
+    void ReadEigen(std::istream & is, em & mat, const std::string sep = ",")
     {
         using mmd = MMDOf<em>;
         using container = ContainerOf<em>;
@@ -211,12 +212,11 @@ namespace detail::EigenIO
         os << msg << "\n"
            << m.format(fmt) << std::endl;
     }
-
 }
 
-using detail::EigenIO::PrintEigen;
-using detail::EigenIO::ReadEigen;
-namespace EigenFmt = detail::EigenIO::Fmt;
+AGTB_FROM_PRIVATE_IMPORT(EigenIO, PrintEigen);
+AGTB_FROM_PRIVATE_IMPORT(EigenIO, ReadEigen);
+AGTB_IMPORT_PRIVATE_AS(EigenIO::Fmt, EigenFmt);
 
 AGTB_IO_END
 

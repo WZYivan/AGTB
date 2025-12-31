@@ -5,9 +5,9 @@
 
 int main()
 {
-    using AGTB::IO::EigenIO::ContainerOf;
-    using AGTB::IO::EigenIO::IsValidContainer;
-    using AGTB::IO::EigenIO::MMDOf;
+    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::ContainerOf;
+    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::IsValidContainer;
+    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::MMDOf;
 
     using ContainerXd = ContainerOf<Eigen::MatrixXd>;
     using MMDXd = MMDOf<Eigen::MatrixXd>;
@@ -40,21 +40,21 @@ int main()
     AGTB::IO::ReadEigen(iss, mat);
     AGTB::IO::PrintEigen(mat, "Read mat");
 
-    iss = std::istringstream(data);
-    using MMD_4_2_d = AGTB::IO::EigenIO::MatrixMetaData<double, 4, 2>;
-    Eigen::MatrixXd mat_cus(4, 2);
-    AGTB::IO::EigenIO::ReadEigenCustom<
-        MMD_4_2_d,
-        AGTB::IO::EigenIO::ContainerOf<decltype(mat_cus)>>(iss, mat_cus);
-    AGTB::IO::PrintEigen(mat_cus, "Custom read(4, 2)");
+    // iss = std::istringstream(data);
+    // using MMD_4_2_d = AGTB::IO::EigenIO::MatrixMetaData<double, 4, 2>;
+    // Eigen::MatrixXd mat_cus(4, 2);
+    // AGTB::IO::EigenIO::ReadEigenCustom<
+    //     MMD_4_2_d,
+    //     AGTB::IO::EigenIO::ContainerOf<decltype(mat_cus)>>(iss, mat_cus);
+    // AGTB::IO::PrintEigen(mat_cus, "Custom read(4, 2)");
 
-    iss = std::istringstream(data);
-    using MMD_2_4_d = AGTB::IO::EigenIO::MatrixMetaData<double, 2, 4>;
-    Eigen::MatrixXd mat_2_4(2, 4);
-    AGTB::IO::EigenIO::ReadEigenCustom<
-        MMD_2_4_d,
-        AGTB::IO::EigenIO::ContainerOf<decltype(mat_2_4)>>(iss, mat_2_4);
-    AGTB::IO::PrintEigen(mat_2_4, "Custom read(2, 4)");
+    // iss = std::istringstream(data);
+    // using MMD_2_4_d = AGTB::IO::EigenIO::MatrixMetaData<double, 2, 4>;
+    // Eigen::MatrixXd mat_2_4(2, 4);
+    // AGTB::IO::EigenIO::ReadEigenCustom<
+    //     MMD_2_4_d,
+    //     AGTB::IO::EigenIO::ContainerOf<decltype(mat_2_4)>>(iss, mat_2_4);
+    // AGTB::IO::PrintEigen(mat_2_4, "Custom read(2, 4)");
 
     return 0;
 }

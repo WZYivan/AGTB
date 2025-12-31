@@ -6,7 +6,7 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-namespace detail::SpaceIntersection
+AGTB_PRIVATE SpaceIntersection
 {
     struct SpaceIntersectionIsolatedParam
     {
@@ -150,10 +150,10 @@ namespace detail::SpaceIntersection
     }
 }
 
-using detail::SpaceIntersection::Solve;
-using detail::SpaceIntersection::SpaceIntersectionBatchParam;
-using detail::SpaceIntersection::SpaceIntersectionParam;
-using detail::SpaceIntersection::SpaceIntersectionResult;
+AGTB_FROM_PRIVATE_IMPORT(SpaceIntersection, Solve);
+AGTB_FROM_PRIVATE_IMPORT(SpaceIntersection, SpaceIntersectionBatchParam);
+AGTB_FROM_PRIVATE_IMPORT(SpaceIntersection, SpaceIntersectionParam);
+AGTB_FROM_PRIVATE_IMPORT(SpaceIntersection, SpaceIntersectionResult);
 
 AGTB_PHOTOGRAMMETRY_END
 
