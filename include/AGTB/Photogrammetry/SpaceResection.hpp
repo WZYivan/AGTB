@@ -21,47 +21,48 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
-AGTB_PRIVATE SpaceResection
+struct SpaceResectionParam
 {
-    struct SpaceResectionParam
+    InteriorOrientationElements interior;
+    Matrix photo, object;
+};
+
+struct SpaceResectionResult
+{
+    ExteriorOrientationElements external;
+    Matrix rotate;
+    Matrix sigma;
+    Matrix photo;
+    double m0;
+    IterativeSolutionInfo info;
+
+    std::string ToString() const noexcept
     {
-        InteriorOrientationElements interior;
-        Matrix photo, object;
-    };
+        std::string sb{};
+        auto sbb = std::back_inserter(sb);
 
-    struct SpaceResectionResult
-    {
-        ExteriorOrientationElements external;
-        Matrix rotate;
-        Matrix sigma;
-        Matrix photo;
-        double m0;
-        IterativeSolutionInfo info;
+        std::format_to(sbb,
+                       "{:=^100}\n"
+                       "ExteriorOrientationElements:\n{}\n"
+                       "Median Error:\n{}\n",
+                       " SpaceResectionResult ",
+                       external.ToString(), m0);
 
-        std::string ToString() const noexcept
-        {
-            std::string sb{};
-            auto sbb = std::back_inserter(sb);
+        std::ostringstream oss;
+        oss << "New Photo:\n"
+            << photo.format(IO::EigenFmt::python_style) << "\n"
+            << "Final Rotation:\n"
+            << rotate.format(IO::EigenFmt::python_style) << "\n"
+            << "Error Matrix:\n"
+            << sigma.format(IO::EigenFmt::python_style) << "\n";
+        sb.append(oss.str());
 
-            std::format_to(sbb,
-                           "{:=^100}\n"
-                           "ExteriorOrientationElements:\n{}\n"
-                           "Median Error:\n{}\n",
-                           " SpaceResectionResult ",
-                           external.ToString(), m0);
+        return sb;
+    }
+};
 
-            std::ostringstream oss;
-            oss << "New Photo:\n"
-                << photo.format(IO::EigenFmt::python_style) << "\n"
-                << "Final Rotation:\n"
-                << rotate.format(IO::EigenFmt::python_style) << "\n"
-                << "Error Matrix:\n"
-                << sigma.format(IO::EigenFmt::python_style) << "\n";
-            sb.append(oss.str());
-
-            return sb;
-        }
-    };
+namespace detail ::SpaceResection
+{
 
     bool IsInputValid(const Matrix &photo, const Matrix &object)
     {
@@ -242,7 +243,7 @@ AGTB_PRIVATE SpaceResection
         return coefficient;
     }
 
-    void UpdateExternalElements(ExteriorOrientationElements & external, const Matrix &correction)
+    void UpdateExternalElements(ExteriorOrientationElements &external, const Matrix &correction)
     {
         external.Xs += correction(0);
         external.Ys += correction(1);
@@ -270,7 +271,7 @@ AGTB_PRIVATE SpaceResection
                                    { return abs(a) < threshold; });
     }
 
-    void CompleteResult(SpaceResectionResult & result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
+    void CompleteResult(SpaceResectionResult &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
@@ -286,104 +287,108 @@ AGTB_PRIVATE SpaceResection
         }
     }
 
-    /**
-     * @brief Execute space resection algorithm.
-     *
-     * @tparam __linalg_opt Inverse method
-     * @tparam __equation_opt Coefficient method
-     * @param param
-     * @param max_loop
-     * @param threshold
-     * @return SpaceResectionResult
-     */
-    template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
-    SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
-    {
-        auto &internal = param.interior;
-        auto &photo = param.photo;
-        auto &object = param.object;
-
-        if (!IsInputValid(photo, object))
-        {
-            throw std::invalid_argument("Arguments are invalid");
-        }
-
-        SpaceResectionResult result{
-            .external = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(internal, object),
-            .info = IterativeSolutionInfo::NotConverged};
-        ExteriorOrientationElements &external = result.external;
-
-        while (max_loop-- > 0)
-        {
-            Matrix rotate = external.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>();
-
-            Matrix transformed_obj = TransformToImageSpaceCoordinateSystem(rotate, object, external);
-            Matrix transformed_photo = CalculateImagePlaneCoordinates(internal, transformed_obj);
-            Matrix residual = ResidualMatrix(photo, transformed_photo);
-            Matrix coefficient = SpaceResectionCoefficient<__equation_opt>(rotate, transformed_obj, transformed_photo, external, internal);
-            Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
-
-#if (AGTB_DEBUG)
-            IO::PrintEigen(transformed_obj, "transformed_obj");
-            IO::PrintEigen(transformed_photo, "transformed_photo");
-            IO::PrintEigen(residual, "residual");
-            IO::PrintEigen(coefficient, "coefficient");
-            IO::PrintEigen(correction, "correction");
-#endif
-
-            UpdateExternalElements(external, correction);
-
-            if (IsExternalElementsConverged(correction, threshold))
-            {
-                Matrix N = Linalg::NormalEquationMatrixInverse<__linalg_opt>(coefficient);
-                CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
-                result.info = IterativeSolutionInfo::Success;
-                break;
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * @brief Space resection template param pack
-     *
-     * @tparam __linalg_opt Inverse method
-     * @tparam __equation_opt Coefficient method
-     */
-    template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
-    struct SpaceResectionTParam
-    {
-        constexpr static Linalg::LinalgOption linalg_option = __linalg_opt;
-        constexpr static CollinearityEquationCoeffOption equation_option = __equation_opt;
-    };
-
     template <typename T>
     concept SpaceResectionTParamConcept = requires {
         { T::linalg_option } -> std::convertible_to<Linalg::LinalgOption>;
         { T::equation_option } -> std::convertible_to<CollinearityEquationCoeffOption>;
     };
-
-    /**
-     * @brief Execute space resection algorithm.
-     *
-     * @tparam Tp Space resection template param pack
-     * @param param
-     * @param max_loop
-     * @param threshold
-     * @return SpaceResectionResult
-     */
-    template <SpaceResectionTParamConcept Tp>
-    SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
-    {
-        return Solve<Tp::linalg_option, Tp::equation_option>(param, max_loop, threshold);
-    }
 }
 
-AGTB_FROM_PRIVATE_IMPORT(SpaceResection, Solve);
-AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionParam);
-AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionResult);
-AGTB_FROM_PRIVATE_IMPORT(SpaceResection, SpaceResectionTParam);
+/**
+ * @brief Execute space resection algorithm.
+ *
+ * @tparam __linalg_opt Inverse method
+ * @tparam __equation_opt Coefficient method
+ * @param param
+ * @param max_loop
+ * @param threshold
+ * @return SpaceResectionResult
+ */
+template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
+SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
+{
+    using detail::SpaceResection::CalculateImagePlaneCoordinates;
+    using detail::SpaceResection::CompleteResult;
+    using detail::SpaceResection::IsExternalElementsConverged;
+    using detail::SpaceResection::IsInputValid;
+    using detail::SpaceResection::ResidualMatrix;
+    using detail::SpaceResection::SpaceResectionCoefficient;
+    using detail::SpaceResection::TransformToImageSpaceCoordinateSystem;
+    using detail::SpaceResection::UpdateExternalElements;
+
+    auto &internal = param.interior;
+    auto &photo = param.photo;
+    auto &object = param.object;
+
+    if (!IsInputValid(photo, object))
+    {
+        throw std::invalid_argument("Arguments are invalid");
+    }
+
+    SpaceResectionResult result{
+        .external = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(internal, object),
+        .info = IterativeSolutionInfo::NotConverged};
+    ExteriorOrientationElements &external = result.external;
+
+    while (max_loop-- > 0)
+    {
+        Matrix rotate = external.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>();
+
+        Matrix transformed_obj = TransformToImageSpaceCoordinateSystem(rotate, object, external);
+        Matrix transformed_photo = CalculateImagePlaneCoordinates(internal, transformed_obj);
+        Matrix residual = ResidualMatrix(photo, transformed_photo);
+        Matrix coefficient = SpaceResectionCoefficient<__equation_opt>(rotate, transformed_obj, transformed_photo, external, internal);
+        Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
+
+#if (AGTB_DEBUG)
+        IO::PrintEigen(transformed_obj, "transformed_obj");
+        IO::PrintEigen(transformed_photo, "transformed_photo");
+        IO::PrintEigen(residual, "residual");
+        IO::PrintEigen(coefficient, "coefficient");
+        IO::PrintEigen(correction, "correction");
+#endif
+
+        UpdateExternalElements(external, correction);
+
+        if (IsExternalElementsConverged(correction, threshold))
+        {
+            Matrix N = Linalg::NormalEquationMatrixInverse<__linalg_opt>(coefficient);
+            CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
+            result.info = IterativeSolutionInfo::Success;
+            break;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Space resection template param pack
+ *
+ * @tparam __linalg_opt Inverse method
+ * @tparam __equation_opt Coefficient method
+ */
+template <Linalg::LinalgOption __linalg_opt = Linalg::LinalgOption::Cholesky, CollinearityEquationCoeffOption __equation_opt = CollinearityEquationCoeffOption::NoAngles>
+struct SpaceResectionTParam
+{
+    constexpr static Linalg::LinalgOption linalg_option = __linalg_opt;
+    constexpr static CollinearityEquationCoeffOption equation_option = __equation_opt;
+};
+
+/**
+ * @brief Execute space resection algorithm.
+ *
+ * @tparam Tp Space resection template param pack
+ * @param param
+ * @param max_loop
+ * @param threshold
+ * @return SpaceResectionResult
+ */
+template <detail::SpaceResection::SpaceResectionTParamConcept Tp>
+SpaceResectionResult Solve(const SpaceResectionParam &param, size_t max_loop = 50, const double threshold = 3e-5) [[nodiscard]]
+{
+    return Solve<Tp::linalg_option, Tp::equation_option>(param, max_loop, threshold);
+}
 
 AGTB_PHOTOGRAMMETRY_END
 

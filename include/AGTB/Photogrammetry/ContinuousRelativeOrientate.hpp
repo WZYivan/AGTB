@@ -12,6 +12,8 @@
 #include <format>
 #include <sstream>
 
+AGTB_FILE_NOT_IMPLEMENT();
+
 AGTB_PHOTOGRAMMETRY_BEGIN
 
 namespace ContinuousRelativeOrientate

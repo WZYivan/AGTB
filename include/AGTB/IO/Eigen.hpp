@@ -15,8 +15,7 @@
 
 AGTB_IO_BEGIN
 
-// namespace detail::
-AGTB_PRIVATE EigenIO
+namespace detail::EigenIO
 {
 
     template <typename T>
@@ -132,7 +131,7 @@ AGTB_PRIVATE EigenIO
     }
 
     template <EigenMatrixMetaData mmd, typename container, EigenMatrix em>
-    void ReadEigenCustom(std::istream & is, em & mat, const std::string sep = ",")
+    void ReadEigenCustom(std::istream &is, em &mat, const std::string sep = ",")
     {
         container c{};
 
@@ -167,56 +166,52 @@ AGTB_PRIVATE EigenIO
             AGTB_THROW(std::runtime_error, "Invalid container size");
         }
     }
-
-    /**
-     * @brief Read eigen matrix from stream, each line is separated by `sep`
-     *
-     * @tparam em Eigen matrix type
-     * @param is
-     * @param mat
-     * @param sep
-     */
-    template <EigenMatrix em>
-    void ReadEigen(std::istream & is, em & mat, const std::string sep = ",")
-    {
-        using mmd = MMDOf<em>;
-        using container = ContainerOf<em>;
-        container c{};
-
-        return ReadEigenCustom<mmd, container, em>(is, mat, sep);
-    }
-
-    namespace Fmt
-    {
-        const Eigen::IOFormat
-            python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]"),
-            csv_style(Eigen::FullPrecision, 0, ", ", "\n", "", "", "", "");
-    }
-
-    /**
-     * @brief Print eigen matrix in specified format with message
-     *
-     * @tparam em
-     * @param m
-     * @param msg
-     * @param fmt
-     * @param os
-     */
-    template <EigenMatrix em>
-    void PrintEigen(
-        const em &m,
-        const std::string msg,
-        const Eigen::IOFormat &fmt = Fmt::python_style,
-        std::ostream &os = std::cout)
-    {
-        os << msg << "\n"
-           << m.format(fmt) << std::endl;
-    }
 }
 
-AGTB_FROM_PRIVATE_IMPORT(EigenIO, PrintEigen);
-AGTB_FROM_PRIVATE_IMPORT(EigenIO, ReadEigen);
-AGTB_IMPORT_PRIVATE_AS(EigenIO::Fmt, EigenFmt);
+/**
+ * @brief Read eigen matrix from stream, each line is separated by `sep`
+ *
+ * @tparam em Eigen matrix type
+ * @param is
+ * @param mat
+ * @param sep
+ */
+template <detail::EigenIO::EigenMatrix em>
+void ReadEigen(std::istream &is, em &mat, const std::string sep = ",")
+{
+    using mmd = detail::EigenIO::MMDOf<em>;
+    using container = detail::EigenIO::ContainerOf<em>;
+    container c{};
+
+    return detail::EigenIO::ReadEigenCustom<mmd, container, em>(is, mat, sep);
+}
+
+namespace EigenFmt
+{
+    const Eigen::IOFormat
+        python_style(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]"),
+        csv_style(Eigen::FullPrecision, 0, ", ", "\n", "", "", "", "");
+}
+
+/**
+ * @brief Print eigen matrix in specified format with message
+ *
+ * @tparam em
+ * @param m
+ * @param msg
+ * @param fmt
+ * @param os
+ */
+template <detail::EigenIO::EigenMatrix em>
+void PrintEigen(
+    const em &m,
+    const std::string msg,
+    const Eigen::IOFormat &fmt = EigenFmt::python_style,
+    std::ostream &os = std::cout)
+{
+    os << msg << "\n"
+       << m.format(fmt) << std::endl;
+}
 
 AGTB_IO_END
 

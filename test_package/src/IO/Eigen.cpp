@@ -5,9 +5,9 @@
 
 int main()
 {
-    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::ContainerOf;
-    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::IsValidContainer;
-    using AGTB::IO::AGTB_LOCALE_PRIVATE_NS::EigenIO::MMDOf;
+    using AGTB::IO::detail::EigenIO::ContainerOf;
+    using AGTB::IO::detail::EigenIO::IsValidContainer;
+    using AGTB::IO::detail::EigenIO::MMDOf;
 
     using ContainerXd = ContainerOf<Eigen::MatrixXd>;
     using MMDXd = MMDOf<Eigen::MatrixXd>;
