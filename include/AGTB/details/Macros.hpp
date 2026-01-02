@@ -165,6 +165,7 @@ AGTB_END
 #include <print>
 #include <iostream>
 #include <cassert>
+#include "../IO.hpp"
 #define AGTB_DEBUG true
 #else
 #define AGTB_DEBUG false

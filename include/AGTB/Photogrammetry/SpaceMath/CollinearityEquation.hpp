@@ -7,53 +7,84 @@
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
+enum class CollinearityEquationStyle
+{
+    Linearization,
+    DLT
+};
+
 namespace detail::CollinearityEquation
 {
-    /**
-     * @brief Represent simplification method
-     *
-     */
-    enum class CollinearityEquationCoeffOption : size_t
+    template <CollinearityEquationStyle __style>
+    struct Param
     {
-        NoAngles,
-        KappaOnly,
-        FullAngles
+        AGTB_TEMPLATE_NOT_SPECIFIED();
     };
 
-    /**
-     * @brief 12 coefficients of collinearity equation
-     *
-     */
-    struct CollinearityEquationCoefficient
-    {
-        double a11, a12, a13, a14, a15, a16,
-            a21, a22, a23, a24, a25, a26;
-    };
-
-    /**
-     * @brief Parameters needed to calculate its coefficients
-     *
-     */
-    struct CollinearityEquationCoeffParam
+    template <>
+    struct Param<CollinearityEquationStyle::Linearization>
     {
         double x, y, f, H, kappa, omega, z;
         Matrix rotate;
     };
 
-    /**
-     * @brief Calculate coefficients of collinearity equation
-     *
-     * @tparam __equation_opt CollinearityEquationCoeffOption
-     * @return CollinearityEquationCoefficient
-     */
-    template <CollinearityEquationCoeffOption __equation_opt>
-    CollinearityEquationCoefficient CalculateCoeff(const CollinearityEquationCoeffParam &)
+    template <CollinearityEquationStyle __style>
+    struct Coefficient
     {
         AGTB_TEMPLATE_NOT_SPECIFIED();
-    }
+    };
 
     template <>
-    CollinearityEquationCoefficient CalculateCoeff<CollinearityEquationCoeffOption::FullAngles>(const CollinearityEquationCoeffParam &param)
+    struct Coefficient<CollinearityEquationStyle::Linearization>
+    {
+        double a11, a12, a13, a14, a15, a16,
+            a21, a22, a23, a24, a25, a26;
+    };
+}
+
+template <CollinearityEquationStyle __style>
+struct CollinearityEquation
+{
+    AGTB_TEMPLATE_NOT_SPECIFIED();
+};
+
+template <>
+struct CollinearityEquation<CollinearityEquationStyle::Linearization>
+{
+    constexpr static CollinearityEquationStyle style = CollinearityEquationStyle::Linearization;
+    enum class Simplify
+    {
+        None,
+        Kappa,
+        All
+    };
+
+    using Coefficient = detail::CollinearityEquation::Coefficient<style>;
+    using Param = detail::CollinearityEquation::Param<style>;
+
+    template <Simplify __simplify>
+    static Coefficient Solve(const Param &param)
+    {
+        if constexpr (__simplify == Simplify::None)
+        {
+            return Solve_None(param);
+        }
+        else if constexpr (__simplify == Simplify::Kappa)
+        {
+            return Solve_Kappa(param);
+        }
+        else if constexpr (__simplify == Simplify::All)
+        {
+            return Solve_All(param);
+        }
+        else
+        {
+            AGTB_TEMPLATE_NOT_SPECIFIED();
+        }
+    }
+
+private:
+    static Coefficient Solve_None(const Param &param)
     {
         double
             x = param.x,
@@ -71,7 +102,7 @@ namespace detail::CollinearityEquation
                    &b = rotate.row(1),
                    &c = rotate.row(2);
 
-        CollinearityEquationCoefficient coeff{
+        Coefficient coeff{
             .a11 = 1 / z * (a(0) * f + a(2) * x),
             .a12 = 1 / z * (b(0) * f + b(2) * x),
             .a13 = 1 / z * (c(0) * f + c(2) * x),
@@ -87,8 +118,7 @@ namespace detail::CollinearityEquation
         return coeff;
     }
 
-    template <>
-    CollinearityEquationCoefficient CalculateCoeff<CollinearityEquationCoeffOption::KappaOnly>(const CollinearityEquationCoeffParam &param)
+    static Coefficient Solve_Kappa(const Param &param)
     {
         double
             x = param.x,
@@ -103,7 +133,7 @@ namespace detail::CollinearityEquation
             cosk = gcem::cos(k),
             sink = gcem::sin(k);
 
-        CollinearityEquationCoefficient coeff{
+        Coefficient coeff{
             .a11 = -f / H * cosk,
             .a12 = -f / H * sink,
             .a13 = -x / H,
@@ -119,8 +149,7 @@ namespace detail::CollinearityEquation
         return coeff;
     }
 
-    template <>
-    CollinearityEquationCoefficient CalculateCoeff<CollinearityEquationCoeffOption::NoAngles>(const CollinearityEquationCoeffParam &param)
+    static Coefficient Solve_All(const Param &param)
     {
         double
             x = param.x,
@@ -132,7 +161,7 @@ namespace detail::CollinearityEquation
             yy = f + pow(y, 2) / f,
             xy = x * y / f;
 
-        CollinearityEquationCoefficient coeff{
+        Coefficient coeff{
             .a11 = -f / H,
             .a12 = 0,
             .a13 = -x / H,
@@ -147,12 +176,7 @@ namespace detail::CollinearityEquation
             .a26 = -x};
         return coeff;
     }
-}
-
-using detail::CollinearityEquation::CalculateCoeff;
-using detail::CollinearityEquation::CollinearityEquationCoefficient;
-using detail::CollinearityEquation::CollinearityEquationCoeffOption;
-using detail::CollinearityEquation::CollinearityEquationCoeffParam;
+};
 
 AGTB_PHOTOGRAMMETRY_END
 

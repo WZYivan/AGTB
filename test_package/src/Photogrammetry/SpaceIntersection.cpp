@@ -18,21 +18,21 @@ int main()
     ap::InteriorOrientationElements
         in_left{.f = f},
         in_right{.f = f};
-    ap::SpaceIntersectionParam
+    ap::SpaceIntersection::Param
         sip_left{ex_left, in_left, -2.99493, 98.31321},
         sip_right{ex_right, in_right, 115.30009, 106.80757};
-    auto [X, Y, Z] = ap::Solve(sip_left, sip_right);
+    auto [X, Y, Z] = ap::SpaceIntersection::Solve(sip_left, sip_right);
     std::println("X = {}, Y = {}, Z = {}", X, Y, Z);
 
     ap::Matrix image_left(1, 2), image_right(1, 2);
     image_left << -2.99493, 98.31321;
     image_right << 115.30009, 106.80757;
 
-    ap::SpaceIntersectionBatchParam
+    ap::SpaceIntersection::BatchParam
         sibp_left{
             ex_left, in_left, image_left},
         sibp_right{
             ex_right, in_right, image_right};
-    auto batch_result = ap::Solve(sibp_left, sibp_right);
+    auto batch_result = ap::SpaceIntersection::Solve(sibp_left, sibp_right);
     aio::PrintEigen(batch_result, "Batch intersection");
 }

@@ -1,4 +1,4 @@
-#include <AGTB/Photogrammetry/SpaceResection.hpp>
+#include <AGTB/Photogrammetry.hpp>
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
 
@@ -30,13 +30,13 @@ int main()
         .f = 153.24 / 1000,
         .m = 50000};
 
-    ap::SpaceResectionParam p = {
+    ap::SpaceResection::Param p = {
         .interior = internal,
         .photo = std::move(photo),
         .object = std::move(obj)};
 
-    using spTp = ap::SpaceResectionTParam<al::LinalgOption::Cholesky, ap::CollinearityEquationCoeffOption::FullAngles>;
-    auto result = ap::Solve<spTp>(p);
+    using config = ap::SpaceResection::Config<ap::SpaceResection::InverseMethod::Cholesky, ap::SpaceResection::Simplify::None>;
+    auto result = ap::SpaceResection::Solve<config>(p);
 
     if (result.info == ap::IterativeSolutionInfo::Success)
     {
