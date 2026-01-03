@@ -31,7 +31,7 @@ endfunction()
 # create_new_executable(IO_JSON "src/IO/JSON.cpp")
 
 
-create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
+# create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
 # create_new_executable(Photogrammetry_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")
 # # # create_new_executable(Photogrammetry_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp") # Not Implement
 
