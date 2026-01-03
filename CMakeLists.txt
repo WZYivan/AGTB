@@ -7,16 +7,14 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Eigen3 REQUIRED)
 find_package(gcem REQUIRED)
-find_package(Boost REQUIRED COMPONENTS
-    iostreams
-)
+find_package(Boost REQUIRED COMPONENTS headers)
 
 add_library(agtb INTERFACE)
 target_include_directories(agtb INTERFACE include)
 target_link_libraries(agtb INTERFACE 
     Eigen3::Eigen
     gcem
-    Boost::iostreams
+    Boost::boost
 )
 
 install(DIRECTORY include/AGTB DESTINATION include)
