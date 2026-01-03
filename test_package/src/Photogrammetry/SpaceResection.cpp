@@ -1,3 +1,5 @@
+#define AGTB_ENABLE_DEBUG
+
 #include <AGTB/Photogrammetry.hpp>
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
@@ -35,8 +37,9 @@ int main()
         .photo = std::move(photo),
         .object = std::move(obj)};
 
-    using config = ap::SpaceResection::Config<ap::SpaceResection::InverseMethod::Cholesky, ap::SpaceResection::Simplify::None>;
-    auto result = ap::SpaceResection::Solve<config>(p);
+    // using config = ap::SpaceResection::Config<ap::SpaceResection::InverseMethod::Cholesky, ap::SpaceResection::Simplify::None>;
+    // auto result = ap::SpaceResection::Solve<config>(p);
+    ap::SpaceResection::Result result = ap::SpaceResection::Solve(p);
 
     if (result.info == ap::IterativeSolutionInfo::Success)
     {

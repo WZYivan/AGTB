@@ -14,6 +14,7 @@
 #include "../IO/Eigen.hpp"
 #include "Base.hpp"
 #include "SpaceMath/CollinearityEquation.hpp"
+#include "SpaceMath/Transform.hpp"
 #include "../Linalg/NormalEquationMatrixInverse.hpp"
 #include "../Linalg/RotationMatrix.hpp"
 #include "../Linalg/CorrectionOlsSolve.hpp"
@@ -23,7 +24,6 @@ AGTB_PHOTOGRAMMETRY_BEGIN
 
 namespace detail::SpaceResection
 {
-    // using Matrix = Linalg::Matrix;
     constexpr CollinearityEquationStyle equation_style = CollinearityEquationStyle::Linearization;
     using Equation = ::AGTB::Photogrammetry::CollinearityEquation<equation_style>;
     using Simplify = Equation::Simplify;
@@ -80,47 +80,10 @@ namespace detail::SpaceResection
         }
     }
 
-    /**
-     * @brief Image space aux system -> Image space system
-     *
-     * @param rotate
-     * @param object
-     * @param external
-     * @return Matrix
-     */
-    Matrix TransformToImageSpaceCoordinateSystem(const Matrix &rotate, const Matrix &object, const ExteriorOrientationElements &external)
+    Matrix ResidualMatrix(const Matrix &img, const Matrix &img_calc)
     {
-        auto pc = object.rows();
-        const double &Xs = external.Xs,
-                     &Ys = external.Ys,
-                     &Zs = external.Zs;
-        // rotate(matrix) : ImgAux -> ImgSp
-        return Linalg::CsRotateForward(Linalg::CsTranslate(object, Xs, Ys, Zs), rotate); // ImgAux -> ImgSp : forward
-    }
-
-    /**
-     * @brief Image space system -> Image plane system
-     *
-     * @param internal
-     * @param transformed_obj
-     * @return Matrix
-     */
-    Matrix CalculateImagePlaneCoordinates(const InteriorOrientationElements &internal, const Matrix &transformed_obj)
-    {
-        Matrix trans_p(transformed_obj.rows(), 2);
-        const auto &XBar = transformed_obj.col(0),
-                   &YBar = transformed_obj.col(1),
-                   &ZBar = transformed_obj.col(2);
-        const double &f = internal.f;
-        trans_p.col(0) = -f * (XBar.array() / ZBar.array()).matrix(); // x
-        trans_p.col(1) = -f * (YBar.array() / ZBar.array()).matrix(); // y
-        return trans_p;
-    }
-
-    Matrix ResidualMatrix(const Matrix &photo, const Matrix &transformed_photo)
-    {
-        const Matrix dxy = photo - transformed_photo;
-        const auto l = photo.rows();
+        const Matrix dxy = img - img_calc;
+        const auto l = img.rows();
         Matrix residual(2 * l, 1);
         for (auto li = 0uz; li != l; ++li)
         {
@@ -131,21 +94,21 @@ namespace detail::SpaceResection
     }
 
     template <Simplify __simplify>
-    Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &img_sp, const Matrix &img_calc, const ExteriorOrientationElements &ex, const InteriorOrientationElements &in)
     {
         AGTB_TEMPLATE_NOT_SPECIFIED();
     }
 
     template <>
-    Matrix SpaceResectionCoefficient<Simplify::None>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    Matrix SpaceResectionCoefficient<Simplify::None>(const Matrix &rotate, const Matrix &img_sp, const Matrix &img_calc, const ExteriorOrientationElements &ex, const InteriorOrientationElements &in)
     {
-        auto pc = transformed_photo.rows();
+        auto pc = img_calc.rows();
         Matrix coefficient(pc * 2, 6);
 
-        const double &f = internal.f,
-                     &m = internal.m,
-                     &k = external.Kappa,
-                     &w = external.Omega;
+        const double &f = in.f,
+                     &m = in.m,
+                     &k = ex.Kappa,
+                     &w = ex.Omega;
         const auto &a = rotate.row(0),
                    &b = rotate.row(1),
                    &c = rotate.row(2);
@@ -161,9 +124,9 @@ namespace detail::SpaceResection
         for (auto pi = 0uz; pi != pc; ++pi)
         {
             const double
-                &x = transformed_photo(pi, 0),
-                &y = transformed_photo(pi, 1),
-                &z = transformed_obj(pi, 2);
+                &x = img_calc(pi, 0),
+                &y = img_calc(pi, 1),
+                &z = img_sp(pi, 2);
             param.x = x;
             param.y = y;
             param.z = z;
@@ -180,14 +143,14 @@ namespace detail::SpaceResection
     }
 
     template <>
-    Matrix SpaceResectionCoefficient<Simplify::Kappa>(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    Matrix SpaceResectionCoefficient<Simplify::Kappa>(const Matrix &rotate, const Matrix &img_sp, const Matrix &img_calc, const ExteriorOrientationElements &ex, const InteriorOrientationElements &in)
     {
-        auto pc = transformed_photo.rows();
+        auto pc = img_calc.rows();
         Matrix coefficient(pc * 2, 6);
 
-        const double &f = internal.f,
-                     &m = internal.m,
-                     &k = external.Kappa;
+        const double &f = in.f,
+                     &m = in.m,
+                     &k = ex.Kappa;
 
         double H = f * m;
         Equation::Param param{
@@ -197,8 +160,8 @@ namespace detail::SpaceResection
         for (auto pi = 0uz; pi != pc; ++pi)
         {
             const double
-                &x = transformed_photo(pi, 0),
-                &y = transformed_photo(pi, 1);
+                &x = img_calc(pi, 0),
+                &y = img_calc(pi, 1);
             param.x = x;
             param.y = y;
 
@@ -215,24 +178,24 @@ namespace detail::SpaceResection
     template <>
     Matrix SpaceResectionCoefficient<Simplify::All>(
         const Matrix &rotate,
-        const Matrix &transformed_obj,
-        const Matrix &transformed_photo,
-        const ExteriorOrientationElements &external,
-        const InteriorOrientationElements &internal)
+        const Matrix &img_sp,
+        const Matrix &img_calc,
+        const ExteriorOrientationElements &ex,
+        const InteriorOrientationElements &in)
     {
-        auto pc = transformed_photo.rows();
+        auto pc = img_calc.rows();
         Matrix coefficient(pc * 2, 6);
 
-        const double &f = internal.f;
-        double H = f * internal.m;
+        const double &f = in.f;
+        double H = f * in.m;
         Equation::Param param{
             .f = f,
             .H = H};
         for (auto pi = 0uz; pi != pc; ++pi)
         {
             const double
-                &x = transformed_photo(pi, 0),
-                &y = transformed_photo(pi, 1);
+                &x = img_calc(pi, 0),
+                &y = img_calc(pi, 1);
             param.x = x;
             param.y = y;
 
@@ -275,14 +238,14 @@ namespace detail::SpaceResection
                                    { return abs(a) < threshold; });
     }
 
-    void CompleteResult(Result &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &photo, const Matrix &N)
+    void CompleteResult(Result &result, const Matrix &coefficient, const Matrix &correction, const Matrix &residual, Matrix &rotate, const Matrix &img, const Matrix &N)
     {
         const Matrix &A = coefficient, &x = correction, &L = residual;
         Matrix V = A * x - L;
         result.m0 = Adjustment::MeanRootSquareError(V, coefficient.rows(), 6);
         result.sigma = Adjustment::ErrorMatrix(result.m0, N);
         result.rotate = std::move(rotate);
-        result.photo = Matrix(photo);
+        result.photo = Matrix(img);
         Matrix &p = result.photo;
         for (size_t pc = coefficient.rows() / 2, pi = 0uz; pi != pc; ++pi)
         {
@@ -292,6 +255,10 @@ namespace detail::SpaceResection
     }
 }
 
+/**
+ * @brief All in one space resection solver. Everything needed for algorithm is in scope.
+ *
+ */
 struct SpaceResection
 {
     constexpr static CollinearityEquationStyle equation_style = detail::SpaceResection::equation_style;
@@ -312,13 +279,14 @@ struct SpaceResection
     template <InverseMethod __inverse_method, Simplify __simplify>
     static Result Solve(const Param &param, size_t max_loop, const double threshold)
     {
-        using detail::SpaceResection::CalculateImagePlaneCoordinates;
+#if (AGTB_NOTE)
+#warning "Image coordinates and f for AGTB::SpaceResection::Solve must be of `mm`"
+#endif
         using detail::SpaceResection::CompleteResult;
         using detail::SpaceResection::IsExternalElementsConverged;
         using detail::SpaceResection::IsInputValid;
         using detail::SpaceResection::ResidualMatrix;
         using detail::SpaceResection::SpaceResectionCoefficient;
-        using detail::SpaceResection::TransformToImageSpaceCoordinateSystem;
         using detail::SpaceResection::UpdateExternalElements;
 
         auto &internal = param.interior;
@@ -337,10 +305,9 @@ struct SpaceResection
 
         while (max_loop-- > 0)
         {
-            Matrix rotate = external.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>();
-
-            Matrix transformed_obj = TransformToImageSpaceCoordinateSystem(rotate, object, external);
-            Matrix transformed_photo = CalculateImagePlaneCoordinates(internal, transformed_obj);
+            Matrix rotate = Transform::Ex2YXZ(external);
+            Matrix transformed_obj = Transform::Aux2Isp(Transform::Obj2Aux(object, external), rotate);
+            Matrix transformed_photo = Transform::Isp2Img(transformed_obj, internal);
             Matrix residual = ResidualMatrix(photo, transformed_photo);
             Matrix coefficient = SpaceResectionCoefficient<__simplify>(rotate, transformed_obj, transformed_photo, external, internal);
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
@@ -367,7 +334,7 @@ struct SpaceResection
         return result;
     }
 
-    template <typename __config>
+    template <typename __config = Config<InverseMethod::Cholesky, Simplify::None>>
     static Result Solve(const Param &param, size_t max_loop = 50, const double threshold = 3e-5)
     {
         return Solve<__config::inverse_method, __config::simplify>(param, max_loop, threshold);

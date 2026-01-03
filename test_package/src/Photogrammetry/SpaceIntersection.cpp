@@ -35,4 +35,15 @@ int main()
             ex_right, in_right, image_right};
     auto batch_result = ap::SpaceIntersection::Solve(sibp_left, sibp_right);
     aio::PrintEigen(batch_result, "Batch intersection");
+
+    // using config = ap::SpaceIntersection::Config<ap::SpaceIntersection::InverseMethod::Cholesky, ap::SpaceIntersection::Simplify::None>;
+    // // sip_left.x / 1000;
+    // // sip_left.y / 1000;
+    // // sip_left.in.f / 1000;
+    // // sip_right.x / 1000;
+    // // sip_right.y / 1000;
+    // // sip_right.in.f / 1000;
+
+    // auto [X2, Y2, Z2] = ap::SpaceIntersection::Solve<config>(sip_left, sip_right);
+    // std::println("ols: X = {}, Y = {}, Z = {}", X2, Y2, Z2);
 }
