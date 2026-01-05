@@ -31,15 +31,15 @@ namespace detail::SpaceResection
     struct Param
     {
         InteriorOrientationElements interior;
-        Matrix photo, object;
+        Matrix image, object;
     };
 
     struct Result
     {
-        ExteriorOrientationElements external;
+        ExteriorOrientationElements exterior;
         Matrix rotate;
         Matrix sigma;
-        Matrix photo;
+        Matrix image;
         double m0;
         IterativeSolutionInfo info;
 
@@ -53,11 +53,11 @@ namespace detail::SpaceResection
                            "ExteriorOrientationElements:\n{}\n"
                            "Median Error:\n{}\n",
                            " SpaceResectionResult ",
-                           external.ToString(), m0);
+                           exterior.ToString(), m0);
 
             std::ostringstream oss;
             oss << "New Photo:\n"
-                << photo.format(IO::EigenFmt::python_style) << "\n"
+                << image.format(IO::EigenFmt::python_style) << "\n"
                 << "Final Rotation:\n"
                 << rotate.format(IO::EigenFmt::python_style) << "\n"
                 << "Error Matrix:\n"
@@ -68,9 +68,9 @@ namespace detail::SpaceResection
         }
     };
 
-    bool IsInputValid(const Matrix &photo, const Matrix &object)
+    bool IsInputValid(const Matrix &image, const Matrix &object)
     {
-        if (photo.rows() == object.rows() && photo.cols() == 2 && object.cols() == 3 && object.rows() >= 4)
+        if (image.rows() == object.rows() && image.cols() == 2 && object.cols() == 3 && object.rows() >= 4)
         {
             return true;
         }
@@ -210,14 +210,14 @@ namespace detail::SpaceResection
         return coefficient;
     }
 
-    void UpdateExternalElements(ExteriorOrientationElements &external, const Matrix &correction)
+    void UpdateExternalElements(ExteriorOrientationElements &exterior, const Matrix &correction)
     {
-        external.Xs += correction(0);
-        external.Ys += correction(1);
-        external.Zs += correction(2);
-        external.Phi += correction(3);
-        external.Omega += correction(4);
-        external.Kappa += correction(5);
+        exterior.Xs += correction(0);
+        exterior.Ys += correction(1);
+        exterior.Zs += correction(2);
+        exterior.Phi += correction(3);
+        exterior.Omega += correction(4);
+        exterior.Kappa += correction(5);
     }
 
     /**
@@ -245,8 +245,8 @@ namespace detail::SpaceResection
         result.m0 = Adjustment::MeanRootSquareError(V, coefficient.rows(), 6);
         result.sigma = Adjustment::ErrorMatrix(result.m0, N);
         result.rotate = std::move(rotate);
-        result.photo = Matrix(img);
-        Matrix &p = result.photo;
+        result.image = Matrix(img);
+        Matrix &p = result.image;
         for (size_t pc = coefficient.rows() / 2, pi = 0uz; pi != pc; ++pi)
         {
             p(pi, 0) = (p(pi, 0) + V(2 * pi)) * 1000;
@@ -289,43 +289,43 @@ struct SpaceResection
         using detail::SpaceResection::SpaceResectionCoefficient;
         using detail::SpaceResection::UpdateExternalElements;
 
-        auto &internal = param.interior;
-        auto &photo = param.photo;
+        auto &interior = param.interior;
+        auto &image = param.image;
         auto &object = param.object;
 
-        if (!IsInputValid(photo, object))
+        if (!IsInputValid(image, object))
         {
             throw std::invalid_argument("Arguments are invalid");
         }
 
         Result result{
-            .external = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(internal, object),
+            .exterior = ExteriorOrientationElements::FromInteriorAndObjectCoordinate(interior, object),
             .info = IterativeSolutionInfo::NotConverged};
-        ExteriorOrientationElements &external = result.external;
+        ExteriorOrientationElements &exterior = result.exterior;
 
         while (max_loop-- > 0)
         {
-            Matrix rotate = Transform::Ex2YXZ(external);
-            Matrix transformed_obj = Transform::Aux2Isp(Transform::Obj2Aux(object, external), rotate);
-            Matrix transformed_photo = Transform::Isp2Img(transformed_obj, internal);
-            Matrix residual = ResidualMatrix(photo, transformed_photo);
-            Matrix coefficient = SpaceResectionCoefficient<__simplify>(rotate, transformed_obj, transformed_photo, external, internal);
+            Matrix rotate = Transform::Ex2YXZ(exterior);
+            Matrix isp = Transform::Aux2Isp(Transform::Obj2Aux(object, exterior), rotate);
+            Matrix img_calc = Transform::Isp2Img(isp, interior);
+            Matrix residual = ResidualMatrix(image, img_calc);
+            Matrix coefficient = SpaceResectionCoefficient<__simplify>(rotate, isp, img_calc, exterior, interior);
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
 
 #if (AGTB_DEBUG)
-            IO::PrintEigen(transformed_obj, "transformed_obj");
-            IO::PrintEigen(transformed_photo, "transformed_photo");
+            IO::PrintEigen(isp, "transformed_obj");
+            IO::PrintEigen(img_calc, "transformed_photo");
             IO::PrintEigen(residual, "residual");
             IO::PrintEigen(coefficient, "coefficient");
             IO::PrintEigen(correction, "correction");
 #endif
 
-            UpdateExternalElements(external, correction);
+            UpdateExternalElements(exterior, correction);
 
             if (IsExternalElementsConverged(correction, threshold))
             {
                 Matrix N = Linalg::NormalEquationMatrixInverse<__inverse_method>(coefficient);
-                CompleteResult(result, coefficient, correction, residual, rotate, photo, N);
+                CompleteResult(result, coefficient, correction, residual, rotate, image, N);
                 result.info = IterativeSolutionInfo::Success;
                 break;
             }

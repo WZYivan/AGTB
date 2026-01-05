@@ -8,6 +8,14 @@
 #define AGTB_DEBUG false
 #endif
 
+#ifdef AGTB_DEBUG_INFO_VERBOSE_ALL
+#define AGTB_DEBUG_INFO_LEVEL
+#else
+#define AGTB_DEBUG_INFO_LEVEL 0
+#endif
+
+#define AGTB_DEBUG_INTERNAL_LEVEL 1
+
 #ifdef AGTB_DISABLE_NOTE
 #define AGTB_NOTE false
 #else

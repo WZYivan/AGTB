@@ -181,7 +181,7 @@ void ReadEigen(std::istream &is, em &mat, const std::string sep = ",")
 {
     using mmd = detail::EigenIO::MMDOf<em>;
     using container = detail::EigenIO::ContainerOf<em>;
-    container c{};
+    // container c{};
 
     return detail::EigenIO::ReadEigenCustom<mmd, container, em>(is, mat, sep);
 }

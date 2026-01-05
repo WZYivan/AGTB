@@ -1,8 +1,9 @@
 #ifndef __AGTB_PHOTOGRAMMETRY_SAPCE_MATH_TRANSFORM__
 #define __AGTB_PHOTOGRAMMETRY_SAPCE_MATH_TRANSFORM__
 
-#include "../Base.hpp"
 #include <functional>
+
+#include "../Base.hpp"
 
 AGTB_PHOTOGRAMMETRY_BEGIN
 
@@ -27,6 +28,16 @@ namespace Transform
         Matrix mat(3, 1);
         mat << x, y, z;
         return mat;
+    }
+
+    Matrix XY2Mat12(double x, double y)
+    {
+        return XY2Mat21(x, y).transpose();
+    }
+
+    Matrix XYZ2Mat13(double x, double y, double z)
+    {
+        return XYZ2Mat31(x, y, z).transpose();
     }
 
     Matrix Obj2Aux(const Matrix &obj, const ExteriorOrientationElements &ex)

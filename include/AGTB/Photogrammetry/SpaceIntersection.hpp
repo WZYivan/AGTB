@@ -5,6 +5,8 @@
 #include "../Linalg/RotationMatrix.hpp"
 #include "SpaceResection.hpp"
 
+#include <span>
+
 AGTB_PHOTOGRAMMETRY_BEGIN
 
 namespace detail::SpaceIntersection
@@ -14,11 +16,11 @@ namespace detail::SpaceIntersection
     using detail::SpaceResection::Simplify;
 
     template <Simplify __simplify>
-    Matrix SpaceIntersectionCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &external, const InteriorOrientationElements &internal)
+    Matrix SpaceIntersectionNegativeCoefficient(const Matrix &rotate, const Matrix &transformed_obj, const Matrix &transformed_photo, const ExteriorOrientationElements &exterior, const InteriorOrientationElements &internal)
     {
         using detail::SpaceResection::SpaceResectionCoefficient;
 
-        return SpaceResectionCoefficient<__simplify>(rotate, transformed_obj, transformed_photo, external, internal).leftCols(3);
+        return SpaceResectionCoefficient<__simplify>(rotate, transformed_obj, transformed_photo, exterior, internal).leftCols(3);
     }
 }
 
@@ -121,9 +123,6 @@ struct SpaceIntersection
         isp_right.conservativeResize(Eigen::NoChange, 3);
         isp_right.col(2).fill(-right.in.f);
 
-        // Matrix
-        //     aux_left = left.ex.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>() * isp_left.transpose(),
-        //     aux_right = right.ex.ToRotationMatrix<Linalg::Axis::Y, Linalg::Axis::X, Linalg::Axis::Z>() * isp_right.transpose();
         Matrix
             aux_left = Transform::Isp2Aux(isp_left, left.ex),
             aux_right = Transform::Isp2Aux(isp_right, right.ex);
@@ -169,49 +168,70 @@ struct SpaceIntersection
     template <InverseMethod __inverse_method, Simplify __simplify>
     using Config = SpaceResection::Config<__inverse_method, __simplify>;
 
-    template <InverseMethod __inverse_method, Simplify __simplify>
-    static Result Solve(const Param &left, const Param &right, int max_loop = 50, double threshold = 3e-5)
+    struct OlsResult
     {
-#if (AGTB_NOTE)
-#warning "This may be wrong"
-#endif
-        Result xyz = Solve(left, right);
+        Result coord;
+        Matrix sigma;
+        double m0;
+        IterativeSolutionInfo info;
+    };
+
+    using OlsParam = std::span<const Param>;
+
+    template <InverseMethod __inverse_method, Simplify __simplify>
+    static OlsResult Solve(OlsParam list, int max_loop, double threshold)
+    {
+        size_t count = list.size();
+        if (count < 2)
+        {
+            AGTB_THROW(std::invalid_argument, "input param less than 2");
+        }
+
+        OlsResult result{
+            .coord = Solve(list[0], list[1]),
+            .info = IterativeSolutionInfo::NotConverged};
 
         while (max_loop-- > 0)
         {
-            auto [c_left, r_left] = MakeCoefficientAndResidual<__simplify>(left, xyz);
-            auto [c_right, r_right] = MakeCoefficientAndResidual<__simplify>(right, xyz);
-            Matrix coeff(4, 3), residual(4, 1);
-            coeff << c_left, c_right;
-            residual << r_left, r_right;
-
-            Matrix correction = Linalg::CorrectionOlsSolve(coeff, residual);
+            Matrix coeff(2 * count, 3), residual(2 * count, 1);
+            for (size_t i = 0uz; i != count; ++i)
+            {
+                auto [c, l] = MakeCoefficientAndResidual<__simplify>(list[i], result.coord);
+                coeff.block(2 * i, 0, 2, 3) << c;
+                residual.block(2 * i, 0, 2, 1) << l;
+#if (AGTB_DEBUG) && (AGTB_DEBUG_INFO_LEVEL >= AGTB_DEBUG_INTERNAL_LEVEL)
+                IO::PrintEigen(c, std::format("c[{}]", i));
+                IO::PrintEigen(l, std::format("l[{}]", i));
+#endif
+            }
 #if (AGTB_DEBUG)
             IO::PrintEigen(coeff, "coeff");
             IO::PrintEigen(residual, "residual");
-            IO::PrintEigen(correction, "correction");
 #endif
-            xyz.X -= correction(0, 0);
-            xyz.Y -= correction(1, 0);
-            xyz.Z -= correction(2, 0);
-#if (AGTB_DEBUG)
-            IO::PrintEigen(XYZ2Mat(xyz), "XYZ");
-#endif
+            const Matrix correction = Linalg::CorrectionOlsSolve(coeff, residual);
+
+            result.coord.X -= correction(0, 0);
+            result.coord.Y -= correction(1, 0);
+            result.coord.Z -= correction(2, 0);
+
             if (std::abs(correction(0, 0)) < threshold &&
                 std::abs(correction(1, 0)) < threshold &&
                 std::abs(correction(2, 0)) < threshold)
             {
+                result.info = IterativeSolutionInfo::Success;
+                const Matrix N = Linalg::NormalEquationMatrixInverse<__inverse_method>(coeff);
+                result.m0 = Adjustment::MeanRootSquareError(coeff * correction - residual, count * 2, 3);
+                result.sigma = Adjustment::ErrorMatrix(result.m0, N);
                 break;
             }
         }
-
-        return xyz;
+        return result;
     }
 
-    template <typename __config>
-    static Result Solve(const Param &left, const Param &right, int max_loop = 50, double threshold = 3e-5)
+    template <typename __config = Config<InverseMethod::Cholesky, Simplify::None>>
+    static OlsResult Solve(OlsParam list, int max_loop = 50, double threshold = 3e-5)
     {
-        return Solve<__config::inverse_method, __config::simplify>(left, right, max_loop, threshold);
+        return Solve<__config::inverse_method, __config::simplify>(list, max_loop, threshold);
     }
 
 private:
@@ -223,33 +243,20 @@ private:
         const ExteriorOrientationElements &ex = param.ex;
         const InteriorOrientationElements &in = param.in;
         const Matrix rotate = Transform::Ex2YXZ(ex);
-        const Matrix obj = Transform::XYZ2Mat31(xyz).transpose();
-        const Matrix transformed_obj = Transform::Aux2Isp(Transform::Obj2Aux(obj, ex), rotate);
-        const Matrix transformed_photo = Transform::Isp2Img(transformed_obj, internal);
-        const Matrix coeff = SpaceIntersectionCoefficient<__simplify>(rotate, transformed_obj, transformed_photo, ex, in);
-        const Matrix residual = ResidualMatrix(XY2Mat(param), transformed_photo);
-#if (AGTB_DEBUG)
+        const Matrix obj = Transform::XYZ2Mat13(xyz.X, xyz.Y, xyz.Z);
+        const Matrix isp = Transform::Aux2Isp(Transform::Obj2Aux(obj, ex), rotate);
+        const Matrix img_calc = Transform::Isp2Img(isp, in);
+        const Matrix coeff = SpaceIntersectionNegativeCoefficient<__simplify>(rotate, isp, img_calc, ex, in);
+        const Matrix residual = ResidualMatrix(Transform::XY2Mat12(param.x, param.y), img_calc);
+#if (AGTB_DEBUG) && (AGTB_DEBUG_INFO_LEVEL >= AGTB_DEBUG_INTERNAL_LEVEL)
         IO::PrintEigen(Linalg::CsTranslate(obj, ex.Xs, ex.Ys, ex.Zs), "img aux coord");
-        IO::PrintEigen(transformed_obj, "img sp coord");
-        IO::PrintEigen(transformed_photo, "calc photo");
-        IO::PrintEigen(Transform::XY2Mat21(param).transpose(), "photo");
+        IO::PrintEigen(isp, "img sp coord");
+        IO::PrintEigen(img_calc, "calc image");
+        IO::PrintEigen(Transform::XY2Mat12(param.x, param.y), "image");
 #endif
         return std::make_tuple(coeff, residual);
     }
 
-    static Matrix XYZ2Mat(const Result &xyz)
-    {
-        Matrix mat(1, 3);
-        mat << xyz.X, xyz.Y, xyz.Z;
-        return mat;
-    }
-
-    static Matrix XY2Mat(const Param &xy)
-    {
-        Matrix mat(1, 2);
-        mat << xy.x, xy.y;
-        return mat;
-    }
 #endif
 };
 

@@ -12,20 +12,20 @@ endfunction()
 
 # create_new_executable(Draft "src/Draft.cpp")
 
-create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
-create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
-create_new_executable(Adjustment_ElevationNet "src/Adjustment/ElevationNet.cpp")
-create_new_executable(Adjustment_TraverseNet "src/Adjustment/TraverseNet.cpp")
+# create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
+# create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
+# create_new_executable(Adjustment_ElevationNet "src/Adjustment/ElevationNet.cpp")
+# create_new_executable(Adjustment_TraverseNet "src/Adjustment/TraverseNet.cpp")
 
-create_new_executable(Geodesy_Geometry "src/Geodesy/Ellipsoid/Geometry.cpp")
-create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
-create_new_executable(Geodesy_Solution_Gauss "src/Geodesy/Solution/Gauss.cpp")
-create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
+# create_new_executable(Geodesy_Geometry "src/Geodesy/Ellipsoid/Geometry.cpp")
+# create_new_executable(Geodesy_Projection_GaussKruger "src/Geodesy/Projection/GaussKruger.cpp")
+# create_new_executable(Geodesy_Solution_Gauss "src/Geodesy/Solution/Gauss.cpp")
+# create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 
-create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
-create_new_executable(IO_JSON "src/IO/JSON.cpp")
+# create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
+# create_new_executable(IO_JSON "src/IO/JSON.cpp")
 
-create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
+# create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
 create_new_executable(Photogrammetry_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")
 # # # create_new_executable(Photogrammetry_ContinuousRelativeOrientate "src/Photogrammetry/ContinuousRelativeOrientate.cpp") # Not Implement
 

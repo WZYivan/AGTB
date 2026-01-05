@@ -39,6 +39,22 @@ namespace detail::CollinearityEquation
     {
         double a11, a12, a13, a14, a15, a16,
             a21, a22, a23, a24, a25, a26;
+
+        Matrix ToMatrix26() const noexcept
+        {
+            Matrix mat(2, 6);
+            mat << a11, a12, a13, a14, a15, a16,
+                a21, a22, a23, a24, a25, a26;
+            return mat;
+        }
+
+        Matrix ToMatrix29() const noexcept
+        {
+            Matrix mat(2, 9);
+            mat << a11, a12, a13, a14, a15, a16, -a11, -a12, -a13,
+                a21, a22, a23, a24, a25, a26, -a21, -a22, -a23;
+            return mat;
+        }
     };
 }
 

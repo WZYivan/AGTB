@@ -43,4 +43,13 @@ using Linalg::LinalgOption;
 
 AGTB_END
 
+AGTB_LINALG_BEGIN
+
+void FillNaN(Matrix &mat, double val)
+{
+    mat = mat.array().isNaN().select(val, mat.array());
+}
+
+AGTB_LINALG_END
+
 #endif

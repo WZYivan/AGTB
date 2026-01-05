@@ -4,7 +4,7 @@
 #include <AGTB/IO/Eigen.hpp>
 #include <sstream>
 
-namespace ai = AGTB::IO;
+namespace aio = AGTB::IO;
 namespace ap = AGTB::Photogrammetry;
 namespace al = AGTB::Linalg;
 
@@ -18,23 +18,23 @@ int main()
         "10.46 , 64.43 ,  40426.54, 30319.81, 757.31 \n"};
 
     ap::Matrix photo(4, 2), obj(4, 3), all(4, 5);
-    ai::ReadEigen(iss, all);
+    aio::ReadEigen(iss, all);
     photo = all.leftCols(2),
     obj = all.rightCols(3);
 
-    ai::PrintEigen(photo, "photo"); // mm
-    ai::PrintEigen(obj, "obj");
+    aio::PrintEigen(photo, "photo"); // mm
+    aio::PrintEigen(obj, "obj");
     photo /= 1000; // mm -> m
 
-    ap::InteriorOrientationElements internal{
+    ap::InteriorOrientationElements interior{
         .x0 = 0,
         .y0 = 0,
         .f = 153.24 / 1000,
         .m = 50000};
 
     ap::SpaceResection::Param p = {
-        .interior = internal,
-        .photo = std::move(photo),
+        .interior = interior,
+        .image = std::move(photo),
         .object = std::move(obj)};
 
     // using config = ap::SpaceResection::Config<ap::SpaceResection::InverseMethod::Cholesky, ap::SpaceResection::Simplify::None>;
@@ -47,6 +47,9 @@ int main()
     }
     else
     {
-        throw std::runtime_error("QuickSolve failed");
+        throw std::runtime_error("Solve failed");
     }
+
+    auto img_clac = ap::Transform::Obj2Img(p.object, result.exterior, interior);
+    aio::PrintEigen(img_clac * 1000, "Calculate Img (mm)");
 }
