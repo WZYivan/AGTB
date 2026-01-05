@@ -174,11 +174,17 @@ namespace detail::JsonIO
     };
 
     template <typename __json, typename __parser, typename __target>
-    concept SupportParseFromJson = requires(__json json) {
+    concept SupportParse = requires(__json json) {
         { __parser::Parse(json) } -> std::convertible_to<__target>;
-    } || requires(__parser parser, __json json) {
+    };
+
+    template <typename __json, typename __parser, typename __target>
+    concept SupportParseConfig = requires(__parser parser, __json json) {
         { parser.ParseConfig(json) } -> std::convertible_to<__target>;
     };
+
+    template <typename __json, typename __parser, typename __target>
+    concept SupportParseFromJson = SupportParse<__json, __parser, __target> || SupportParseConfig<__json, __parser, __target>;
 }
 
 /**
@@ -217,7 +223,7 @@ struct JsonParser
 };
 
 /**
- * @brief Default parse.
+ * @brief Default parse. If parser doesn't has `Parse`, it construct a parser and call `ParseConfig`.
  *
  * @tparam __target
  * @param json
@@ -227,12 +233,19 @@ template <typename __target>
 __target ParseJson(const Json &json)
     requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
 {
-    return JsonParser<__target>::Parse(json);
+    if constexpr (detail::JsonIO::SupportParse<Json, JsonParser<__target>, __target>)
+    {
+        return JsonParser<__target>::Parse(json);
+    }
+    else
+    {
+        return JsonParser<__target>{}.ParseConfig(json);
+    }
 }
 
 /**
  * @brief Parse using your config. You can add custom members to your `JsonParser` and custom behavior of `ParseConfig`. Pass a
- * object to this function, it will use `ParseConfig` to parse.
+ * object to this function, it will use `ParseConfig` to parse. If parser doesn't has `ParseConfig`, it calls `Parse`.
  *
  * @tparam __target
  * @param json
@@ -243,7 +256,14 @@ template <typename __target>
 __target ParseJson(const Json &json, const JsonParser<__target> &parser)
     requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
 {
-    return parser.ParseConfig(json);
+    if constexpr (detail::JsonIO::SupportParseConfig<Json, JsonParser<__target>, __target>)
+    {
+        return parser.ParseConfig(json);
+    }
+    else
+    {
+        return JsonParser<__target>::Parse(json);
+    }
 }
 
 #define AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(__json_obj, __key, __type) \
