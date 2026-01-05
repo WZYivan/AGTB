@@ -10,8 +10,6 @@
 #include <filesystem>
 #include <generator>
 
-// AGTB_FILE_NOT_IMPLEMENT();
-
 AGTB_IO_BEGIN
 
 namespace detail::JsonIO
@@ -42,6 +40,14 @@ namespace detail::JsonIO
             return root;
         }
 
+        /**
+         * @brief Give a key, get its view.
+         *
+         * @tparam __self
+         * @param self
+         * @param path
+         * @return auto
+         */
         template <typename __self>
         auto ArrayView(this __self &&self, const pt::path &path)
         {
@@ -51,6 +57,13 @@ namespace detail::JsonIO
                                          { return PTreeWrapper(kv.second); });
         }
 
+        /**
+         * @brief Convert this to view.
+         *
+         * @tparam __self
+         * @param self
+         * @return auto
+         */
         template <typename __self>
         auto ToArrayView(this __self &&self)
         {
@@ -59,6 +72,15 @@ namespace detail::JsonIO
                                          { return PTreeWrapper(kv.second); });
         }
 
+        /**
+         * @brief Give a key, convert its view to a container and return it.
+         *
+         * @tparam __container
+         * @tparam __container::value_type
+         * @param self
+         * @param path
+         * @return __container
+         */
         template <typename __container, typename __value_type = typename __container::value_type>
         __container Container(this auto &&self, const pt::path &path)
         {
@@ -68,12 +90,29 @@ namespace detail::JsonIO
                    std::ranges::to<__container>();
         }
 
+        /**
+         * @brief Give a key, convert its view to a container and return it.
+         *
+         * @tparam __container
+         * @tparam __value_type
+         * @param self
+         * @param path
+         * @return __container<__value_type>
+         */
         template <template <typename> typename __container, typename __value_type>
         __container<__value_type> Container(this auto &&self, const pt::path &path)
         {
             return self.template Container<__container<__value_type>>(path);
         }
 
+        /**
+         * @brief Convert this to container.
+         *
+         * @tparam __container
+         * @tparam __container::value_type
+         * @param self
+         * @return __container
+         */
         template <typename __container, typename __value_type = typename __container::value_type>
         __container ToContainer(this auto &&self)
         {
@@ -83,6 +122,14 @@ namespace detail::JsonIO
                    std::ranges::to<__container>();
         }
 
+        /**
+         * @brief Convert this to container.
+         *
+         * @tparam __container
+         * @tparam __container::value_type
+         * @param self
+         * @return __container
+         */
         template <template <typename> typename __container, typename __value_type>
         __container<__value_type> ToContainer(this auto &&self)
         {

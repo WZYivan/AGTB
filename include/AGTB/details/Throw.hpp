@@ -17,7 +17,7 @@ namespace macros
      */
     std::string error_msg(const std::string_view msg, const std::source_location location)
     {
-        return std::format("\n[ AGTB_THROW ]:\n> file: {}({}:{}) `{}`:\n> {}\n",
+        return std::format("\n[ AGTB_THROW ]\n[ LOCATION ]\n< file >\n{}\n< position >\n({}:{})\n< function >\n{}\n{}\n",
                            location.file_name(),
                            location.line(),
                            location.column(),
@@ -51,7 +51,7 @@ AGTB_END
 #define AGTB_ERROR_MSG(__msg) __AGTB_MACROS error_msg(__msg)
 
 #define AGTB_THROW(__error_type, __msg) \
-    __AGTB_MACROS msg_throw<__error_type>(__msg, std::source_location::current())
+    __AGTB_MACROS msg_throw<__error_type>(std::format("[ {} ]\n{}", #__error_type, __msg), std::source_location::current())
 
 #define AGTB_STATIC_THROW(__msg) static_assert(false, __msg)
 
