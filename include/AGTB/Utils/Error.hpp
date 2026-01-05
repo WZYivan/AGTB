@@ -7,48 +7,63 @@
 
 #include "../details/Macros.hpp"
 
-AGTB_UTILS_BEGIN
+AGTB_BEGIN
 
-/**
- * @brief Represent functions that exist but are not implemented.
- *
- */
-class not_implement_error : public std::runtime_error
+namespace Errors
 {
-public:
-    explicit not_implement_error(const std::string &message = "Function not implemented")
-        : std::runtime_error(message) {}
+    class SimpleMsgError : public std::exception
+    {
+    private:
+        std::string _what;
 
-    explicit not_implement_error(const char *message = "Function not implemented")
-        : std::runtime_error(message) {}
-};
+    public:
+        explicit SimpleMsgError(const std::string &msg = "Construct failed")
+            : _what(msg) {}
+        explicit SimpleMsgError(const char *msg = "Construct failed")
+            : _what(msg) {}
+        virtual const char *what() const noexcept override
+        {
+            return _what.c_str();
+        }
+    };
 
-/**
- * @brief Exception should only throw in constructor
- *
- */
-class constructor_error : public std::invalid_argument
-{
-public:
-    explicit constructor_error(const std::string &msg = "Construct failed")
-        : std::invalid_argument(msg) {}
-    explicit constructor_error(const char *msg = "Construct failed")
-        : std::invalid_argument(msg) {}
-};
+#define AGTB_DEF_MSG_ERR(__err, __default)                 \
+    class __err : public SimpleMsgError                    \
+    {                                                      \
+    public:                                                \
+        explicit __err(const std::string &msg = __default) \
+            : SimpleMsgError(msg) {}                       \
+        explicit __err(const char *msg = __default)        \
+            : SimpleMsgError(msg) {}                       \
+    }
 
-/**
- * @brief Represent unsupported template parameter
- *
- */
-class unknown_template_parameter_error : public std::invalid_argument
-{
-public:
-    explicit unknown_template_parameter_error(const std::string &msg = "Unknown template parameter")
-        : std::invalid_argument(msg) {}
-    explicit unknown_template_parameter_error(const char *msg = "Unknown template parameter")
-        : std::invalid_argument(msg) {}
-};
+    // class ConstructorError : public SimpleMsgError
+    // {
+    // public:
+    //     explicit ConstructorError(const std::string &msg = "Construct failed")
+    //         : SimpleMsgError(msg) {}
+    //     explicit ConstructorError(const char *msg = "Construct failed")
+    //         : SimpleMsgError(msg) {}
+    // };
 
-AGTB_UTILS_END
+    // class JsonKeyError : public SimpleMsgError
+    // {
+    // public:
+    //     explicit JsonKeyError(const std::string &msg)
+    //         : SimpleMsgError(msg) {}
+    //     explicit JsonKeyError(const char *msg)
+    //         : SimpleMsgError(msg) {}
+    // };
+
+    AGTB_DEF_MSG_ERR(ConstructorError, "Construct failed");
+    AGTB_DEF_MSG_ERR(JsonKeyError, "Key not found");
+    AGTB_DEF_MSG_ERR(ContainerSizeError, "Invalid size for use");
+}
+
+using Errors::ConstructorError;
+using Errors::ContainerSizeError;
+using Errors::JsonKeyError;
+
+AGTB_END
 
 #endif

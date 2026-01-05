@@ -282,12 +282,7 @@ struct SpaceResection
 #if (AGTB_NOTE)
 #warning "Image coordinates and f for AGTB::SpaceResection::Solve must be of `mm`"
 #endif
-        using detail::SpaceResection::CompleteResult;
-        using detail::SpaceResection::IsExternalElementsConverged;
-        using detail::SpaceResection::IsInputValid;
-        using detail::SpaceResection::ResidualMatrix;
-        using detail::SpaceResection::SpaceResectionCoefficient;
-        using detail::SpaceResection::UpdateExternalElements;
+        using namespace detail::SpaceResection;
 
         auto &interior = param.interior;
         auto &image = param.image;

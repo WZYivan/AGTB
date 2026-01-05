@@ -10,7 +10,7 @@ int main()
 
     if (json.HasArray("edges"))
     {
-        for (const auto &v : json.Array("edges"))
+        for (const auto &v : json.ArrayView("edges"))
         {
             std::println("name: {}", v.Value<std::string>("name"));
         }

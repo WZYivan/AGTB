@@ -43,13 +43,7 @@ namespace detail::JsonIO
         }
 
         template <typename __self>
-        auto Range(this __self &&self)
-        {
-            return std::ranges::subrange(self.root.begin(), self.root.end());
-        }
-
-        template <typename __self>
-        auto Array(this __self &&self, const pt::path &path)
+        auto ArrayView(this __self &&self, const pt::path &path)
         {
             auto &range = self.root.get_child(path);
             return std::ranges::subrange(range.begin(), range.end()) |
@@ -57,9 +51,53 @@ namespace detail::JsonIO
                                          { return PTreeWrapper(kv.second); });
         }
 
+        template <typename __self>
+        auto ToArrayView(this __self &&self)
+        {
+            return std::ranges::subrange(self.root.begin(), self.root.end()) |
+                   std::views::transform([](auto &kv) -> decltype(auto)
+                                         { return PTreeWrapper(kv.second); });
+        }
+
+        template <typename __container, typename __value_type = typename __container::value_type>
+        __container Container(this auto &&self, const pt::path &path)
+        {
+            return self.ArrayView(path) |
+                   std::views::transform([](const auto &v) -> double
+                                         { return v.template ToValue<__value_type>(); }) |
+                   std::ranges::to<__container>();
+        }
+
+        template <template <typename> typename __container, typename __value_type>
+        __container<__value_type> Container(this auto &&self, const pt::path &path)
+        {
+            return self.template Container<__container<__value_type>>(path);
+        }
+
+        template <typename __container, typename __value_type = typename __container::value_type>
+        __container ToContainer(this auto &&self)
+        {
+            return self.ToArrayView() |
+                   std::views::transform([](const auto &v) -> double
+                                         { return v.template ToValue<__value_type>(); }) |
+                   std::ranges::to<__container>();
+        }
+
+        template <template <typename> typename __container, typename __value_type>
+        __container<__value_type> ToContainer(this auto &&self)
+        {
+            return self.template ToContainer<__container<__value_type>>();
+        }
+
         bool HasArray(const pt::path &path) const
         {
             return root.get_child_optional(path).has_value();
+        }
+
+        template <typename __value_type>
+        __value_type ToValue() const
+        {
+            return root.template get_value<__value_type>();
         }
 
         template <typename __value_type>
@@ -74,9 +112,10 @@ namespace detail::JsonIO
             return root.template get<__value_type>(path, default_value);
         }
 
+        template <typename __value_type>
         bool HasValue(const pt::path &path) const
         {
-            return root.get_optional(path).has_value();
+            return root.template get_optional<__value_type>(path).has_value();
         }
 
         std::string ToString(bool pretty = true) const
@@ -85,6 +124,13 @@ namespace detail::JsonIO
             pt::write_json(oss, root, pretty);
             return oss.str();
         }
+    };
+
+    template <typename __json, typename __parser, typename __target>
+    concept SupportParseFromJson = requires(__json json) {
+        { __parser::Parse(json) } -> std::convertible_to<__target>;
+    } || requires(__parser parser, __json json) {
+        { parser.ParseConfig(json) } -> std::convertible_to<__target>;
     };
 }
 
@@ -111,6 +157,59 @@ void WriteJson(const Json &json, const std::string &filename, const std::locale 
 {
     detail::JsonIO::pt::write_json(filename, json.Unwrap(), loc, pretty);
 }
+
+/**
+ * @brief Specialize this struct to define how to parse a type from json. Defaultly using static method `Parse`.
+ *
+ * @tparam __target
+ */
+template <typename __target>
+struct JsonParser
+{
+    AGTB_TEMPLATE_NOT_SPECIFIED();
+};
+
+/**
+ * @brief Default parse.
+ *
+ * @tparam __target
+ * @param json
+ * @return __target
+ */
+template <typename __target>
+__target ParseJson(const Json &json)
+    requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
+{
+    return JsonParser<__target>::Parse(json);
+}
+
+/**
+ * @brief Parse using your config. You can add custom members to your `JsonParser` and custom behavior of `ParseConfig`. Pass a
+ * object to this function, it will use `ParseConfig` to parse.
+ *
+ * @tparam __target
+ * @param json
+ * @param parser
+ * @return __target
+ */
+template <typename __target>
+__target ParseJson(const Json &json, const JsonParser<__target> &parser)
+    requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
+{
+    return parser.ParseConfig(json);
+}
+
+#define AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(__json_obj, __key, __type) \
+    if (!__json_obj.HasValue<__type>(__key))                            \
+    {                                                                   \
+        AGTB_THROW(JsonKeyError, __key);                                \
+    }
+
+#define AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(__json_obj, __key) \
+    if (!__json_obj.HasArray(__key))                            \
+    {                                                           \
+        AGTB_THROW(JsonKeyError, __key);                        \
+    }
 
 AGTB_IO_END
 

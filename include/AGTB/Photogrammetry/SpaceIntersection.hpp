@@ -160,13 +160,16 @@ struct SpaceIntersection
         return res;
     }
 
-#if (AGTB_EXP)
-    constexpr static CollinearityEquationStyle equation_style = SpaceResection::equation_style;
-    using Equation = SpaceResection::Equation;
-    using InverseMethod = SpaceResection::InverseMethod;
-    using Simplify = SpaceResection::Simplify;
+    constexpr static CollinearityEquationStyle equation_style = CollinearityEquationStyle::Linearization;
+    using Equation = CollinearityEquation<equation_style>;
+    using InverseMethod = LinalgOption;
+    using Simplify = Equation::Simplify;
     template <InverseMethod __inverse_method, Simplify __simplify>
-    using Config = SpaceResection::Config<__inverse_method, __simplify>;
+    struct Config
+    {
+        constexpr static InverseMethod inverse_method = __inverse_method;
+        constexpr static Simplify simplify = __simplify;
+    };
 
     struct OlsResult
     {
@@ -256,8 +259,6 @@ private:
 #endif
         return std::make_tuple(coeff, residual);
     }
-
-#endif
 };
 
 AGTB_PHOTOGRAMMETRY_END

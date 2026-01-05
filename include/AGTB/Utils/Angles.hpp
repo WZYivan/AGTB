@@ -193,11 +193,11 @@ namespace Angles
         /**
          * @brief initializer_list must in size of 3
          *
-         * @throw AGTB::Utils::constructor_error : initializer_list.size() != 3
+         * @throw AGTB::Utils::ConstructorError : initializer_list.size() != 3
          */
         constexpr Angle(std::initializer_list<double> il)
             : Angle(
-                  il.size() == 3 ? *il.begin() : (AGTB_THROW(Utils::constructor_error, "Initializer list size must be 3"), 0.0),
+                  il.size() == 3 ? *il.begin() : (AGTB_THROW(ConstructorError, "Initializer list size must be 3"), 0.0),
                   il.size() == 3 ? *(il.begin() + 1) : 0.0,
                   il.size() == 3 ? *(il.begin() + 2) : 0.0)
         {
@@ -211,6 +211,15 @@ namespace Angles
         static constexpr Angle FromRad(double rad)
         {
             return Angle(ToSeconds(rad));
+        }
+
+        static Angle FromSpan(std::span<const double> span)
+        {
+            if (span.size() != 3)
+            {
+                AGTB_THROW(ContainerSizeError, "Container for angle must be of size 3");
+            }
+            return Angle(span[0], span[1], span[2]);
         }
         ~Angle() = default;
 
