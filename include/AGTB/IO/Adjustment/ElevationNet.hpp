@@ -14,17 +14,17 @@ struct JsonParser<Adjustment::ElevationNet>
     static Target Parse(const Json &json)
     {
         {
-            AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(json, "vertices");
-            AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(json, "edges");
+            AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "vertices");
+            AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "edges");
             const auto &vert = (*json.ArrayView("vertices").begin());
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(vert, "name", std::string);
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(vert, "elev", double);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "name", std::string);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "elev", double);
             const auto &edge = (*json.ArrayView("edges").begin());
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(edge, "name", std::string);
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(edge, "from", std::string);
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(edge, "to", std::string);
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(edge, "dif", double);
-            AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(edge, "len", double);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "name", std::string);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "from", std::string);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "to", std::string);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "dif", double);
+            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "len", double);
         }
 
         Target target{};
@@ -47,6 +47,57 @@ struct JsonParser<Adjustment::ElevationNet>
         }
 
         return target;
+    }
+
+    static std::string Expect()
+    {
+        return R"(
+{
+    "vertices": [
+        {
+            "name": "A",
+            "elev": 237.483
+        }
+    ],
+    "edges": [
+        {
+            "name": "1",
+            "from": "A",
+            "to": "B",
+            "dif": 5.835,
+            "len": 3.5
+        },
+        {
+            "name": "2",
+            "from": "B",
+            "to": "C",
+            "dif": 3.782,
+            "len": 2.7
+        },
+        {
+            "name": "3",
+            "from": "A",
+            "to": "C",
+            "dif": 9.64,
+            "len": 4
+        },
+        {
+            "name": "4",
+            "from": "D",
+            "to": "C",
+            "dif": 7.384,
+            "len": 3
+        },
+        {
+            "name": "5",
+            "from": "A",
+            "to": "D",
+            "dif": 2.27,
+            "len": 2.5
+        }
+    ]
+}
+        )";
     }
 };
 

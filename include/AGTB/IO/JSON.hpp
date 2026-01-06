@@ -203,8 +203,16 @@ namespace detail::JsonIO
         { parser.ParseConfig(json) } -> std::convertible_to<__target>;
     };
 
+    template <typename __parser>
+    concept GiveExpectJsonFormat = requires {
+        { __parser::Expect() } -> std::convertible_to<std::string>;
+    };
+
     template <typename __json, typename __parser, typename __target>
-    concept SupportParseFromJson = SupportParse<__json, __parser, __target> || SupportParseConfig<__json, __parser, __target>;
+    concept SupportParseFromJson =
+        (SupportParse<__json, __parser, __target> ||
+         SupportParseConfig<__json, __parser, __target>) &&
+        GiveExpectJsonFormat<__parser>;
 }
 
 /**
@@ -302,6 +310,27 @@ __target ParseJson(const Json &json, const JsonParser<__target> &parser)
     if (!__json_obj.HasMap(__key))                            \
     {                                                         \
         AGTB_THROW(JsonKeyError, __key);                      \
+    }
+
+#define AGTB_THROW_IN_JSON_PARSER(__key) \
+    AGTB_THROW(JsonKeyError, std::format("Key: [{}] not found. We expect json like below:\n{}\n", __key, JsonParser ::Expect()))
+
+#define AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(__json_obj, __key, __type) \
+    if (!__json_obj.HasValue<__type>(__key))                           \
+    {                                                                  \
+        AGTB_THROW_IN_JSON_PARSER(__key);                              \
+    }
+
+#define AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(__json_obj, __key) \
+    if (!__json_obj.HasArray(__key))                           \
+    {                                                          \
+        AGTB_THROW_IN_JSON_PARSER(__key);                      \
+    }
+
+#define AGTB_JSON_PARSER_VALIDATE_MAP_KEY(__json_obj, __key) \
+    if (!__json_obj.HasMap(__key))                           \
+    {                                                        \
+        AGTB_THROW_IN_JSON_PARSER(__key);                    \
     }
 
 AGTB_IO_END

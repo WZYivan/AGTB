@@ -32,11 +32,11 @@ private:
 
     static Target DoParse(const Json &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
     {
-        AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(json, distances);
-        AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(json, angles);
-        AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(json, azi_beg);
-        AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(json, x_beg, double);
-        AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(json, y_beg, double);
+        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, distances);
+        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
+        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, azi_beg);
+        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, x_beg, double);
+        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, y_beg, double);
 
         return {
             .distances = json.Container<std::vector<double>>(distances),
@@ -47,6 +47,25 @@ private:
             .azi_beg = Angle::FromSpan(json.Container<std::vector<double>>(azi_beg)),
             .x_beg = json.Value<double>(x_beg),
             .y_beg = json.Value<double>(y_beg)};
+    }
+
+public:
+    static std::string Expect()
+    {
+        return R"(
+{
+    "distances" : [105.22, 80.18, 129.34, 78.16],
+    "angles" : [
+        [107, 48, 32], 
+        [73, 0, 24], 
+        [89, 33, 48], 
+        [89, 36, 30]
+    ],
+    "azi_beg" : [125, 30, 0],
+    "x_beg" : 506.32,
+    "y_beg" : 215.65
+}
+        )";
     }
 };
 
