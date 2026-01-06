@@ -56,7 +56,7 @@ AGTB_END
 #define AGTB_STATIC_THROW(__msg) static_assert(false, __msg)
 
 #define AGTB_NOT_IMPLEMENT() \
-    AGTB_THROW(__AGTB_UTILS not_implement_error, "AGTB::[ Not implement this ]")
+    AGTB_THROW(NotImplementError, "AGTB::[ Not implement this ]")
 
 #define AGTB_TEMPLATE_NOT_SPECIFIED() \
     AGTB_STATIC_THROW("This template must be specified to implement")

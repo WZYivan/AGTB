@@ -24,7 +24,9 @@ endfunction()
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 # create_new_executable(IO_JSON "src/IO/JSON.cpp")
-create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
+# create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
+create_new_executable(IO_Adjustment_ElevationNet "src/IO/Adjustment/ElevationNet.cpp")
+
 
 # create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")
 # create_new_executable(Photogrammetry_SpaceIntersection "src/Photogrammetry/SpaceIntersection.cpp")

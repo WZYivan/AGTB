@@ -40,6 +40,26 @@ namespace detail::JsonIO
             return root;
         }
 
+        auto MapView(this auto &&self, const pt::path &path)
+        {
+            auto &range = self.root.get_child(path);
+            return std::ranges::subrange(range.begin(), range.end()) |
+                   std::views::transform([](const auto &kv) -> decltype(auto)
+                                         { return std::make_pair(kv.first, PTreeWrapper(kv.second)); });
+        }
+
+        auto ToMapView(this auto &&self)
+        {
+            return std::ranges::subrange(self.root.begin(), self.root.end()) |
+                   std::views::transform([](const auto &kv) -> decltype(auto)
+                                         { return std::make_pair(kv.first, PTreeWrapper(kv.second)); });
+        }
+
+        bool HasMap(const pt::path &path) const
+        {
+            return root.get_child_optional(path).has_value();
+        }
+
         /**
          * @brief Give a key, get its view.
          *
@@ -276,6 +296,12 @@ __target ParseJson(const Json &json, const JsonParser<__target> &parser)
     if (!__json_obj.HasArray(__key))                            \
     {                                                           \
         AGTB_THROW(JsonKeyError, __key);                        \
+    }
+
+#define AGTB_THROW_IF_JSON_MAP_KEY_INVALID(__json_obj, __key) \
+    if (!__json_obj.HasMap(__key))                            \
+    {                                                         \
+        AGTB_THROW(JsonKeyError, __key);                      \
     }
 
 AGTB_IO_END

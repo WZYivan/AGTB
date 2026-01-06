@@ -58,11 +58,13 @@ namespace Errors
     AGTB_DEF_MSG_ERR(ConstructorError, "Construct failed");
     AGTB_DEF_MSG_ERR(JsonKeyError, "Key not found");
     AGTB_DEF_MSG_ERR(ContainerSizeError, "Invalid size for use");
+    AGTB_DEF_MSG_ERR(NotImplementError, "AGTB not implement this");
 }
 
 using Errors::ConstructorError;
 using Errors::ContainerSizeError;
 using Errors::JsonKeyError;
+using Errors::NotImplementError;
 
 AGTB_END
 
