@@ -9,7 +9,7 @@
 #endif
 
 #ifdef AGTB_DEBUG_INFO_VERBOSE_ALL
-#define AGTB_DEBUG_INFO_LEVEL
+#define AGTB_DEBUG_INFO_LEVEL 100
 #else
 #define AGTB_DEBUG_INFO_LEVEL 0
 #endif

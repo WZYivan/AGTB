@@ -66,4 +66,6 @@ int main()
     std::println("gamma = {}", gamma.ToString());
 
     projector::DirctionCorrectionResult dcr = projector::DirectionCorrection<K_config>(src, tar);
+
+    using utils = ag::ProjUtils<ag::ProjCS::GaussKruger, ag::GaussZoneInterval::D6, ag::Units::Radian>;
 }
