@@ -17,7 +17,7 @@ enum class Solutions
 template <Solutions __solution>
 struct Solver
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 namespace Solution

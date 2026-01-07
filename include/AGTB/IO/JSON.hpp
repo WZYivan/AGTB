@@ -59,7 +59,7 @@ concept SupportParseFromJson =
 template <typename __target>
 struct JsonParser
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 template <typename __target, typename __ptree>

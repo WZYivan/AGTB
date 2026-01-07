@@ -17,7 +17,7 @@ namespace SpatialRef::Proj::GaussKruger
     template <GaussZoneInterval interval>
     constexpr double ToDouble()
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
 
         return 0.0;
     }
@@ -40,7 +40,7 @@ namespace SpatialRef::Proj::GaussKruger
     template <GaussZoneInterval __zone_interval, Units _unit>
     struct GaussProjCoeffSolver
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <Units __unit>

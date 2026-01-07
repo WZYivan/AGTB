@@ -133,7 +133,7 @@ namespace Elevation
     template <RouteType __rt>
     void __CalculateFh(const ElevationParam<__rt> &param, ElevationVariable &va, ElevationInfo &info, int place)
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     }
     template <>
     void __CalculateFh<RouteType::ClosedLoop>(const ElevationParam<RouteType::ClosedLoop> &param, ElevationVariable &va, ElevationInfo &info, int place)

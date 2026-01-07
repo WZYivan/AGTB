@@ -18,7 +18,7 @@ namespace detail::CollinearityEquation
     template <CollinearityEquationStyle __style>
     struct Param
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <>
@@ -31,7 +31,7 @@ namespace detail::CollinearityEquation
     template <CollinearityEquationStyle __style>
     struct Coefficient
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <>
@@ -61,7 +61,7 @@ namespace detail::CollinearityEquation
 template <CollinearityEquationStyle __style>
 struct CollinearityEquation
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 template <>
@@ -95,7 +95,7 @@ struct CollinearityEquation<CollinearityEquationStyle::Linearization>
         }
         else
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            AGTB_TEMPLATE_NOT_SPECIALIZED();
         }
     }
 

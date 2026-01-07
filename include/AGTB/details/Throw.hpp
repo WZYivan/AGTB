@@ -58,7 +58,7 @@ AGTB_END
 #define AGTB_NOT_IMPLEMENT() \
     AGTB_THROW(NotImplementError, "AGTB::[ Not implement this ]")
 
-#define AGTB_TEMPLATE_NOT_SPECIFIED() \
+#define AGTB_TEMPLATE_NOT_SPECIALIZED() \
     AGTB_STATIC_THROW("This template must be specified to implement")
 
 #define AGTB_FILE_NOT_IMPLEMENT() \

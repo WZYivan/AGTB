@@ -34,7 +34,7 @@ namespace Concept
 template <Ellipsoids __ellipsoid>
 struct EllipsoidGeometry
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 template <>

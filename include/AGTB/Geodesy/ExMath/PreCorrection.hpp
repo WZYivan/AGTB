@@ -16,7 +16,7 @@ namespace PreCorrection
         template <Ellipsoids __ellipsoid>
         struct SinCoeff
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            AGTB_TEMPLATE_NOT_SPECIALIZED();
         };
 
         template <>
@@ -59,7 +59,7 @@ namespace PreCorrection
         template <Ellipsoids __ellipsoid>
         struct DoubleGaussianCoeff
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            AGTB_TEMPLATE_NOT_SPECIALIZED();
         };
 
         template <>
@@ -134,7 +134,7 @@ namespace PreCorrection
         template <Ellipsoids __ellipsoid>
         consteval CubicSpline<double, 88> PreDefinedCubicSpline()
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            AGTB_TEMPLATE_NOT_SPECIALIZED();
             return {};
         }
 

@@ -96,7 +96,7 @@ namespace detail::SpaceResection
     template <Simplify __simplify>
     Matrix SpaceResectionCoefficient(const Matrix &rotate, const Matrix &img_sp, const Matrix &img_calc, const ExteriorOrientationElements &ex, const InteriorOrientationElements &in)
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     }
 
     template <>

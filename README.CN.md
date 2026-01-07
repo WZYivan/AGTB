@@ -10,13 +10,13 @@
 # 导入AGTB
 
 `AGTB`有以下依赖:
-- `gcem`
-- `Eigen`
+- `gcem` : 1.18.0
+- `Eigen` : 5.0.0
 ```cpp
 using Matrix = Eigen::MatrixXd;
 ```
-- `Boost`
-- `C++23`
+- `Boost` : 1.83.0
+- `C++23` : g++14
 
 所有的三方库只需要它们的头文件。`AGTB`在开发、测试时均使用conan作为包管理器，因此使用`conan`将很容易导入`AGTB`，也提供了开发时的`conanfile.py`。
 
@@ -57,7 +57,7 @@ enum class Ellipsoids // 表示椭球体的类型
 template <Ellipsoids __ellipsoid>
 struct EllipsoidGeometry // 为每个椭球体提供特化的几何参数的实现
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 enum class Units // 对角度系统的描述
@@ -103,7 +103,7 @@ enum class Solutions
 template <Solutions __solution>
 struct Solver
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 ```
 
@@ -149,7 +149,7 @@ using ProjUtils = SpatialRef::ProjUtils<__proj, __args...>::Using; // 提取可�
 template <GeoCS __geo, ProjCS __proj>
 struct Projector
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 ```
 
@@ -170,7 +170,7 @@ GeoCoord geo_coord_inv = projector::Project<config>(gauss_proj_coord);
 
 首先，使用期望的坐标系实例化`Projector`，接着用对应的`Config`来配置`Project`方法，此方法根据参数的类型自动选择不同方向的投影。进行双重实例化的分离设计的原因与`Solver`相同，即投影求解器的类型与地球椭球体和投影坐标系参数是分离的。
 
-## Photgrammetry
+## Photogrammetry
 
 `AGTB`摄影测量模块的设计相较于大地测量模块要简单的多，主要有几个不同的、非模板的求解器组成。由于摄影测量理论大部分基于最小二乘法的平差原理，它们大多是需要迭代的算法，因此算法本身是不抛异常的，而是在返回的结构体中包含一个表示迭代状况的枚举值。
 
@@ -429,7 +429,7 @@ aio::PrintJson(json, stream);
 template <typename __target>
 struct JsonParser
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 template <typename __target, typename __ptree>
@@ -539,7 +539,7 @@ public:
 ### 仅内部使用但应知晓其存在
 
 - `AGTB_THROW( ... )` : `AGTB`抛出的，带有风格化信息的异常
-- `AGTB_TEMPLATE_NOT_SPECIFIED()` : 表示若没有特化版本，则触发编译时错误，因为不存在默认实现
+- `AGTB_TEMPLATE_NOT_SPECIALIZED()` : 表示若没有特化版本，则触发编译时错误，因为不存在默认实现
 - `AGTB_FILE_NOT_IMPELEMENT()` : 表示该文件未被实现或因为种种原因不应该被包含
 
 ### 同时提供给用户

@@ -11,7 +11,7 @@ AGTB_GEODESY_BEGIN
 template <GeoCS __geo, ProjCS __proj>
 struct Projector
 {
-    AGTB_TEMPLATE_NOT_SPECIFIED();
+    AGTB_TEMPLATE_NOT_SPECIALIZED();
 };
 
 namespace Projection::ConfigConcept

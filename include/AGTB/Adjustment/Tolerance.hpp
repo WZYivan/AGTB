@@ -34,7 +34,7 @@ namespace Tolerance
     template <EvaluateTarget __target>
     struct EvaluateParamForward
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <>
@@ -72,7 +72,7 @@ namespace Tolerance
     template <EvaluateTarget __target>
     struct EvaluateResult
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <>
@@ -101,7 +101,7 @@ namespace Tolerance
     template <EvaluateTarget __target, ToleranceCatagory __cat, size_t __num>
     struct ToleranceValue
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     /**
@@ -165,7 +165,7 @@ namespace Tolerance
         template <EvaluateTarget __target, ToleranceCatagory __cat, size_t __num>
         struct Impl
         {
-            AGTB_TEMPLATE_NOT_SPECIFIED();
+            AGTB_TEMPLATE_NOT_SPECIALIZED();
         };
 
         template <ToleranceCatagory __cat, size_t __num>

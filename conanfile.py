@@ -51,7 +51,7 @@ class agtbRecipe(ConanFile):
         self.cpp_info.libs = ["agtb"]
         
     def requirements(self):
-        self.requires("eigen/[*]")
-        self.requires("gcem/[*]")
-        self.requires("boost/[*]")
+        self.requires("eigen/5.0.0")
+        self.requires("gcem/1.18.0")
+        self.requires("boost/1.83.0")
 

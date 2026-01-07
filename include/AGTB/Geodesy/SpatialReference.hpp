@@ -21,7 +21,7 @@ namespace SpatialRef
     template <ProjectCoordinateSystem __proj, auto... __args>
     struct ProjUtils
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     };
 
     template <GaussZoneInterval __zone_interval, Units __unit>

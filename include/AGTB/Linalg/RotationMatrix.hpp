@@ -85,7 +85,7 @@ Matrix RotateByAxis(double angle)
     }
     else
     {
-        AGTB_TEMPLATE_NOT_SPECIFIED();
+        AGTB_TEMPLATE_NOT_SPECIALIZED();
     }
 }
 
