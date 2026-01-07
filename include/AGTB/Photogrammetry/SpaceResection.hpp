@@ -279,9 +279,6 @@ struct SpaceResection
     template <InverseMethod __inverse_method, Simplify __simplify>
     static Result Solve(const Param &param, size_t max_loop, const double threshold)
     {
-#if (AGTB_NOTE)
-#warning "Image coordinates and f for AGTB::SpaceResection::Solve must be of `mm`"
-#endif
         using namespace detail::SpaceResection;
 
         auto &interior = param.interior;
@@ -308,15 +305,12 @@ struct SpaceResection
             Matrix correction = Linalg::CorrectionOlsSolve(coefficient, residual);
 
 #if (AGTB_DEBUG)
-            IO::PrintEigen(isp, "transformed_obj");
-            IO::PrintEigen(img_calc, "transformed_photo");
+            IO::PrintEigen(isp, "isp");
+            IO::PrintEigen(img_calc, "img calc");
             IO::PrintEigen(residual, "residual");
             IO::PrintEigen(coefficient, "coefficient");
             IO::PrintEigen(correction, "correction");
 #endif
-
-            UpdateExternalElements(exterior, correction);
-
             if (IsExternalElementsConverged(correction, threshold))
             {
                 Matrix N = Linalg::NormalEquationMatrixInverse<__inverse_method>(coefficient);
@@ -324,6 +318,8 @@ struct SpaceResection
                 result.info = IterativeSolutionInfo::Success;
                 break;
             }
+
+            UpdateExternalElements(exterior, correction);
         }
 
         return result;

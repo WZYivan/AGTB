@@ -37,9 +37,7 @@ int main()
         .image = std::move(photo),
         .object = std::move(obj)};
 
-    // using config = ap::SpaceResection::Config<ap::SpaceResection::InverseMethod::Cholesky, ap::SpaceResection::Simplify::None>;
-    // auto result = ap::SpaceResection::Solve<config>(p);
-    ap::SpaceResection::Result result = ap::SpaceResection::Solve(p);
+    ap::SpaceResection::Result result = ap::SpaceResection::Solve(p, 5);
 
     if (result.info == ap::IterativeSolutionInfo::Success)
     {

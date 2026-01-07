@@ -213,10 +213,6 @@ struct SpaceIntersection
 #endif
             const Matrix correction = Linalg::CorrectionOlsSolve(coeff, residual);
 
-            result.coord.X -= correction(0, 0);
-            result.coord.Y -= correction(1, 0);
-            result.coord.Z -= correction(2, 0);
-
             if (std::abs(correction(0, 0)) < threshold &&
                 std::abs(correction(1, 0)) < threshold &&
                 std::abs(correction(2, 0)) < threshold)
@@ -227,6 +223,10 @@ struct SpaceIntersection
                 result.sigma = Adjustment::ErrorMatrix(result.m0, N);
                 break;
             }
+
+            result.coord.X -= correction(0, 0);
+            result.coord.Y -= correction(1, 0);
+            result.coord.Z -= correction(2, 0);
         }
         return result;
     }

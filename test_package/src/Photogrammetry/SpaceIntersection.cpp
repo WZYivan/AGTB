@@ -57,7 +57,7 @@ int main()
 
     if constexpr (true)
     {
-        double f = 150;
+        double f = 150.0 / 1000.0;
         using solver = ap::SpaceIntersection;
 
         ap::ExteriorOrientationElements
@@ -72,6 +72,7 @@ int main()
             49.88, -0.782, -42.201, -1.022,
             86.14, -1.346, -7.706, -2.112,
             48.035, -79.962, -44.438, -79.736;
+        img /= 1000.0;
         solver::BatchParam
             sibp_left{ex_left, in_left, img.leftCols(2)},
             sibp_right{ex_right, in_right, img.rightCols(2)};
@@ -85,14 +86,6 @@ int main()
         aio::PrintEigen(img, "All img");
         aio::PrintEigen(result, "Batch result");
         aio::PrintEigen(img_inv, "All inv img");
-
-        // solver::Param
-        //     ols_left{ex_left, in_left, img(0, 0), img(0, 1)},
-        //     ols_right{ex_right, in_right, img(0, 2), img(0, 3)};
-        // solver::OlsResult ols_result = solver::OlsSolve(ols_left, ols_right);
-        // std::println("Ols[ x = {}, y = {}, z = {}, m0 = {}]", ols_result.coord.X, ols_result.coord.Y, ols_result.coord.Z, ols_result.m0);
-        // al::FillNaN(ols_result.sigma, 0.0);
-        // aio::PrintEigen(ols_result.sigma, "Error mat");
 
         solver::Param
             ols_1{ex_left, in_left, img(0, 0), img(0, 1)},
