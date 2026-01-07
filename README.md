@@ -484,7 +484,7 @@ private:
     static Target DoParse(const __ptree  &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
     {
         AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, distances);
-         AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
+        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
         AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, azi_beg);
         AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, x_beg, double) ;
         AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, y_beg, double);
