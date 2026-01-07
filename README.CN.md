@@ -16,7 +16,7 @@
 using Matrix = Eigen::MatrixXd;
 ```
 - `Boost` : 1.83.0
-- `C++23` : g++14
+- `C++23` : g++ 14.2.0
 
 所有的三方库只需要它们的头文件。`AGTB`在开发、测试时均使用conan作为包管理器，因此使用`conan`将很容易导入`AGTB`，也提供了开发时的`conanfile.py`。
 
