@@ -1,267 +1,72 @@
 #ifndef __AGTB_IO_JSON_HPP__
 #define __AGTB_IO_JSON_HPP__
 
-#include "../details/Macros.hpp"
-#include "../Utils/Concept.hpp"
-
-#include <boost/property_tree/ptree.hpp>
+#include "../Container/PropertyTree.hpp"
 #include <boost/property_tree/json_parser.hpp>
-
 #include <filesystem>
-#include <generator>
 
 AGTB_IO_BEGIN
 
-namespace detail::JsonIO
+template <typename __ptree>
+void ReadJson(std::filesystem::path fpath, __ptree &root)
 {
-    namespace fs = std::filesystem;
-    namespace pt = boost::property_tree;
-
-    template <typename __ptree>
-        requires std::same_as<UnqualifiedType<__ptree>, pt::ptree>
-    class PTreeWrapper
-    {
-    private:
-        __ptree root;
-
-    public:
-        PTreeWrapper(const __ptree &ptree) : root(ptree)
-        {
-        }
-        ~PTreeWrapper() = default;
-
-        const __ptree &Unwrap() const
-        {
-            return root;
-        }
-
-        __ptree &Unwrap()
-        {
-            return root;
-        }
-
-        auto MapView(this auto &&self, const pt::path &path)
-        {
-            auto &range = self.root.get_child(path);
-            return std::ranges::subrange(range.begin(), range.end()) |
-                   std::views::transform([](const auto &kv) -> decltype(auto)
-                                         { return std::make_pair(kv.first, PTreeWrapper(kv.second)); });
-        }
-
-        auto ToMapView(this auto &&self)
-        {
-            return std::ranges::subrange(self.root.begin(), self.root.end()) |
-                   std::views::transform([](const auto &kv) -> decltype(auto)
-                                         { return std::make_pair(kv.first, PTreeWrapper(kv.second)); });
-        }
-
-        bool HasMap(const pt::path &path) const
-        {
-            return root.get_child_optional(path).has_value();
-        }
-
-        /**
-         * @brief Give a key, get its view.
-         *
-         * @tparam __self
-         * @param self
-         * @param path
-         * @return auto
-         */
-        template <typename __self>
-        auto ArrayView(this __self &&self, const pt::path &path)
-        {
-            auto &range = self.root.get_child(path);
-            return std::ranges::subrange(range.begin(), range.end()) |
-                   std::views::transform([](auto &kv) -> decltype(auto)
-                                         { return PTreeWrapper(kv.second); });
-        }
-
-        /**
-         * @brief Convert this to view.
-         *
-         * @tparam __self
-         * @param self
-         * @return auto
-         */
-        template <typename __self>
-        auto ToArrayView(this __self &&self)
-        {
-            return std::ranges::subrange(self.root.begin(), self.root.end()) |
-                   std::views::transform([](auto &kv) -> decltype(auto)
-                                         { return PTreeWrapper(kv.second); });
-        }
-
-        /**
-         * @brief Give a key, convert its view to a container and return it.
-         *
-         * @tparam __container
-         * @tparam __container::value_type
-         * @param self
-         * @param path
-         * @return __container
-         */
-        template <typename __container, typename __value_type = typename __container::value_type>
-        __container Container(this auto &&self, const pt::path &path)
-        {
-            return self.ArrayView(path) |
-                   std::views::transform([](const auto &v) -> double
-                                         { return v.template ToValue<__value_type>(); }) |
-                   std::ranges::to<__container>();
-        }
-
-        /**
-         * @brief Give a key, convert its view to a container and return it.
-         *
-         * @tparam __container
-         * @tparam __value_type
-         * @param self
-         * @param path
-         * @return __container<__value_type>
-         */
-        template <template <typename> typename __container, typename __value_type>
-        __container<__value_type> Container(this auto &&self, const pt::path &path)
-        {
-            return self.template Container<__container<__value_type>>(path);
-        }
-
-        /**
-         * @brief Convert this to container.
-         *
-         * @tparam __container
-         * @tparam __container::value_type
-         * @param self
-         * @return __container
-         */
-        template <typename __container, typename __value_type = typename __container::value_type>
-        __container ToContainer(this auto &&self)
-        {
-            return self.ToArrayView() |
-                   std::views::transform([](const auto &v) -> double
-                                         { return v.template ToValue<__value_type>(); }) |
-                   std::ranges::to<__container>();
-        }
-
-        /**
-         * @brief Convert this to container.
-         *
-         * @tparam __container
-         * @tparam __container::value_type
-         * @param self
-         * @return __container
-         */
-        template <template <typename> typename __container, typename __value_type>
-        __container<__value_type> ToContainer(this auto &&self)
-        {
-            return self.template ToContainer<__container<__value_type>>();
-        }
-
-        bool HasArray(const pt::path &path) const
-        {
-            return root.get_child_optional(path).has_value();
-        }
-
-        template <typename __value_type>
-        __value_type ToValue() const
-        {
-            return root.template get_value<__value_type>();
-        }
-
-        template <typename __value_type>
-        __value_type Value(const pt::path &path) const
-        {
-            return root.template get<__value_type>(path);
-        }
-
-        template <typename __value_type>
-        __value_type Value(const pt::path &path, const __value_type &default_value) const
-        {
-            return root.template get<__value_type>(path, default_value);
-        }
-
-        template <typename __value_type>
-        bool HasValue(const pt::path &path) const
-        {
-            return root.template get_optional<__value_type>(path).has_value();
-        }
-
-        std::string ToString(bool pretty = true) const
-        {
-            std::ostringstream oss;
-            pt::write_json(oss, root, pretty);
-            return oss.str();
-        }
-    };
-
-    template <typename __json, typename __parser, typename __target>
-    concept SupportParse = requires(__json json) {
-        { __parser::Parse(json) } -> std::convertible_to<__target>;
-    };
-
-    template <typename __json, typename __parser, typename __target>
-    concept SupportParseConfig = requires(__parser parser, __json json) {
-        { parser.ParseConfig(json) } -> std::convertible_to<__target>;
-    };
-
-    template <typename __parser>
-    concept GiveExpectJsonFormat = requires {
-        { __parser::Expect() } -> std::convertible_to<std::string>;
-    };
-
-    template <typename __json, typename __parser, typename __target>
-    concept SupportParseFromJson =
-        (SupportParse<__json, __parser, __target> ||
-         SupportParseConfig<__json, __parser, __target>) &&
-        GiveExpectJsonFormat<__parser>;
-}
-
-/**
- * @brief A wrapper of boost::property_tree::ptree
- *
- */
-using Json = detail::JsonIO::PTreeWrapper<detail::JsonIO::pt::ptree>;
-
-Json ReadJson(const detail::JsonIO::fs::path &fpath)
-{
-    if (!detail::JsonIO::fs::exists(fpath))
+    if (!std::filesystem::exists(fpath))
     {
         AGTB_THROW(std::invalid_argument, std::format("file `{}` not exists", fpath.string()));
     }
-
-    detail::JsonIO::pt::ptree root{};
-    detail::JsonIO::pt::read_json(fpath, root);
-
-    return Json(root);
+    boost::property_tree::read_json(fpath, root);
 }
 
-void WriteJson(const Json &json, const std::string &filename, const std::locale &loc = std::locale(), bool pretty = true)
+template <typename __ptree>
+void ReadJson(std::basic_istream<typename __ptree::key_type::value_type> &is, __ptree &root)
 {
-    detail::JsonIO::pt::write_json(filename, json.Unwrap(), loc, pretty);
+    boost::property_tree::read_json(is, root);
 }
 
-/**
- * @brief Specialize this struct to define how to parse a type from json. Defaultly using static method `Parse`.
- *
- * @tparam __target
- */
+template <typename __ptree>
+void PrintJson(const __ptree &json, const std::string &filename, const std::locale &loc = std::locale(), bool pretty = true)
+{
+    boost::property_tree::write_json(filename, json, loc, pretty);
+}
+
+template <typename __ptree>
+void PrintJson(const __ptree &json, std::basic_ostream<typename __ptree::key_type::value_type> &os = std::cout, bool pretty = true)
+{
+    boost::property_tree::write_json(os, json, pretty);
+}
+
+template <typename __ptree, typename __parser, typename __target>
+concept SupportParse = requires(__ptree json) {
+    { __parser::Parse(json) } -> std::convertible_to<__target>;
+};
+
+template <typename __ptree, typename __parser, typename __target>
+concept SupportParseConfig = requires(__parser parser, __ptree json) {
+    { parser.ParseConfig(json) } -> std::convertible_to<__target>;
+};
+
+template <typename __parser>
+concept GiveExpectJsonFormat = requires {
+    { __parser::Expect() } -> std::convertible_to<std::string>;
+};
+
+template <typename __ptree, typename __parser, typename __target>
+concept SupportParseFromJson =
+    (SupportParse<__ptree, __parser, __target> ||
+     SupportParseConfig<__ptree, __parser, __target>) &&
+    GiveExpectJsonFormat<__parser>;
+
 template <typename __target>
 struct JsonParser
 {
     AGTB_TEMPLATE_NOT_SPECIFIED();
 };
 
-/**
- * @brief Default parse. If parser doesn't has `Parse`, it construct a parser and call `ParseConfig`.
- *
- * @tparam __target
- * @param json
- * @return __target
- */
-template <typename __target>
-__target ParseJson(const Json &json)
-    requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
+template <typename __target, typename __ptree>
+__target ParseJson(const __ptree &json)
+    requires SupportParseFromJson<__ptree, JsonParser<__target>, __target>
 {
-    if constexpr (detail::JsonIO::SupportParse<Json, JsonParser<__target>, __target>)
+    if constexpr (SupportParse<__ptree, JsonParser<__target>, __target>)
     {
         return JsonParser<__target>::Parse(json);
     }
@@ -271,20 +76,11 @@ __target ParseJson(const Json &json)
     }
 }
 
-/**
- * @brief Parse using your config. You can add custom members to your `JsonParser` and custom behavior of `ParseConfig`. Pass a
- * object to this function, it will use `ParseConfig` to parse. If parser doesn't has `ParseConfig`, it calls `Parse`.
- *
- * @tparam __target
- * @param json
- * @param parser
- * @return __target
- */
-template <typename __target>
-__target ParseJson(const Json &json, const JsonParser<__target> &parser)
-    requires detail::JsonIO::SupportParseFromJson<Json, JsonParser<__target>, __target>
+template <typename __target, typename __ptree>
+__target ParseJson(const __ptree &json, const JsonParser<__target> &parser)
+    requires SupportParseFromJson<__ptree, JsonParser<__target>, __target>
 {
-    if constexpr (detail::JsonIO::SupportParseConfig<Json, JsonParser<__target>, __target>)
+    if constexpr (SupportParseConfig<__ptree, JsonParser<__target>, __target>)
     {
         return parser.ParseConfig(json);
     }
@@ -294,43 +90,25 @@ __target ParseJson(const Json &json, const JsonParser<__target> &parser)
     }
 }
 
-#define AGTB_THROW_IF_JSON_VALUE_KEY_INVALID(__json_obj, __key, __type) \
-    if (!__json_obj.HasValue<__type>(__key))                            \
-    {                                                                   \
-        AGTB_THROW(JsonKeyError, __key);                                \
-    }
-
-#define AGTB_THROW_IF_JSON_ARRAY_KEY_INVALID(__json_obj, __key) \
-    if (!__json_obj.HasArray(__key))                            \
-    {                                                           \
-        AGTB_THROW(JsonKeyError, __key);                        \
-    }
-
-#define AGTB_THROW_IF_JSON_MAP_KEY_INVALID(__json_obj, __key) \
-    if (!__json_obj.HasMap(__key))                            \
-    {                                                         \
-        AGTB_THROW(JsonKeyError, __key);                      \
-    }
-
 #define AGTB_THROW_IN_JSON_PARSER(__key) \
-    AGTB_THROW(JsonKeyError, std::format("Key: [{}] not found. We expect json like below:\n{}\n", __key, JsonParser ::Expect()))
+    AGTB_THROW(::AGTB::Errors::JsonKeyError, std::format("Key: [{}] not found. We expect json like below:\n{}\n", __key, JsonParser ::Expect()))
 
-#define AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(__json_obj, __key, __type) \
-    if (!__json_obj.HasValue<__type>(__key))                           \
-    {                                                                  \
-        AGTB_THROW_IN_JSON_PARSER(__key);                              \
+#define AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(__ptree, __key, __type)  \
+    if (!::AGTB::Container::PTree::HasValue<__type>(__ptree, __key)) \
+    {                                                                \
+        AGTB_THROW_IN_JSON_PARSER(__key);                            \
     }
 
-#define AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(__json_obj, __key) \
-    if (!__json_obj.HasArray(__key))                           \
-    {                                                          \
-        AGTB_THROW_IN_JSON_PARSER(__key);                      \
-    }
-
-#define AGTB_JSON_PARSER_VALIDATE_MAP_KEY(__json_obj, __key) \
-    if (!__json_obj.HasMap(__key))                           \
+#define AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(__ptree, __key)  \
+    if (!::AGTB::Container::PTree::HasArray(__ptree, __key)) \
     {                                                        \
         AGTB_THROW_IN_JSON_PARSER(__key);                    \
+    }
+
+#define AGTB_JSON_PARSER_VALIDATE_MAP_KEY(__ptree, __key)  \
+    if (!::AGTB::Container::PTree::HasMap(__ptree, __key)) \
+    {                                                      \
+        AGTB_THROW_IN_JSON_PARSER(__key);                  \
     }
 
 AGTB_IO_END

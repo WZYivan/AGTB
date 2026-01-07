@@ -3,20 +3,13 @@
 #include <AGTB/IO.hpp>
 #include <print>
 namespace aio = AGTB::IO;
+namespace aa = AGTB::Adjustment;
 
 int main()
 {
-    aio::Json json{aio::ReadJson("../dat/json/elevation_net.json")};
-
-    if (json.HasArray("edges"))
-    {
-        for (const auto &v : json.ArrayView("edges"))
-        {
-            std::println("name: {}", v.Value<std::string>("name"));
-        }
-    }
-
-    std::println("unit_p: {}", json.Value<double>("unit_p", -1));
-
-    std::println("json: {}", json.ToString());
+    AGTB::PropTree json{};
+    aio::ReadJson("../dat/json/traverse_adjust.json", json);
+    using target = aa::ElevationNet;
+    target net = aio::ParseJson<target>(json);
+    aa::PrintElevationNet(net);
 }

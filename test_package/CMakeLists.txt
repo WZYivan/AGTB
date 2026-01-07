@@ -22,9 +22,9 @@ endfunction()
 # create_new_executable(Geodesy_Solution_Gauss "src/Geodesy/Solution/Gauss.cpp")
 # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 
-# create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
-# create_new_executable(IO_JSON "src/IO/JSON.cpp")
-# create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
+create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
+create_new_executable(IO_JSON "src/IO/JSON.cpp")
+create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
 create_new_executable(IO_Adjustment_ElevationNet "src/IO/Adjustment/ElevationNet.cpp")
 
 

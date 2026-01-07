@@ -11,26 +11,28 @@ struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>>
 {
     using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>;
 
-    static Target Parse(const Json &json)
+    template <typename __ptree>
+    static Target Parse(const __ptree &json)
     {
         return DoParse(json, "distances", "angles", "azi_beg", "x_beg", "y_beg");
     }
 
+    template <typename __ptree>
+    Target ParseConfig(const __ptree &json) const
+    {
+        return DoParse(json, dis, ang, ab, x, y);
+    }
     JsonParser(std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
         : dis(distances), ang(angles), ab(azi_beg), x(x_beg), y(y_beg)
     {
     }
     ~JsonParser() = default;
 
-    Target ParseConfig(const Json &json) const
-    {
-        return DoParse(json, dis, ang, ab, x, y);
-    }
-
 private:
     std::string dis, ang, ab, x, y;
 
-    static Target DoParse(const Json &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
+    template <typename __ptree>
+    static Target DoParse(const __ptree &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
     {
         AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, distances);
         AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
@@ -39,14 +41,14 @@ private:
         AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, y_beg, double);
 
         return {
-            .distances = json.Container<std::vector<double>>(distances),
-            .angles = json.ArrayView(angles) |
+            .distances = PTree::ArrayTo<std::vector<double>>(json, distances),
+            .angles = PTree::ArrayView(json, angles) |
                       std::views::transform([](const auto &sub) -> Angle
-                                            { return Angle::FromSpan(sub.template ToContainer<std::vector<double>>()); }) |
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
                       std::ranges::to<std::vector<Angle>>(),
-            .azi_beg = Angle::FromSpan(json.Container<std::vector<double>>(azi_beg)),
-            .x_beg = json.Value<double>(x_beg),
-            .y_beg = json.Value<double>(y_beg)};
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, azi_beg)),
+            .x_beg = PTree::Value<double>(json, x_beg),
+            .y_beg = PTree::Value<double>(json, y_beg)};
     }
 
 public:

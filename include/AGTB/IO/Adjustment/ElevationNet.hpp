@@ -11,15 +11,16 @@ struct JsonParser<Adjustment::ElevationNet>
 {
     using Target = Adjustment::ElevationNet;
 
-    static Target Parse(const Json &json)
+    template <typename __ptree>
+    static Target Parse(const __ptree &json)
     {
         {
             AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "vertices");
             AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "edges");
-            const auto &vert = (*json.ArrayView("vertices").begin());
+            const auto &vert = (*PTree::ArrayView(json, "vertices").begin());
             AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "name", std::string);
             AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "elev", double);
-            const auto &edge = (*json.ArrayView("edges").begin());
+            const auto &edge = (*PTree::ArrayView(json, "edges").begin());
             AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "name", std::string);
             AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "from", std::string);
             AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "to", std::string);
@@ -28,21 +29,21 @@ struct JsonParser<Adjustment::ElevationNet>
         }
 
         Target target{};
-        for (const auto &vert : json.ArrayView("vertices"))
+        for (const auto &vert : PTree::ArrayView(json, "vertices"))
         {
-            auto name = vert.Value<std::string>("name");
-            auto elev = vert.Value<double>("elev");
+            auto name = PTree::Value<std::string>(vert, "name");
+            auto elev = PTree::Value<double>(vert, "elev");
             target.AddVertex(name, {elev, true});
         }
 
         auto edge_adder = target.AddEdge(true);
-        for (const auto &edge : json.ArrayView("edges"))
+        for (const auto &edge : PTree::ArrayView(json, "edges"))
         {
-            auto name = edge.Value<std::string>("name");
-            auto from = edge.Value<std::string>("from");
-            auto to = edge.Value<std::string>("to");
-            auto dif = edge.Value<double>("dif");
-            auto len = edge.Value<double>("len");
+            auto name = PTree::Value<std::string>(edge, "name");
+            auto from = PTree::Value<std::string>(edge, "from");
+            auto to = PTree::Value<std::string>(edge, "to");
+            auto dif = PTree::Value<double>(edge, "dif");
+            auto len = PTree::Value<double>(edge, "len");
             edge_adder(from, to, name, {dif, len});
         }
 

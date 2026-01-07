@@ -7,32 +7,34 @@
 
 AGTB_BEGIN
 
-namespace detail
-{
-    template <typename T>
-    struct Unqualified
-    {
-        using Type = std::remove_cvref_t<T>;
-    };
-}
-
-/**
- * @brief Type with static member Invoke
- *
- * @tparam T constrained type
- * @tparam RT return type of Invoke
- * @tparam PT parameter type pack of Invoke
- */
-// template <typename T, typename RT, typename... PT>
-// concept InvokerConcept = requires(PT... p) {
-//     { T::Invoke(p...) } -> std::convertible_to<RT>;
-// };
-
 template <typename T, typename... Tp>
 concept IsOneOf = (std::is_same_v<T, Tp> || ...);
 
 template <typename T>
-using UnqualifiedType = detail::Unqualified<T>::Type;
+struct Unqualified
+{
+    using Type = std::remove_cvref_t<T>;
+};
+
+template <typename T>
+using UnqualifiedType = Unqualified<T>::Type;
+
+template <typename __to_be_qualified, typename __like_this>
+struct ConstLike
+{
+    using Type = std::conditional_t<
+        std::is_const_v<__like_this>,
+        std::add_const_t<__to_be_qualified>,
+        __to_be_qualified>;
+};
+
+template <typename __to_be_qualified, typename __like_this>
+using ConstLikeType = ConstLike<__to_be_qualified, __like_this>::Type;
+
+template <typename __container>
+concept StdContainerLike = requires {
+    typename __container::value_type;
+};
 
 AGTB_END
 

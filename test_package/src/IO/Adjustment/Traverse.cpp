@@ -1,19 +1,20 @@
-#include <AGTB/IO/JSON.hpp>
-#include <AGTB/IO/Adjustment/Traverse.hpp>
+#include <AGTB/IO.hpp>
 #include <print>
 #include <map>
 
 namespace aio = AGTB::IO;
 namespace aa = AGTB::Adjustment;
+namespace ac = AGTB::Container;
 
 int main()
 {
-    aio::Json json = aio::ReadJson("../dat/json/traverse_closed_loop_alias.json");
+    AGTB::PropTree json{};
+    aio::ReadJson("../dat/json/traverse_closed_loop_alias.json", json);
     using target = aa::TraverseParam<aa::RouteType::ClosedLoop>;
     std::map<std::string, target> params;
     aio::JsonParser<target> parser("d", "a", "ab", "x", "y");
 
-    for (const auto &[key, sub_json] : json.ToMapView())
+    for (const auto &[key, sub_json] : AGTB::PTree::MapView(json))
     {
         params.insert_or_assign(key, aio::ParseJson(sub_json, parser));
     }

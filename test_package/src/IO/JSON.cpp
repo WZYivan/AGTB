@@ -2,35 +2,27 @@
 
 #include <AGTB/IO.hpp>
 #include <print>
+
 namespace aio = AGTB::IO;
+namespace ac = AGTB::Container;
 
 int main()
 {
+    ac::PropTree ptree;
+    aio::ReadJson("../dat/json/traverse_adjust.json", ptree);
+
+    AGTB_THROW_IF_PTREE_VALUE_KEY_INVALID(ptree, "x_beg", double);
+    std::println("x_beg = {}", ac::PTree::Value<double>(ptree, "x_beg"));
+
+    assert(ac::PTree::HasArray(ptree, "distances"));
+
+    for (const auto &v : ac::PTree::ArrayView(ptree, "distances"))
     {
-        aio::Json json{aio::ReadJson("../dat/json/elevation_net.json")};
-
-        if (json.HasArray("edges"))
-        {
-            for (const auto &v : json.ArrayView("edges"))
-            {
-                std::println("name: {}", v.Value<std::string>("name"));
-            }
-        }
-
-        std::println("unit_p: {}", json.Value<double>("unit_p", -1));
-
-        std::println("json: {}", json.ToString());
+        std::println("v = {}", ac::PTree::Value<double>(v));
     }
 
+    for (const auto &v : ac::PTree::ArrayTo<std::vector<double>>(ptree, "distances"))
     {
-        aio::Json json{aio::ReadJson("../dat/json/traverse_adjust.json")};
-
-        if (json.HasArray("distances"))
-        {
-            for (const auto &v : json.ArrayView("distances"))
-            {
-                std::println("v = {}", v.ToValue<double>());
-            }
-        }
+        std::println("v = {}", v);
     }
 }
