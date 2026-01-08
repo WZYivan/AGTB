@@ -36,6 +36,17 @@ concept StdContainerLike = requires {
     typename __container::value_type;
 };
 
+template <typename T>
+concept HasEqual = requires(T l, T r) {
+    { l == r } -> std::same_as<bool>;
+};
+
+template <typename T>
+concept HasGtAndLt = requires(T l, T r) {
+    { l > r } -> std::same_as<bool>;
+    { l < r } -> std::same_as<bool>;
+};
+
 //
 // Pascal Casing Begin
 //

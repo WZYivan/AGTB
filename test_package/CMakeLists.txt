@@ -10,7 +10,7 @@ function(create_new_executable target_name source_file)
     target_link_libraries(${target_name} agtb::agtb)
 endfunction()
 
-# create_new_executable(Draft "src/Draft.cpp")
+create_new_executable(Draft "src/Draft.cpp")
 
 # create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")

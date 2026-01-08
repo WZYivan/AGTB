@@ -1,7 +1,7 @@
 #define AGTB_ENABLE_DEBUG
 // #define AGTB_ENABLE_EXP
 
-#include <AGTB/IO.hpp>
+#include <AGTB/AGTB.hpp>
 #include <print>
 
 namespace aio = AGTB::IO;
