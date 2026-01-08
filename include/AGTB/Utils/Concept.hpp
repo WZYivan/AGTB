@@ -154,22 +154,33 @@ concept StdContainerLike = requires {
     AGTB_EXTRACT_TYPE_NAME_END
 
 //
-// Tool Kit Begin
+// Tool Chain Begin
 //
 
-#define AGTB_DEF_PASCAL_AND_SNAKE_CASING_COMPATIBLE_TYPE_NAME_EXTRACT_AND_CONSTRAINTS_TOOL_KIT(__pascal_name, __snake_name) \
-    AGTB_DEF_REQUIRE_PASCAL_CASING_TYPE_NAME(__pascal_name);                                                                \
-    AGTB_DEF_REQUIRE_SNAKE_CASING_TYPE_NAME(__snake_name);                                                                  \
-    AGTB_DEF_REQUIRE_HAS_TYPE_NAME(__pascal_name, __snake_name);                                                            \
-    AGTB_DEF_EXTARCT(__pascal_name, __snake_name);                                                                          \
+/**
+ * @brief `PSCTM` means `Pascal and Snake Casing Typename Management` which is designed to manage those typenames
+ * with same meaning but different casing style. For example, `ValueType` and `value_type` are in same
+ * meaning but different casing style. Such marcro define a toolchain consists of struct , concept and
+ * alias in namespace `has_snake_casing_type_name`, `HasPascalCasingTypeName`, `HasTypeName`, `Extract`
+ * and `ExtractTypeName`. To use it, give it `PascalName` and `snake_name`, and use `HasTypeName::PascalName<T>`
+ * to constraints that `T` must have `PascalName` or `snake_name` and use `ExtractTypeName::PascalName<T>`
+ * to extract `PascalName` or `snake_name` (default to be `PascalName`) of `T`.
+ *
+ */
+#define AGTB_DEF_PSCTM_TOOLCHAIN(__pascal_name, __snake_name)    \
+    AGTB_DEF_REQUIRE_PASCAL_CASING_TYPE_NAME(__pascal_name);     \
+    AGTB_DEF_REQUIRE_SNAKE_CASING_TYPE_NAME(__snake_name);       \
+    AGTB_DEF_REQUIRE_HAS_TYPE_NAME(__pascal_name, __snake_name); \
+    AGTB_DEF_EXTARCT(__pascal_name, __snake_name);               \
     AGTB_DEF_EXTRACT_TYPE_NAME(__pascal_name);
 
 //
 // Macro Define End
 //
 
-AGTB_DEF_PASCAL_AND_SNAKE_CASING_COMPATIBLE_TYPE_NAME_EXTRACT_AND_CONSTRAINTS_TOOL_KIT(ValueType, value_type);
-AGTB_DEF_PASCAL_AND_SNAKE_CASING_COMPATIBLE_TYPE_NAME_EXTRACT_AND_CONSTRAINTS_TOOL_KIT(KeyType, key_type);
+AGTB_DEF_PSCTM_TOOLCHAIN(ValueType, value_type);
+AGTB_DEF_PSCTM_TOOLCHAIN(KeyType, key_type);
+AGTB_DEF_PSCTM_TOOLCHAIN(SizeType, size_type);
 
 AGTB_END
 
