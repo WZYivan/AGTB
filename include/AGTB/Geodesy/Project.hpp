@@ -33,7 +33,7 @@ struct Projector<GeoCS::Geodetic, ProjCS::GaussKruger>
     constexpr static GeoCS geo_cs = GeoCS::Geodetic;
     constexpr static ProjCS proj_cs = ProjCS::GaussKruger;
 
-    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit>
+    template <Ellipsoids __ellipsoid, GaussZoneInterval __zone_interval, Units __unit = Units::Radian>
     struct Config
     {
         constexpr static Ellipsoids ellipsoid = __ellipsoid;

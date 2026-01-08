@@ -77,7 +77,26 @@ struct PTree
                                      { return kv.second; });
     }
 
-    template <StdContainerLike __container, typename __ptree>
+#if (AGTB_EXP) || (true)
+    template <HasTypeName::ValueType __container, typename __ptree>
+    static __container ArrayTo(const __ptree &ptree)
+    {
+        return ArrayView(ptree) |
+               std::views::transform([](const auto &sub)
+                                     { return Value<ExtractTypeName::ValueType<__container>>(sub); }) |
+               std::ranges::to<__container>();
+    }
+
+    template <HasTypeName::ValueType __container, typename __ptree>
+    static __container ArrayTo(const __ptree &ptree, const PropPath &path)
+    {
+        return ArrayView(ptree, path) |
+               std::views::transform([](const auto &sub)
+                                     { return Value<ExtractTypeName::ValueType<__container>>(sub); }) |
+               std::ranges::to<__container>();
+    }
+#else
+    template <typename __container, typename __ptree>
     static __container ArrayTo(const __ptree &ptree)
     {
         return ArrayView(ptree) |
@@ -86,7 +105,7 @@ struct PTree
                std::ranges::to<__container>();
     }
 
-    template <StdContainerLike __container, typename __ptree>
+    template <typename __container, typename __ptree>
     static __container ArrayTo(const __ptree &ptree, const PropPath &path)
     {
         return ArrayView(ptree, path) |
@@ -94,6 +113,7 @@ struct PTree
                                      { return Value<typename __container::value_type>(sub); }) |
                std::ranges::to<__container>();
     }
+#endif
 };
 
 #define AGTB_THROW_IF_PTREE_VALUE_KEY_INVALID(__ptree, __key, __type) \

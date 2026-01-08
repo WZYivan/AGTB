@@ -1,15 +1,20 @@
 #define AGTB_ENABLE_DEBUG
 
-#include <AGTB/IO.hpp>
-#include <print>
-namespace aio = AGTB::IO;
-namespace aa = AGTB::Adjustment;
+#include <AGTB/Utils/Concept.hpp>
+
+struct Container
+{
+    using value_type = int;
+    // using ValueType = double;
+};
+
+template <typename T1, typename T2>
+void SameAs()
+{
+    static_assert(std::same_as<T1, T2>);
+}
 
 int main()
 {
-    AGTB::PropTree json{};
-    aio::ReadJson("../dat/json/traverse_adjust.json", json);
-    using target = aa::ElevationNet;
-    target net = aio::ParseJson<target>(json);
-    aa::PrintElevationNet(net);
+    SameAs<int, AGTB::ExtractTypeName::ValueType<Container>>();
 }

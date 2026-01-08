@@ -49,7 +49,7 @@ struct Solver<Solutions::Gauss>
 {
     constexpr static Solutions solve_method = Solutions::Gauss;
 
-    template <Ellipsoids __ellipsoid, Units __unit>
+    template <Ellipsoids __ellipsoid, Units __unit = Units::Radian>
     using Config = typename Solution::Config<__ellipsoid, __unit>;
 
     template <Units __unit>
@@ -86,7 +86,7 @@ struct Solver<Solutions::Bessel>
 {
     constexpr static Solutions solve_method = Solutions::Bessel;
 
-    template <Ellipsoids __ellipsoid, Units __unit>
+    template <Ellipsoids __ellipsoid, Units __unit = Units::Radian>
     using Config = typename Solution::Config<__ellipsoid, __unit>;
 
     template <Units __unit>

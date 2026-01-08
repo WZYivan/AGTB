@@ -1,4 +1,5 @@
 #define AGTB_ENABLE_DEBUG
+// #define AGTB_ENABLE_EXP
 
 #include <AGTB/IO.hpp>
 #include <print>
@@ -24,5 +25,10 @@ int main()
     for (const auto &v : ac::PTree::ArrayTo<std::vector<double>>(ptree, "distances"))
     {
         std::println("v = {}", v);
+    }
+
+    for (const auto &[k, v] : ac::PTree::MapView(ptree))
+    {
+        std::println("key = {}", k);
     }
 }

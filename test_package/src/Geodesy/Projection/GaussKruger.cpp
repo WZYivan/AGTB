@@ -9,7 +9,7 @@ int main()
     using au::Angles::Angle;
 
     using projector = ag::Projector<ag::GeoCS::Geodetic, ag::ProjCS::GaussKruger>;
-    using config = projector::Config<ag::Ellipsoids::CGCS2000, ag::GaussZoneInterval::D6, ag::Units::Radian>;
+    using config = projector::Config<ag::Ellipsoids::CGCS2000, ag::GaussZoneInterval::D6>;
     using GeoCoord = config::GeoCoord;
     using ProjCoord = config::ProjCoord;
 

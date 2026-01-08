@@ -17,7 +17,7 @@ AGTB is a toolkit designed for Geomatics Engineering students, primarily contain
 using Matrix = Eigen::MatrixXd;
 ```
 - `Boost` : 1.83.0
-- `C++23` : g++14
+- `C++23` : g++ 14.2.0
 
 All third-party libraries require only their header files. `AGTB` uses Conan as a package manager during development and testing, making it easy to import `AGTB` using `conan`. A `conanfile.py` is provided for development.
 

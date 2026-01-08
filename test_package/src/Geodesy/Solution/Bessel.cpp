@@ -7,7 +7,7 @@ namespace sb = ag::Solution::Bessel;
 int main()
 {
     using solver = ag::Solver<ag::Solutions::Bessel>;
-    using config = solver::Config<ag::Ellipsoids::Krasovski, ag::Units::Radian>;
+    using config = solver::Config<ag::Ellipsoids::Krasovski>;
 
     config::Lat B1(47, 46, 52.647'0);
     config::Lon L1(35, 49, 36.330'0);

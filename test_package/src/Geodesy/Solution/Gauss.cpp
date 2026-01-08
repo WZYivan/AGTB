@@ -7,7 +7,7 @@ int main()
 {
 
     using solver = ag::Solver<ag::Solutions::Gauss>;
-    using config = solver::Config<ag::Ellipsoids::CGCS2000, ag::Units::Radian>;
+    using config = solver::Config<ag::Ellipsoids::CGCS2000>;
 
     ag::Latitude<>
         B1(47, 46, 52.647'0),
