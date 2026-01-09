@@ -27,3 +27,9 @@
 #else
 #define AGTB_EXP false
 #endif
+
+#ifdef AGTB_ENABLE_APP
+#define AGTB_APP true
+#else
+#define AGTB_APP false
+#endif
