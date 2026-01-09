@@ -21,7 +21,8 @@ static int Main(int argc, char **argv)
         "distance-place,D", po::value<int>()->default_value(3), "Place of distance")(
         "angle-place,A", po::value<int>()->default_value(0), "Place of angle")(
         "route-type,R", po::value<std::string>(),
-        "Route type of param. \'cl\' for \'ClosedLoop\', \'cc\' for \'ClosedConnecting\'.");
+        "Route type of param. \'cl\' for \'ClosedLoop\', \'cc\' for \'ClosedConnecting\'.")(
+        "multi-param,M", "Input file contains multi param.");
 
     po::positional_options_description positional;
     positional.add("input", -1);
@@ -44,6 +45,17 @@ static int Main(int argc, char **argv)
     Adjustment::TraverseAdjustResult result = Adjustment::Adjust(param, 3, 0); \
     std::println("{}", Adjustment::AdjustmentTable(param, result));
 
+#define AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(__rt, __fname)           \
+    PropTree json{};                                                               \
+    IO::ReadJson(__fname, json);                                                   \
+    using Target = Adjustment::TraverseParam<__rt>;                                \
+    for (const auto &[k, sub] : PTree::MapView(json))                              \
+    {                                                                              \
+        Target param = IO::ParseJson<Target>(sub);                                 \
+        Adjustment::TraverseAdjustResult result = Adjustment::Adjust(param, 3, 0); \
+        std::println("{}:\n{}", k, Adjustment::AdjustmentTable(param, result));    \
+    }
+
     if (vm.count("input"))
     {
         if (!vm.count("route-type"))
@@ -56,12 +68,34 @@ static int Main(int argc, char **argv)
 
         if (route_type == "cl")
         {
-            AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedLoop, fname);
+            if (!vm.count("multi-param"))
+            {
+#if (AGTB_DEBUG)
+                std::println("{}", "into single");
+#endif
+                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedLoop, fname);
+            }
+            else
+            {
+#if (AGTB_DEBUG)
+                std::println("{}", "into multi");
+#endif
+                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(Adjustment::RouteType::ClosedLoop, fname);
+            }
             return EXIT_SUCCESS;
         }
         else if (route_type == "cc")
         {
-            // AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedConnecting, fname);
+#if (false) || (true)
+            if (!vm.count("multi-param"))
+            {
+                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedConnecting, fname);
+            }
+            else
+            {
+                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(Adjustment::RouteType::ClosedConnecting, fname);
+            }
+#endif
             return EXIT_SUCCESS;
         }
         else
@@ -71,8 +105,8 @@ static int Main(int argc, char **argv)
         }
     }
 
-    std::println("{}", "Get no options");
-    return EXIT_FAILURE;
+    std::println("{}", "Get no options, you can use -H for help");
+    return EXIT_SUCCESS;
 }
 
 #define AGTB_CONSOLE_APP_TRAVERSE AGTB_IMPORT_CONSOLE_APP(Traverse)

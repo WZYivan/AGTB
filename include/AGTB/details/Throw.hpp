@@ -17,14 +17,14 @@ namespace macros
      */
     std::string error_msg(const std::string_view msg, const std::source_location location)
     {
-        return std::format("\n[ AGTB_THROW ]\n[ LOCATION ]\n< file >\n{}\n< position >\n({}:{})\n< function >\n{}\n{}\n",
+        return std::format("\n[ AGTB_THROW ]\n[ LOCATION ]\n< file >\n{}\n< position >\n({}:{})\n< function >\n{}\n[ __MESSAGE__ ]\n{}\n",
                            location.file_name(),
                            location.line(),
                            location.column(),
                            location.function_name(),
                            msg);
     }
-
+#define AGTB_EXCEPTION_MESSAGE_SPLIT_SEP "[ __MESSAGE__ ]"
     /**
      * @brief Noreturn throw exception
      *
