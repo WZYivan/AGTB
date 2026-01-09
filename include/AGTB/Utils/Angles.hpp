@@ -263,6 +263,16 @@ namespace Angles
         }
 
         /**
+         * @brief To seconds(double)
+         *
+         * @return constexpr double
+         */
+        constexpr inline double AllSeconds() const noexcept
+        {
+            return seconds;
+        }
+
+        /**
          * @brief Same as Utils::ToDMS
          *
          * @return std::tuple<double, double, double>

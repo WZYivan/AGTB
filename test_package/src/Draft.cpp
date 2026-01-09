@@ -1,13 +1,6 @@
-#define AGTB_ENABLE_DEBUG
-
-#include <AGTB/AGTB.hpp>
-
-struct Container
-{
-    using value_type = int;
-};
+#include <stdio.h>
 
 int main()
 {
-    AGTB::Assert::SameAs<int, AGTB::ExtractTypeName::ValueType<Container>>();
+    printf("%s", "Hello World");
 }

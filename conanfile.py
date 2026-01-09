@@ -9,7 +9,7 @@ class agtbRecipe(ConanFile):
     # Optional metadata
     license = "MIT"
     author = "lucas wang 2270060975@qq.com"
-    url = "<Package recipe repository url here, for issues about the package>"
+    url = "https://github.com/WZYivan/AGTB"
     description = "A toolbox for geomatics"
     topics = ("Geomatics Science", "Photogrammetry", "Geodesy", "Adjustment", "Algorithm")
 
@@ -54,4 +54,3 @@ class agtbRecipe(ConanFile):
         self.requires("eigen/5.0.0")
         self.requires("gcem/1.18.0")
         self.requires("boost/1.83.0")
-

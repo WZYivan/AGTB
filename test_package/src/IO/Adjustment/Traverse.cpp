@@ -1,4 +1,5 @@
 #include <AGTB/IO.hpp>
+#include <AGTB/Adjustment.hpp>
 #include <print>
 #include <map>
 
@@ -19,8 +20,10 @@ int main()
         params.insert_or_assign(key, aio::ParseJson(sub_json, parser));
     }
 
+    std::ofstream ofs{"RESULT.md"};
+
     for (const auto &[k, p] : params)
     {
-        std::println("[{}]\n{}\n", k, p.ToString());
+        std::println(ofs, "# {}\n{}\n", k, p.ToString());
     }
 }

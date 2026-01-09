@@ -88,9 +88,9 @@ bool RefineCorrections<Angle>(std::vector<Angle> &vec, Angle dif, bool dif_sign,
     dif = Angle(TakePlace(dif.Seconds(), place));
     unit = dif_sign ? -unit : unit;
     int count = dif / unit;
-
-    // std::println("dif = {}, unit = {}, count = {}", dif.ToString(), unit.ToString(), count);
-
+#if (AGTB_DEBUG)
+    std::println("dif = {}, unit = {}, count = {}", dif.ToString(), unit.ToString(), count);
+#endif
     while (count-- > 0)
     {
         size_t idx = 0;
