@@ -205,11 +205,11 @@ namespace Elevation
         return var;
     }
 
-    void PrintElevationNet(const ElevationNet &net)
+    void PrintElevationNet(const ElevationNet &net, std::ostream &os = std::cout)
     {
         for (const auto n : net.Edges().Names())
         {
-            std::println("{} : {}, {} => dif = {}, len = {}",
+            std::println(os, "{} : {}, {} => dif = {}, len = {}",
                          n,
                          net.SourceName(n),
                          net.TargetName(n),
@@ -219,7 +219,7 @@ namespace Elevation
 
         for (const auto n : net.Vertices().Names())
         {
-            std::println("{} : elev = {}, {} control, {} init",
+            std::println(os, "{} : elev = {}, {} control, {} init",
                          n,
                          net.Vertex(n).elev,
                          net.Vertex(n).is_control ? "is" : "not",

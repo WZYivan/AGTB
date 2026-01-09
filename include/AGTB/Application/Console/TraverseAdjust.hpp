@@ -1,5 +1,5 @@
-#ifndef __AGTB_APP_CONSOLE_TRAVERSE_HPP__
-#define __AGTB_APP_CONSOLE_TRAVERSE_HPP__
+#ifndef __AGTB_APP_CONSOLE_TRAVERSE_ADJUST_HPP__
+#define __AGTB_APP_CONSOLE_TRAVERSE_ADJUST_HPP__
 
 #include "Base.hpp"
 
@@ -10,7 +10,7 @@
 #include "../../IO/Adjustment/Traverse.hpp"
 #include "../../Container/PropertyTree.hpp"
 
-AGTB_DEF_CONSOLE_APP_BEGIN(Traverse)
+AGTB_DEF_CONSOLE_APP_BEGIN(TraverseAdjust)
 
 static int Main(int argc, char **argv)
 {
@@ -21,7 +21,7 @@ static int Main(int argc, char **argv)
         "distance-place,D", po::value<int>()->default_value(3), "Place of distance")(
         "angle-place,A", po::value<int>()->default_value(0), "Place of angle")(
         "route-type,R", po::value<std::string>(),
-        "Route type of param. \'cl\' for \'ClosedLoop\', \'cc\' for \'ClosedConnecting\'.")(
+        "Route type of param. \'cl\' for \'ClosedLoop\', \'cc\' for \'ClosedConnecting\', \'c\' for \'Connecting\',\'n\' for \'Net\'.")(
         "multi-param,M", "Input file contains multi param.");
 
     po::positional_options_description positional;
@@ -37,7 +37,7 @@ static int Main(int argc, char **argv)
         return EXIT_SUCCESS;
     }
 
-#define AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(__rt, __fname)             \
+#define AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_SINGAL(__rt, __fname)      \
     PropTree json{};                                                           \
     IO::ReadJson(__fname, json);                                               \
     using Target = Adjustment::TraverseParam<__rt>;                            \
@@ -56,11 +56,21 @@ static int Main(int argc, char **argv)
         std::println("{}:\n{}", k, Adjustment::AdjustmentTable(param, result));    \
     }
 
+#define AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(__vm, __M, __rt, __fname) \
+    if (!__vm.count(__M))                                                     \
+    {                                                                         \
+        AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_SINGAL(__rt, __fname);    \
+    }                                                                         \
+    else                                                                      \
+    {                                                                         \
+        AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(__rt, __fname);     \
+    }
+
     if (vm.count("input"))
     {
         if (!vm.count("route-type"))
         {
-            std::println("{} is necessary", "-R");
+            std::println("{} is necessary", "-R or --route-type");
             return EXIT_FAILURE;
         }
         std::string fname{vm["input"].as<std::string>()};
@@ -68,34 +78,12 @@ static int Main(int argc, char **argv)
 
         if (route_type == "cl")
         {
-            if (!vm.count("multi-param"))
-            {
-#if (AGTB_DEBUG)
-                std::println("{}", "into single");
-#endif
-                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedLoop, fname);
-            }
-            else
-            {
-#if (AGTB_DEBUG)
-                std::println("{}", "into multi");
-#endif
-                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(Adjustment::RouteType::ClosedLoop, fname);
-            }
+            AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(vm, "multi-param", Adjustment::RouteType::ClosedLoop, fname);
             return EXIT_SUCCESS;
         }
         else if (route_type == "cc")
         {
-#if (false) || (true)
-            if (!vm.count("multi-param"))
-            {
-                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(Adjustment::RouteType::ClosedConnecting, fname);
-            }
-            else
-            {
-                AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE_MULTI(Adjustment::RouteType::ClosedConnecting, fname);
-            }
-#endif
+            AGTB_APP_CONSOLE_TRAVERSE_HANDLE_ROUTE_TYPE(vm, "multi-param", Adjustment::RouteType::ClosedConnecting, fname);
             return EXIT_SUCCESS;
         }
         else
@@ -109,12 +97,12 @@ static int Main(int argc, char **argv)
     return EXIT_SUCCESS;
 }
 
-#define AGTB_CONSOLE_APP_TRAVERSE AGTB_IMPORT_CONSOLE_APP(Traverse)
-
 AGTB_DEF_CONSOLE_APP_END()
 
+#define AGTB_CONSOLE_APP_TRAVERSE_ADJUST AGTB_IMPORT_CONSOLE_APP(TraverseAdjust)
+
 #else
-#define AGTB_CONSOLE_APP_TRAVERSE void(0)
+#define AGTB_CONSOLE_APP_TRAVERSE_ADJUST void(0)
 #endif
 
 #endif
