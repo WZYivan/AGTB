@@ -10,7 +10,7 @@ function(create_new_executable target_name source_file)
     target_link_libraries(${target_name} agtb::agtb)
 endfunction()
 
-create_new_executable(Draft "src/Draft.cpp")
+# create_new_executable(Draft "src/Draft.cpp")
 
 # create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
@@ -23,9 +23,9 @@ create_new_executable(Draft "src/Draft.cpp")
 # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 
 # create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
-# create_new_executable(IO_JSON "src/IO/JSON.cpp")
-# create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
-# create_new_executable(IO_Adjustment_ElevationNet "src/IO/Adjustment/ElevationNet.cpp")
+create_new_executable(IO_JSON "src/IO/JSON.cpp")
+create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
+create_new_executable(IO_Adjustment_ElevationNet "src/IO/Adjustment/ElevationNet.cpp")
 
 
 # create_new_executable(Photogrammetry_SpaceResection "src/Photogrammetry/SpaceResection.cpp")

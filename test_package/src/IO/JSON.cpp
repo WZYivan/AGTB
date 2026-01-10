@@ -12,7 +12,7 @@ int main()
     ac::PropTree ptree;
     aio::ReadJson("../dat/json/traverse_adjust.json", ptree);
 
-    AGTB_THROW_IF_PTREE_VALUE_KEY_INVALID(ptree, "x_beg", double);
+    ac::PTree::ValidateValue<double>(ptree, "x_beg");
     std::println("x_beg = {}", ac::PTree::Value<double>(ptree, "x_beg"));
 
     assert(ac::PTree::HasArray(ptree, "distances"));

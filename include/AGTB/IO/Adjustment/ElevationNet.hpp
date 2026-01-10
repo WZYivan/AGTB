@@ -15,17 +15,17 @@ struct JsonParser<Adjustment::ElevationNet>
     static Target Parse(const __ptree &json)
     {
         {
-            AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "vertices");
-            AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "edges");
+            PTree::ValidateArray(json, "vertices");
+            PTree::ValidateArray(json, "edges");
             const auto &vert = (*PTree::ArrayView(json, "vertices").begin());
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "name", std::string);
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(vert, "elev", double);
+            PTree::ValidateValue<std::string>(vert, "name");
+            PTree::ValidateValue<double>(vert, "elev");
             const auto &edge = (*PTree::ArrayView(json, "edges").begin());
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "name", std::string);
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "from", std::string);
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "to", std::string);
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "dif", double);
-            AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(edge, "len", double);
+            PTree::ValidateValue<std::string>(edge, "name");
+            PTree::ValidateValue<std::string>(edge, "from");
+            PTree::ValidateValue<std::string>(edge, "to");
+            PTree::ValidateValue<double>(edge, "dif");
+            PTree::ValidateValue<double>(edge, "len");
         }
 
         Target target{};
@@ -99,6 +99,67 @@ struct JsonParser<Adjustment::ElevationNet>
     ]
 }
         )";
+    }
+
+    JsonParser() = default;
+    ~JsonParser() = default;
+
+    auto DefAlias(const std::string &key)
+    {
+        return PTree::DefAlias(map, key);
+    }
+
+private:
+    PropPathAliasMap map;
+
+public:
+    template <typename __ptree>
+    Target ParseConfig(const __ptree &json) const
+    {
+#if (AGTB_DEBUG)
+        for (const auto &[k, v] : map)
+        {
+            std::println("key = {}", k);
+            for (const auto &alias : v)
+            {
+                std::println("\talias = {}", alias);
+            }
+        }
+#endif
+        {
+            PTree::ValidateArray(json, "vertices", map);
+            PTree::ValidateArray(json, "edges", map);
+            const auto &vert = (*PTree::ArrayView(json, "vertices", map).begin());
+            PTree::ValidateValue<std::string>(vert, "name", map);
+            PTree::ValidateValue<double>(vert, "elev", map);
+            const auto &edge = (*PTree::ArrayView(json, "edges", map).begin());
+            PTree::ValidateValue<std::string>(edge, "name", map);
+            PTree::ValidateValue<std::string>(edge, "from", map);
+            PTree::ValidateValue<std::string>(edge, "to", map);
+            PTree::ValidateValue<double>(edge, "dif", map);
+            PTree::ValidateValue<double>(edge, "len", map);
+        }
+
+        Target target{};
+        for (const auto &vert : PTree::ArrayView(json, "vertices", map))
+        {
+            auto name = PTree::Value<std::string>(vert, "name", map);
+            auto elev = PTree::Value<double>(vert, "elev", map);
+            target.AddVertex(name, {elev, true});
+        }
+
+        auto edge_adder = target.AddEdge(true);
+        for (const auto &edge : PTree::ArrayView(json, "edges", map))
+        {
+            auto name = PTree::Value<std::string>(edge, "name", map);
+            auto from = PTree::Value<std::string>(edge, "from", map);
+            auto to = PTree::Value<std::string>(edge, "to", map);
+            auto dif = PTree::Value<double>(edge, "dif", map);
+            auto len = PTree::Value<double>(edge, "len", map);
+            edge_adder(from, to, name, {dif, len});
+        }
+
+        return target;
     }
 };
 

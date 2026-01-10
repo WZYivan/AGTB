@@ -34,11 +34,11 @@ private:
     template <typename __ptree>
     static Target DoParse(const __ptree &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
     {
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, distances);
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, azi_beg);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, x_beg, double);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, y_beg, double);
+        PTree::ValidateArray(json, distances);
+        PTree::ValidateArray(json, angles);
+        PTree::ValidateArray(json, azi_beg);
+        PTree::ValidateValue<double>(json, x_beg);
+        PTree::ValidateValue<double>(json, y_beg);
 
         return {
             .distances = PTree::ArrayTo<std::vector<double>>(json, distances),
@@ -77,16 +77,21 @@ struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnect
     using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnecting>;
 
     template <typename __ptree>
+    static void Validate(const __ptree &json)
+    {
+    }
+
+    template <typename __ptree>
     static Target Parse(const __ptree &json)
     {
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "distances");
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "angles");
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "azi_beg");
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, "azi_end");
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, "x_beg", double);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, "y_beg", double);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, "x_end", double);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, "y_end", double);
+        PTree::ValidateArray(json, "distances");
+        PTree::ValidateArray(json, "angles");
+        PTree::ValidateArray(json, "azi_beg");
+        PTree::ValidateArray(json, "azi_end");
+        PTree::ValidateValue<double>(json, "x_beg");
+        PTree::ValidateValue<double>(json, "y_beg");
+        PTree::ValidateValue<double>(json, "x_end");
+        PTree::ValidateValue<double>(json, "y_end");
 
         return Target{
             .distances = PTree::ArrayTo<std::vector<double>>(json, "distances"),

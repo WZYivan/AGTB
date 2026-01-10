@@ -66,13 +66,20 @@ template <typename __target, typename __ptree>
 __target ParseJson(const __ptree &json)
     requires SupportParseFromJson<__ptree, JsonParser<__target>, __target>
 {
-    if constexpr (SupportParse<__ptree, JsonParser<__target>, __target>)
+    try
     {
-        return JsonParser<__target>::Parse(json);
+        if constexpr (SupportParse<__ptree, JsonParser<__target>, __target>)
+        {
+            return JsonParser<__target>::Parse(json);
+        }
+        else
+        {
+            return JsonParser<__target>{}.ParseConfig(json);
+        }
     }
-    else
+    catch (JsonKeyError &e)
     {
-        return JsonParser<__target>{}.ParseConfig(json);
+        AGTB_THROW(JsonKeyError, std::format("{}\nWe expect:\n{}", e.what(), JsonParser<__target>::Expect()));
     }
 }
 
@@ -80,36 +87,22 @@ template <typename __target, typename __ptree>
 __target ParseJson(const __ptree &json, const JsonParser<__target> &parser)
     requires SupportParseFromJson<__ptree, JsonParser<__target>, __target>
 {
-    if constexpr (SupportParseConfig<__ptree, JsonParser<__target>, __target>)
+    try
     {
-        return parser.ParseConfig(json);
+        if constexpr (SupportParseConfig<__ptree, JsonParser<__target>, __target>)
+        {
+            return parser.ParseConfig(json);
+        }
+        else
+        {
+            return JsonParser<__target>::Parse(json);
+        }
     }
-    else
+    catch (JsonKeyError &e)
     {
-        return JsonParser<__target>::Parse(json);
+        AGTB_THROW(JsonKeyError, std::format("{}\nWe expect:\n{}", e.what(), JsonParser<__target>::Expect()));
     }
 }
-
-#define AGTB_THROW_IN_JSON_PARSER(__key) \
-    AGTB_THROW(::AGTB::Errors::JsonKeyError, std::format("Key: [{}] not found. We expect json like below:\n{}\n", __key, JsonParser ::Expect()))
-
-#define AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(__ptree, __key, __type)  \
-    if (!::AGTB::Container::PTree::HasValue<__type>(__ptree, __key)) \
-    {                                                                \
-        AGTB_THROW_IN_JSON_PARSER(__key);                            \
-    }
-
-#define AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(__ptree, __key)  \
-    if (!::AGTB::Container::PTree::HasArray(__ptree, __key)) \
-    {                                                        \
-        AGTB_THROW_IN_JSON_PARSER(__key);                    \
-    }
-
-#define AGTB_JSON_PARSER_VALIDATE_MAP_KEY(__ptree, __key)  \
-    if (!::AGTB::Container::PTree::HasMap(__ptree, __key)) \
-    {                                                      \
-        AGTB_THROW_IN_JSON_PARSER(__key);                  \
-    }
 
 AGTB_IO_END
 
