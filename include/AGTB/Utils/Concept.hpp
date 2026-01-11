@@ -47,6 +47,12 @@ concept HasGtAndLt = requires(T l, T r) {
     { l < r } -> std::same_as<bool>;
 };
 
+template <typename __base, typename __derived>
+concept IsBaseOf = std::is_base_of_v<__base, __derived>;
+
+template <typename __derived, typename __base>
+concept IsDerivedFrom = IsBaseOf<__base, __derived>;
+
 //
 // Pascal Casing Begin
 //

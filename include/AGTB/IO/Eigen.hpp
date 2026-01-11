@@ -92,7 +92,7 @@ namespace detail::EigenIO
             {
                 for (auto ci = 0; ci != col; ++ci)
                 {
-                    mat(ri, ci) = c.at(ri).at(ci);
+                    mat(ri, ci) = std::move(c.at(ri).at(ci));
                 }
             }
         }

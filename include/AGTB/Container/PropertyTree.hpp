@@ -357,10 +357,7 @@ namespace PTreeExt
     };
 
     template <typename T>
-    concept DefAliasEnabled = requires(T t) {
-        { t.AliasMap() } -> std::convertible_to<PropPathAliasMap>;
-        { t.DefAlias(std::string("key")) } -> std::convertible_to<PropPathAliasMapSpecializedInserter>;
-    };
+    concept DefAliasEnabled = IsDerivedFrom<T, EnableDefAliasBase>;
 }
 
 AGTB_CONTAINER_END
