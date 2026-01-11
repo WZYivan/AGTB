@@ -6,13 +6,15 @@
 #include <boost/property_tree/ptree.hpp>
 #include <ranges>
 #include <map>
+#include <set>
 #include <boost/assign.hpp>
 
 AGTB_CONTAINER_BEGIN
 
 using PropTree = boost::property_tree::ptree;
 using PropPath = boost::property_tree::path;
-using PropPathAliasMap = std::map<std::string, std::vector<std::string>>;
+using PropPathSet = std::set<std::string>;
+using PropPathAliasMap = std::map<std::string, PropPathSet>;
 
 struct PTree
 {
@@ -99,6 +101,12 @@ struct PTree
     {
         auto opt = ptree.get_child_optional(path);
         return opt.has_value() && opt.get().begin()->first.empty();
+    }
+
+    template <typename __ptree>
+    static void ValidateArray(const __ptree &ptree)
+    {
+        ValidateMap<__ptree>(ptree, "");
     }
 
     template <typename __ptree>
@@ -290,38 +298,37 @@ struct PTree
 
 namespace PTreeExt
 {
-    class PropPathAliasMapInserter
+    class PropPathAliasMapSpecializedInserter
     {
     private:
         PropPathAliasMap &map;
         std::string key;
 
     public:
-        ~PropPathAliasMapInserter() = default;
-        PropPathAliasMapInserter(PropPathAliasMap &_map, const std::string &_key) : map(_map), key(_key)
+        ~PropPathAliasMapSpecializedInserter() = default;
+        PropPathAliasMapSpecializedInserter(PropPathAliasMap &_map, const std::string &_key) : map(_map), key(_key)
         {
             if (!map.contains(key))
             {
-                map.insert_or_assign(key, std::vector<std::string>{});
+                map.insert_or_assign(key, PropPathSet{});
             }
         }
 
-        PropPathAliasMapInserter operator()(const std::string &alias)
+        PropPathAliasMapSpecializedInserter operator()(const std::string &alias)
         {
-            auto &vec = map.at(key);
-            // alias is already exists
-            if (std::find(vec.begin(), vec.end(), alias) != vec.end())
+            auto &set = map.at(key);
+            if (set.contains(key))
             {
                 return *this;
             }
-            vec.push_back(alias);
+            set.insert(alias);
             return *this;
         }
     };
 
-    PropPathAliasMapInserter DefAlias(PropPathAliasMap &map, const std::string &key)
+    auto DefAlias(PropPathAliasMap &map, const std::string &key)
     {
-        return PropPathAliasMapInserter(map, key);
+        return PropPathAliasMapSpecializedInserter(map, key);
     }
 
     class EnableDefAliasBase
@@ -352,7 +359,7 @@ namespace PTreeExt
     template <typename T>
     concept DefAliasEnabled = requires(T t) {
         { t.AliasMap() } -> std::convertible_to<PropPathAliasMap>;
-        { t.DefAlias(std::string("key")) } -> std::convertible_to<PropPathAliasMapInserter>;
+        { t.DefAlias(std::string("key")) } -> std::convertible_to<PropPathAliasMapSpecializedInserter>;
     };
 }
 

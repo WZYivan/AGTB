@@ -12,6 +12,8 @@
 #include "../details/Macros.hpp"
 #include "../Utils/StreamReader.hpp"
 #include "../Utils/String.hpp"
+#include "../Linalg/Base.hpp"
+#include "JSON.hpp"
 
 AGTB_IO_BEGIN
 
@@ -212,6 +214,76 @@ void PrintEigen(
     os << msg << "\n"
        << m.format(fmt) << std::endl;
 }
+
+template <>
+struct JsonParser<Linalg::Matrix> : public PTreeExt::EnableDefAliasBase
+{
+    using Target = Linalg::Matrix;
+    using Self = JsonParser<Linalg::Matrix>;
+
+    AGTB_JSON_PARSER_DEF_KEY(matrix);
+
+    static std::string Expect() noexcept
+    {
+        return R"(
+{
+    "matrix" : [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]
+    ]    
+}
+        )";
+    }
+
+    template <typename __ptree>
+    Target ParseConfig(const __ptree &json)
+    {
+        const auto &map = AliasMap();
+
+        PTree::ValidateArray(json, Key__matrix(), map);
+        const auto &arr2 = PTree::ArrayView(json, Key__matrix(), map);
+        PTree::ValidateArray(*arr2.begin());
+
+        detail::EigenIO::ContainerOf<Target> container{};
+
+        for (const auto &arr1 : arr2)
+        {
+            container.push_back(PTree::ArrayTo<detail::EigenIO::details::ContainerOf<Target>::col_container>(arr1));
+        }
+
+        Target matrix(container.size(), container.begin()->size());
+        detail::EigenIO::details::ContainerToMatrix<
+            detail::EigenIO::MMDOf<Target>,
+            decltype(container),
+            Target>(matrix, container);
+
+        return matrix;
+    }
+
+    template <typename __ptree>
+    static Target Parse(const __ptree &json)
+    {
+        PTree::ValidateArray(json, Key__matrix());
+        const auto &arr2 = PTree::ArrayView(json, Key__matrix());
+        PTree::ValidateArray(*arr2.begin());
+
+        detail::EigenIO::ContainerOf<Target> container{};
+
+        for (const auto &arr1 : arr2)
+        {
+            container.push_back(PTree::ArrayTo<detail::EigenIO::details::ContainerOf<Target>::col_container>(arr1));
+        }
+
+        Target matrix(container.size(), container.begin()->size());
+        detail::EigenIO::details::ContainerToMatrix<
+            detail::EigenIO::MMDOf<Target>,
+            decltype(container),
+            Target>(matrix, container);
+
+        return matrix;
+    }
+};
 
 AGTB_IO_END
 

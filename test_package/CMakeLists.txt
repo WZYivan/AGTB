@@ -12,7 +12,7 @@ endfunction()
 
 # create_new_executable(Draft "src/Draft.cpp")
 
-create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
+# create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Adjustment_Elevation "src/Adjustment/Elevation.cpp")
 # create_new_executable(Adjustment_ElevationNet "src/Adjustment/ElevationNet.cpp")
 # # # # create_new_executable(Adjustment_TraverseNet "src/Adjustment/TraverseNet.cpp") # TODO: Exp
@@ -22,7 +22,7 @@ create_new_executable(Adjustment_Traverse "src/Adjustment/Traverse.cpp")
 # create_new_executable(Geodesy_Solution_Gauss "src/Geodesy/Solution/Gauss.cpp")
 # create_new_executable(Geodesy_Solution_Bessel "src/Geodesy/Solution/Bessel.cpp")
 
-# create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
+create_new_executable(IO_Eigen "src/IO/Eigen.cpp")
 # create_new_executable(IO_JSON "src/IO/JSON.cpp")
 # create_new_executable(IO_Adjustment_Traverse "src/IO/Adjustment/Traverse.cpp")
 # create_new_executable(IO_Adjustment_ElevationNet "src/IO/Adjustment/ElevationNet.cpp")

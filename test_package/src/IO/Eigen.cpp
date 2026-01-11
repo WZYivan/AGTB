@@ -56,5 +56,13 @@ int main()
     //     AGTB::IO::EigenIO::ContainerOf<decltype(mat_2_4)>>(iss, mat_2_4);
     // AGTB::IO::PrintEigen(mat_2_4, "Custom read(2, 4)");
 
+    using Target = AGTB::Linalg::Matrix;
+    using Parser = AGTB::IO::JsonParser<Target>;
+    std::istringstream json_in(Parser::Expect());
+    AGTB::PropTree json;
+    AGTB::IO::ReadJson(json_in, json);
+    Target tar = AGTB::IO::ParseJson<Target>(json);
+    AGTB::IO::PrintEigen(tar, "From json");
+
     return 0;
 }
