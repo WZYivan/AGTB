@@ -229,7 +229,7 @@ namespace Traverse
         va.a_sum = std::accumulate(angles.begin(), angles.end(), Angle());
         __CalculateFBeta(param, va, info);
 
-        double ang_seconds = TakePlace((-info.f_beta / angles.size()).AllSeconds(), place);
+        double ang_seconds = TakePlace((-info.f_beta / angles.size()).ToSeconds(), place);
         std::fill(corrections.begin(), corrections.end(), Angle(ang_seconds));
         va.da_sum = std::accumulate(corrections.begin(), corrections.end(), Angle()).TakePlace(place);
 #if (AGTB_DEBUG)

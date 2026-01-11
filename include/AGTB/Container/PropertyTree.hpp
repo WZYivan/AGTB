@@ -260,7 +260,7 @@ struct PTree
     }
 
     template <HasTypeName::ValueType __container, typename __ptree>
-    static __container ArrayTo(const __ptree &ptree, const PropPath &path, const PropPathAliasMap &map)
+    static __container ArrayTo(const __ptree &ptree, const std::string &path, const PropPathAliasMap &map)
     {
         return ArrayView(ptree, path, map) |
                std::views::transform([](const auto &sub)
@@ -286,16 +286,19 @@ struct PTree
                std::ranges::to<__container>();
     }
 #endif
-private:
-    class PropPathSingleAliasInserter
+};
+
+namespace PTreeExt
+{
+    class PropPathAliasMapInserter
     {
     private:
         PropPathAliasMap &map;
         std::string key;
 
     public:
-        ~PropPathSingleAliasInserter() = default;
-        PropPathSingleAliasInserter(PropPathAliasMap &_map, const std::string &_key) : map(_map), key(_key)
+        ~PropPathAliasMapInserter() = default;
+        PropPathAliasMapInserter(PropPathAliasMap &_map, const std::string &_key) : map(_map), key(_key)
         {
             if (!map.contains(key))
             {
@@ -303,7 +306,7 @@ private:
             }
         }
 
-        PropPathSingleAliasInserter operator()(const std::string &alias)
+        PropPathAliasMapInserter operator()(const std::string &alias)
         {
             auto &vec = map.at(key);
             // alias is already exists
@@ -316,12 +319,42 @@ private:
         }
     };
 
-public:
-    static PropPathSingleAliasInserter DefAlias(PropPathAliasMap &map, const std::string &key)
+    PropPathAliasMapInserter DefAlias(PropPathAliasMap &map, const std::string &key)
     {
-        return PropPathSingleAliasInserter(map, key);
+        return PropPathAliasMapInserter(map, key);
     }
-};
+
+    class EnableDefAliasBase
+    {
+    private:
+        PropPathAliasMap PTreeExt_EnableDefAliasBase_m_map;
+
+    public:
+        EnableDefAliasBase() = default;
+        virtual ~EnableDefAliasBase() = default;
+
+        auto DefAlias(const std::string &key)
+        {
+            return PTreeExt::DefAlias(AliasMap(), key);
+        }
+
+        const PropPathAliasMap &AliasMap() const noexcept
+        {
+            return PTreeExt_EnableDefAliasBase_m_map;
+        }
+
+        PropPathAliasMap &AliasMap() noexcept
+        {
+            return PTreeExt_EnableDefAliasBase_m_map;
+        }
+    };
+
+    template <typename T>
+    concept DefAliasEnabled = requires(T t) {
+        { t.AliasMap() } -> std::convertible_to<PropPathAliasMap>;
+        { t.DefAlias(std::string("key")) } -> std::convertible_to<PropPathAliasMapInserter>;
+    };
+}
 
 AGTB_CONTAINER_END
 
@@ -331,6 +364,7 @@ using Container::PropPath;
 using Container::PropPathAliasMap;
 using Container::PropTree;
 using Container::PTree;
+namespace PTreeExt = Container::PTreeExt;
 
 AGTB_END
 

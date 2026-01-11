@@ -12,11 +12,12 @@ int main()
     using Target = aa::ElevationNet;
 
     aio::JsonParser<Target> parser;
-    parser.DefAlias("vertices")("v")("verts");
-    parser.DefAlias("edges")("es");
-    parser.DefAlias("name")("n");
-    parser.DefAlias("from")("beg");
-    parser.DefAlias("to")("end");
+    parser.DefAlias(parser.Key__vertices())("v")("verts");
+    parser.DefAlias(parser.Key__edges())("es");
+    parser.DefAlias(parser.Key__name())("n");
+    parser.DefAlias(parser.Key__from())("beg");
+    parser.DefAlias(parser.Key__to())("end");
+
     Target net = aio::ParseJson<Target>(json, parser);
     aa::PrintElevationNet(net);
 }

@@ -104,6 +104,22 @@ __target ParseJson(const __ptree &json, const JsonParser<__target> &parser)
     }
 }
 
+/**
+ * @brief This macro is used to literally def the default key you expect in json file.
+ * For example, you expect a "key" in json file, then you write `AGTB_JSON_PARSER_DEF_KEY(key)`
+ * inside the specialized `JsonParser`, and you can use static method `Key__key()` to access
+ * this key, it will literally return "key". For others, such as "aboba", `Key__aboba` returns
+ * "aboba". With this macro, `JsonParser` is more friendly to those using IDE with hint and work with `PTree::EnableDefAliasBase`.
+ * In such situation, you want to parse json to a AGTB defined type tah not familiar with and define alias of its internal defined key,
+ * just get corresponding instantiation, call `Key__*()`, and you get the key!
+ *
+ */
+#define AGTB_JSON_PARSER_DEF_KEY(__key)        \
+    static std::string Key__##__key() noexcept \
+    {                                          \
+        return #__key;                         \
+    }
+
 AGTB_IO_END
 
 #endif

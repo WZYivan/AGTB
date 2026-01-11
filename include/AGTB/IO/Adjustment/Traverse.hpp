@@ -8,50 +8,16 @@ AGTB_IO_BEGIN
 
 template <>
 struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>>
+    : public PTreeExt::EnableDefAliasBase
 {
     using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>;
 
-    template <typename __ptree>
-    static Target Parse(const __ptree &json)
-    {
-        return DoParse(json, "distances", "angles", "azi_beg", "x_beg", "y_beg");
-    }
+    AGTB_JSON_PARSER_DEF_KEY(distances);
+    AGTB_JSON_PARSER_DEF_KEY(angles);
+    AGTB_JSON_PARSER_DEF_KEY(azi_beg);
+    AGTB_JSON_PARSER_DEF_KEY(x_beg);
+    AGTB_JSON_PARSER_DEF_KEY(y_beg);
 
-    template <typename __ptree>
-    Target ParseConfig(const __ptree &json) const
-    {
-        return DoParse(json, dis, ang, ab, x, y);
-    }
-    JsonParser(std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
-        : dis(distances), ang(angles), ab(azi_beg), x(x_beg), y(y_beg)
-    {
-    }
-    ~JsonParser() = default;
-
-private:
-    std::string dis, ang, ab, x, y;
-
-    template <typename __ptree>
-    static Target DoParse(const __ptree &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
-    {
-        PTree::ValidateArray(json, distances);
-        PTree::ValidateArray(json, angles);
-        PTree::ValidateArray(json, azi_beg);
-        PTree::ValidateValue<double>(json, x_beg);
-        PTree::ValidateValue<double>(json, y_beg);
-
-        return {
-            .distances = PTree::ArrayTo<std::vector<double>>(json, distances),
-            .angles = PTree::ArrayView(json, angles) |
-                      std::views::transform([](const auto &sub) -> Angle
-                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
-                      std::ranges::to<std::vector<Angle>>(),
-            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, azi_beg)),
-            .x_beg = PTree::Value<double>(json, x_beg),
-            .y_beg = PTree::Value<double>(json, y_beg)};
-    }
-
-public:
     static std::string Expect()
     {
         return R"(
@@ -69,45 +35,65 @@ public:
 }
         )";
     }
-};
-
-template <>
-struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnecting>>
-{
-    using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnecting>;
 
     template <typename __ptree>
-    static void Validate(const __ptree &json)
+    Target ParseConfig(const __ptree &json) const
     {
+        const auto &map = AliasMap();
+        PTree::ValidateArray(json, Key__distances(), map);
+        PTree::ValidateArray(json, Key__angles(), map);
+        PTree::ValidateArray(json, Key__azi_beg(), map);
+        PTree::ValidateValue<double>(json, Key__x_beg(), map);
+        PTree::ValidateValue<double>(json, Key__y_beg(), map);
+
+        return {
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances(), map),
+            .angles = PTree::ArrayView(json, Key__angles(), map) |
+                      std::views::transform([](const auto &sub) -> Angle
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
+                      std::ranges::to<std::vector<Angle>>(),
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg(), map)),
+            .x_beg = PTree::Value<double>(json, Key__x_beg(), map),
+            .y_beg = PTree::Value<double>(json, Key__y_beg(), map)};
     }
 
     template <typename __ptree>
     static Target Parse(const __ptree &json)
     {
-        PTree::ValidateArray(json, "distances");
-        PTree::ValidateArray(json, "angles");
-        PTree::ValidateArray(json, "azi_beg");
-        PTree::ValidateArray(json, "azi_end");
-        PTree::ValidateValue<double>(json, "x_beg");
-        PTree::ValidateValue<double>(json, "y_beg");
-        PTree::ValidateValue<double>(json, "x_end");
-        PTree::ValidateValue<double>(json, "y_end");
+        PTree::ValidateArray(json, Key__distances());
+        PTree::ValidateArray(json, Key__angles());
+        PTree::ValidateArray(json, Key__azi_beg());
+        PTree::ValidateValue<double>(json, Key__x_beg());
+        PTree::ValidateValue<double>(json, Key__y_beg());
 
-        return Target{
-            .distances = PTree::ArrayTo<std::vector<double>>(json, "distances"),
-            .angles = PTree::ArrayView(json, "angles") |
+        return {
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances()),
+            .angles = PTree::ArrayView(json, Key__angles()) |
                       std::views::transform([](const auto &sub) -> Angle
                                             { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
                       std::ranges::to<std::vector<Angle>>(),
-            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, "azi_beg")),
-            .azi_end = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, "azi_end")),
-            .x_beg = PTree::Value<double>(json, "x_beg"),
-            .y_beg = PTree::Value<double>(json, "y_beg"),
-            .x_end = PTree::Value<double>(json, "x_end"),
-            .y_end = PTree::Value<double>(json, "y_end")};
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg())),
+            .x_beg = PTree::Value<double>(json, Key__x_beg()),
+            .y_beg = PTree::Value<double>(json, Key__y_beg())};
     }
+};
 
-    static std::string Expect()
+template <>
+struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnecting>>
+    : public PTreeExt::EnableDefAliasBase
+{
+    using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnecting>;
+
+    AGTB_JSON_PARSER_DEF_KEY(distances);
+    AGTB_JSON_PARSER_DEF_KEY(angles);
+    AGTB_JSON_PARSER_DEF_KEY(azi_beg);
+    AGTB_JSON_PARSER_DEF_KEY(azi_end);
+    AGTB_JSON_PARSER_DEF_KEY(x_beg);
+    AGTB_JSON_PARSER_DEF_KEY(y_beg);
+    AGTB_JSON_PARSER_DEF_KEY(x_end);
+    AGTB_JSON_PARSER_DEF_KEY(y_end);
+
+    static std::string Expect() noexcept
     {
         return R"(
 {
@@ -131,6 +117,60 @@ struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedConnect
     "y_end" : 600
 }
         )";
+    }
+
+    template <typename __ptree>
+    static Target Parse(const __ptree &json)
+    {
+        PTree::ValidateArray(json, Key__distances());
+        PTree::ValidateArray(json, Key__angles());
+        PTree::ValidateArray(json, Key__azi_beg());
+        PTree::ValidateArray(json, Key__azi_end());
+        PTree::ValidateValue<double>(json, Key__x_beg());
+        PTree::ValidateValue<double>(json, Key__y_beg());
+        PTree::ValidateValue<double>(json, Key__x_end());
+        PTree::ValidateValue<double>(json, Key__y_end());
+
+        return Target{
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances()),
+            .angles = PTree::ArrayView(json, Key__angles()) |
+                      std::views::transform([](const auto &sub) -> Angle
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
+                      std::ranges::to<std::vector<Angle>>(),
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg())),
+            .azi_end = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_end())),
+            .x_beg = PTree::Value<double>(json, Key__x_beg()),
+            .y_beg = PTree::Value<double>(json, Key__y_beg()),
+            .x_end = PTree::Value<double>(json, Key__x_end()),
+            .y_end = PTree::Value<double>(json, Key__y_end())};
+    }
+
+    template <typename __ptree>
+    Target ParseConfig(const __ptree &json)
+    {
+        const auto &map = AliasMap();
+
+        PTree::ValidateArray(json, Key__distances(), map);
+        PTree::ValidateArray(json, Key__angles(), map);
+        PTree::ValidateArray(json, Key__azi_beg(), map);
+        PTree::ValidateArray(json, Key__azi_end(), map);
+        PTree::ValidateValue<double>(json, Key__x_beg(), map);
+        PTree::ValidateValue<double>(json, Key__y_beg(), map);
+        PTree::ValidateValue<double>(json, Key__x_end(), map);
+        PTree::ValidateValue<double>(json, Key__y_end(), map);
+
+        return Target{
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances(), map),
+            .angles = PTree::ArrayView(json, Key__angles(), map) |
+                      std::views::transform([](const auto &sub) -> Angle
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
+                      std::ranges::to<std::vector<Angle>>(),
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg(), map)),
+            .azi_end = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_end(), map)),
+            .x_beg = PTree::Value<double>(json, Key__x_beg(), map),
+            .y_beg = PTree::Value<double>(json, Key__y_beg(), map),
+            .x_end = PTree::Value<double>(json, Key__x_end(), map),
+            .y_end = PTree::Value<double>(json, Key__y_end(), map)};
     }
 };
 AGTB_IO_END

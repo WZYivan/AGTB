@@ -210,7 +210,7 @@ namespace Angles
          */
         static constexpr Angle FromRad(double rad)
         {
-            return Angle(ToSeconds(rad));
+            return Angle(Angles::ToSeconds(rad));
         }
 
         static Angle FromSpan(std::span<const double> span)
@@ -230,21 +230,21 @@ namespace Angles
          */
         std::string ToString() const noexcept
         {
-            auto [d, m, s] = DMS();
+            auto [d, m, s] = ToDMS();
             return std::format("{}d{}m{}s", d, m, s);
         }
 
         /**
-         * @brief To degrees(double)
+         * @brief Get degrees(double)
          *
          * @return constexpr double
          */
         constexpr inline double Degrees() const noexcept
         {
-            return seconds / 3600;
+            return gcem::round(seconds / 3600);
         }
         /**
-         * @brief To minutes(double)
+         * @brief Get minutes(double)
          *
          * @return constexpr double
          */
@@ -253,7 +253,7 @@ namespace Angles
             return gcem::fmod(seconds, 3600.0) / 60;
         }
         /**
-         * @brief To seconds(double)
+         * @brief Get seconds(double)
          *
          * @return constexpr double
          */
@@ -267,9 +267,29 @@ namespace Angles
          *
          * @return constexpr double
          */
-        constexpr inline double AllSeconds() const noexcept
+        constexpr inline double ToSeconds() const noexcept
         {
             return seconds;
+        }
+
+        /**
+         * @brief To minutes(double)
+         *
+         * @return constexpr double
+         */
+        constexpr inline double ToMinutes() const noexcept
+        {
+            return seconds / 60.0;
+        }
+
+        /**
+         * @brief To degrees(double)
+         *
+         * @return constexpr double
+         */
+        constexpr inline double ToDegrees() const noexcept
+        {
+            return seconds / 3600.0;
         }
 
         /**
@@ -277,9 +297,9 @@ namespace Angles
          *
          * @return std::tuple<double, double, double>
          */
-        std::tuple<double, double, double> DMS() const noexcept
+        std::tuple<double, double, double> ToDMS() const noexcept
         {
-            return ToDMS(Rad());
+            return Angles::ToDMS(Rad());
         }
 
         /**
@@ -289,7 +309,7 @@ namespace Angles
          */
         constexpr inline double Rad() const noexcept
         {
-            return FromDMS(Degrees());
+            return FromDMS(ToDegrees());
         }
 
         friend inline Angle operator+(Angle left, Angle right);
@@ -386,7 +406,7 @@ namespace Angles
          */
         std::string ToStringDMS(int place = 0) const noexcept
         {
-            auto [d, m, s] = DMS();
+            auto [d, m, s] = ToDMS();
             int d_i = Round(d);
             int m_i = Round(m);
             s = AGTB::TakePlace(s, place) * gcem::pow(10, place);

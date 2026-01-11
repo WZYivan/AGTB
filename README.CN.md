@@ -38,6 +38,18 @@ namespace aio = AGTB::IO;
 
 在`AGTB`中，还有很多其他头文件和嵌套的命名空间，但我只推荐包含这四个头文件和对应的命名空间。这些命名空间的的符号经过了筛选，不会泄露内部的实现而导致混淆。当然，请不要试图访问`detail`命名空间或包含`details`文件夹下的任何头文件，它们都属于不稳定的内部实现，尤其是`details`下的头文件，对其的任何修改都会传播到整个库的所有实现中，这可能导致严重的编译错误。
 
+或者你直接包含一个头:
+
+```cpp
+#include <AGTB/AGTB.hpp>
+
+namespace ag = AGTB::Geodesy;
+namespace ap = AGTB::Photogrammetry;
+namespace aa = AGTB::Adjustment;
+namespace aio = AGTB::IO;
+namespace af = AGTB::Filtered; // AGTB 中内部模块经过筛选、稳定可用的部分
+```
+
 下面将一一介绍每个模块。
 
 ## Geodesy
@@ -452,50 +464,16 @@ __target ParseJson(const __ptree &json, const JsonParser<__target> &parser)
 ```cpp
 template <>
 struct JsonParser<Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>>
+    : public PTreeExt::EnableDefAliasBase
 {
     using Target = Adjustment::TraverseParam<Adjustment::RouteType::ClosedLoop>;
 
-    template <typename __ptree>
-    static Target Parse(const __ptree &json)
-    {
-        return DoParse(json, "distances", "angles", "azi_beg", "x_beg", "y_beg");
-    }
+    AGTB_JSON_PARSER_DEF_KEY(distances);
+    AGTB_JSON_PARSER_DEF_KEY(angles);
+    AGTB_JSON_PARSER_DEF_KEY(azi_beg);
+    AGTB_JSON_PARSER_DEF_KEY(x_beg);
+    AGTB_JSON_PARSER_DEF_KEY(y_beg);
 
-    template <typename __ptree>
-    Target ParseConfig(const __ptree &json) const
-    {
-        return DoParse(json, dis, ang, ab, x, y);
-    }
-    JsonParser(std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
-        : dis(distances), ang(angles), ab(azi_beg), x(x_beg), y(y_beg)
-    {
-    }
-    ~JsonParser() = default;
-
-private:
-    std::string dis, ang, ab, x, y;
-
-    template <typename __ptree>
-    static Target DoParse(const __ptree &json, std::string distances, std::string angles, std::string azi_beg, std::string x_beg, std::string y_beg)
-    {
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, distances);
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, angles);
-        AGTB_JSON_PARSER_VALIDATE_ARRAY_KEY(json, azi_beg);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, x_beg, double);
-        AGTB_JSON_PARSER_VALIDATE_VALUE_KEY(json, y_beg, double);
-
-        return {
-            .distances = PTree::ArrayTo<std::vector<double>>(json, distances),
-            .angles = PTree::ArrayView(json, angles) |
-                      std::views::transform([](const auto &sub) -> Angle
-                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
-                      std::ranges::to<std::vector<Angle>>(),
-            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, azi_beg)),
-            .x_beg = PTree::Value<double>(json, x_beg),
-            .y_beg = PTree::Value<double>(json, y_beg)};
-    }
-
-public:
     static std::string Expect()
     {
         return R"(
@@ -513,6 +491,47 @@ public:
 }
         )";
     }
+
+    template <typename __ptree>
+    Target ParseConfig(const __ptree &json) const
+    {
+        const auto &map = AliasMap();
+        PTree::ValidateArray(json, Key__distances(), map);
+        PTree::ValidateArray(json, Key__angles(), map);
+        PTree::ValidateArray(json, Key__azi_beg(), map);
+        PTree::ValidateValue<double>(json, Key__x_beg(), map);
+        PTree::ValidateValue<double>(json, Key__y_beg(), map);
+
+        return {
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances(), map),
+            .angles = PTree::ArrayView(json, Key__angles(), map) |
+                      std::views::transform([](const auto &sub) -> Angle
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
+                      std::ranges::to<std::vector<Angle>>(),
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg(), map)),
+            .x_beg = PTree::Value<double>(json, Key__x_beg(), map),
+            .y_beg = PTree::Value<double>(json, Key__y_beg(), map)};
+    }
+
+    template <typename __ptree>
+    static Target Parse(const __ptree &json)
+    {
+        PTree::ValidateArray(json, Key__distances());
+        PTree::ValidateArray(json, Key__angles());
+        PTree::ValidateArray(json, Key__azi_beg());
+        PTree::ValidateValue<double>(json, Key__x_beg());
+        PTree::ValidateValue<double>(json, Key__y_beg());
+
+        return {
+            .distances = PTree::ArrayTo<std::vector<double>>(json, Key__distances()),
+            .angles = PTree::ArrayView(json, Key__angles()) |
+                      std::views::transform([](const auto &sub) -> Angle
+                                            { return Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(sub)); }) |
+                      std::ranges::to<std::vector<Angle>>(),
+            .azi_beg = Angle::FromSpan(PTree::ArrayTo<std::vector<double>>(json, Key__azi_beg())),
+            .x_beg = PTree::Value<double>(json, Key__x_beg()),
+            .y_beg = PTree::Value<double>(json, Key__y_beg())};
+    }
 };
 ```
 
@@ -522,15 +541,22 @@ public:
 - `Parse` : 单参数版本`ParseJson`将默认调用此函数，若不存在，则尝试默认构造一个`JsonParser`，并调用其`ParseConfig`
 - `ParseConfig` : 双参数版本`ParseJson`将默认调用传入的`JsonParser`的此函数，若不存在，则调用`Parse`。你可以在`JsonParser`的特化版本中定义任何其他的成员以自定义其行为，这里通过5个字符串成员来解析特定的json键。
 
-你应该注意到了实现中使用的`AGTB_JSON_PARSER_VALIDATE_*_KEY`系列宏，这是`AGTB`提供的，**仅用于`JsonParser`内部的**json键检查，他会在指定类型的键不存在时抛出带详细信息的异常，包括缺失的键名、默认期待的json格式等。
-
 这里再简要介绍`PTree`系列自由函数的使用:
 - `ArrayView` : 将当前`PropTree`（或指定键的子树）转为数组视图，可见例子中的`"distances"`键
 - `MapView` : 将当前`PropTree`（或指定键的子树）转为字典视图，在例子中即为整个原始树
 - `Value` : 将当前`PropTree`（或指定键的子树）转为值（需给定类型），在例子中即为`"x_beg"`键
+- `ValidateArray` : 验证当前`PropTree`对应的`PropPath`是否有效
+- `ValidateMap` : 验证当前`PropTree`对应的`PropPath`是否有效
+- `ValidateValue` : 验证当前`PropTree`对应的`PropPath`是否有效
 - `ArrayTo` : 将当前`PropTree`（或指定键的子树）的数组视图转为容器
+- `PropPathAliasMap` : 上述所有函数还有额外接受一个`PropPathAliasMap`的重载，当给定键不存在时，其在此映射中搜索给定键的别名，并以别名访问
 
 这些函数提供了对于`PropTree`的快捷、直观的访问方法。
+
+此外，`PTreeExt::EnableDefAliasBase` 和宏`AGTB_JSON_PARSER_DEF_KEY`起到了重要作用，它们的功能如下：
+- `PTreeExt` : 这里提供了一系列用于增强PTree功能的类、函数和概念等
+- `EnableDefAliasBase` : 为其子类提供公有函数`AliasMap`和`DefAlias`，用于访问内部的`PropPathAliasMap`并为键添加别名
+- `AGTB_JSON_PARSER_DEF_KEY( key )` : 定义一个名为`Key__*`的静态方法，`*`扩展为唯一的参数，并返回此参数的字面量字符串，提供一个用于访问默认键的接口
 
 ## Macros
 
@@ -544,7 +570,7 @@ public:
 
 ### 同时提供给用户
 
-- `AGTB_JSON_PARSER_VALIDATE_*_KEY` : 用于`JsonPaser`内部的json键检查
+- `AGTB_JSON_PARSER_DEF_KEY` : 用于`JsonPaser`内部定义期待的json默认键
 
 ### 专门提供给用户
 
@@ -572,6 +598,7 @@ public:
 - `NamedGraph` : `BGL`中类的具名包装，可以通过名称访问边和顶点，而不止通过索引
 - `PropTree, PropPath` : `boost::property_tree::ptree, path`的别名
 - `PTree` : 用于访问`PropTree`的一系列自由函数
+- `PTreeExt` : 用于增强`PTree`的功能的辅助类和自由函数
 
 ### Linalg
 
@@ -581,7 +608,28 @@ public:
 - `Rotate*` : 旋转矩阵相关
 - `Cs*` : 坐标转换相关
 
+## 对API稳定性的说明
+
+### 稳定的API
+
+通过以下命名空间访问
+
+- `AGTB::Geodesy` : 大地测量相关
+- `AGTB::Photogrammetry` : 摄影测量
+- `AGTB::Adjustment` : 误差平差
+- `AGTB::IO` : 输入输出
+- `AGTB::Linalg` : 这里虽然是内部实现，但他们的API相对稳定，其基本上是`Eigen`的包装，你可以接使用它们
+- `AGTB::Filtered` : 这里收集了`Utils`，`Container`等中可供用户使用的API
+
+### 特别说明
+
+- `AGTB` : 顶层命名空间的名称可能不稳定
+- `* :: detail :: *` : 内部实现，不对其稳定性有任何保证
+- 此外都是实验性内容，或不稳定，或干脆是有bug的实现
+- `C++`的命名空间管理真的很困难...
+- `Fuck namespace...`
+
 ## Version
 
-- `AGTB` : `0.0.14`
-- `Date` : `26.1.7`
+- `AGTB` : `0.0.16`
+- `Date` : `26.1.10`
